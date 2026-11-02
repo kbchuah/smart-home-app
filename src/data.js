@@ -21,7 +21,7 @@ const dev = (id, name, type, roomId, extra = {}) => ({
 });
 
 export const DEFAULT_STATE = {
-  homeName: 'My Home',
+  homeName: 'KB home',
   rooms: [
     { id: 'living', name: 'Living Room' },
     { id: 'kitchen', name: 'Kitchen' },

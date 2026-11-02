@@ -1,184 +1,36 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHome } from './store.js';
-import { DEVICE_TYPES } from './data.js';
-import Icon from './components/Icon.jsx';
-import DeviceTile from './components/DeviceTile.jsx';
-import DeviceControls from './components/DeviceControls.jsx';
-import DeviceForm from './components/DeviceForm.jsx';
-import RoomManager from './components/RoomManager.jsx';
-import Modal from './components/Modal.jsx';
+import { useState } from 'react';
+import Landing from './screens/Landing.jsx';
+import AuthChoice from './screens/AuthChoice.jsx';
+import GoogleFlow from './screens/GoogleFlow.jsx';
+import Homes from './screens/Homes.jsx';
+import Dashboard from './screens/Dashboard.jsx';
+import { PLANS } from './plans.js';
 
-function greeting() {
-  const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-}
-
+// Screens: landing → auth → signup | login → homes → dashboard
 export default function App() {
-  const [state, dispatch] = useHome();
-  const { rooms, devices, routines } = state;
-  const [filter, setFilter] = useState('all');
-  const [openId, setOpenId] = useState(null);
-  const [form, setForm] = useState(null); // { device? } | null
-  const [showRooms, setShowRooms] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [screen, setScreen] = useState('landing');
+  const [planId, setPlanId] = useState('starter');
+  const [user, setUser] = useState(null); // demo: always starts logged out
+  const plan = PLANS.find((p) => p.id === planId);
 
-  const update = useCallback((id, patch) => dispatch({ type: 'update', id, patch }), [dispatch]);
-  const toggle = useCallback((id) => dispatch({ type: 'toggle', id }), [dispatch]);
+  const signedIn = (u) => { setUser(u); setScreen('homes'); };
+  const logout = () => { setUser(null); setScreen('landing'); };
 
-  // Simulate thermostats drifting toward their target temperature.
-  useEffect(() => {
-    const t = setInterval(() => {
-      devices.filter((d) => d.type === 'thermostat').forEach((d) => {
-        const goal = d.on ? d.target : 20;
-        const diff = goal - d.current;
-        if (Math.abs(diff) >= 0.05) update(d.id, { current: Math.round((d.current + Math.sign(diff) * Math.min(0.1, Math.abs(diff))) * 10) / 10 });
-      });
-    }, 2000);
-    return () => clearInterval(t);
-  }, [devices, update]);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2500);
-    return () => clearTimeout(t);
-  }, [toast]);
-
-  // Reset filter if the selected room was deleted.
-  useEffect(() => {
-    if (filter !== 'all' && !rooms.some((r) => r.id === filter)) setFilter('all');
-  }, [rooms, filter]);
-
-  const summary = useMemo(() => {
-    const lightsOn = devices.filter((d) => d.type === 'light' && d.on).length;
-    const unlocked = devices.filter((d) => d.type === 'lock' && !d.on).length;
-    const thermo = devices.find((d) => d.type === 'thermostat');
-    return { lightsOn, unlocked, thermo };
-  }, [devices]);
-
-  const visibleRooms = filter === 'all' ? rooms : rooms.filter((r) => r.id === filter);
-  const openDevice = devices.find((d) => d.id === openId);
-
-  const runRoutine = (r) => {
-    dispatch({ type: 'runRoutine', id: r.id });
-    setToast(`“${r.name}” routine ran`);
-  };
-
-  return (
-    <div className="app">
-      <header className="top">
-        <div>
-          <p className="eyebrow"><Icon name="home" fill /> {state.homeName}</p>
-          <h1>{greeting()}</h1>
-        </div>
-        <div className="top-actions">
-          <button className="icon-btn" onClick={() => setShowRooms(true)} aria-label="Manage rooms" title="Manage rooms"><Icon name="settings" /></button>
-          <div className="avatar" aria-hidden>H</div>
-        </div>
-      </header>
-
-      <section className="summary">
-        <button className="chip-card" onClick={() => setFilter('all')}>
-          <Icon name="lightbulb" fill={summary.lightsOn > 0} />
-          <span><b>{summary.lightsOn}</b> light{summary.lightsOn === 1 ? '' : 's'} on</span>
-        </button>
-        {summary.thermo && (
-          <button className="chip-card" onClick={() => setOpenId(summary.thermo.id)}>
-            <Icon name="thermostat" />
-            <span><b>{summary.thermo.current.toFixed(1)}°</b> indoors</span>
-          </button>
-        )}
-        <button className={`chip-card ${summary.unlocked ? 'warn' : ''}`}
-          onClick={() => { const l = devices.find((d) => d.type === 'lock'); if (l) setOpenId(l.id); }}>
-          <Icon name={summary.unlocked ? 'lock_open' : 'lock'} fill />
-          <span>{summary.unlocked ? <><b>{summary.unlocked}</b> unlocked</> : 'All locked'}</span>
-        </button>
-      </section>
-
-      <section>
-        <h3 className="section-title">Routines</h3>
-        <div className="routines">
-          {routines.map((r) => (
-            <button key={r.id} className="routine" onClick={() => runRoutine(r)}>
-              <Icon name={r.icon} fill /> {r.name}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <nav className="filters" aria-label="Filter by room">
-        <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All rooms</button>
-        {rooms.map((r) => (
-          <button key={r.id} className={filter === r.id ? 'active' : ''} onClick={() => setFilter(r.id)}>{r.name}</button>
-        ))}
-      </nav>
-
-      {visibleRooms.map((room) => {
-        const list = devices.filter((d) => d.roomId === room.id);
-        const anyOn = list.some((d) => d.on && d.type !== 'lock' && d.type !== 'camera');
-        return (
-          <section key={room.id} className="room">
-            <div className="room-head">
-              <h3 className="section-title">{room.name} <small>{list.length}</small></h3>
-              {list.length > 0 && (
-                <button className="btn subtle" onClick={() => dispatch({ type: 'roomPower', roomId: room.id, on: !anyOn })}>
-                  <Icon name="power_settings_new" /> {anyOn ? 'Turn off all' : 'Turn on all'}
-                </button>
-              )}
-            </div>
-            {list.length ? (
-              <div className="grid">
-                {list.map((d) => <DeviceTile key={d.id} device={d} onToggle={toggle} onOpen={setOpenId} />)}
-              </div>
-            ) : (
-              <button className="empty" onClick={() => setForm({ roomId: room.id })}>
-                <Icon name="add_circle" /> Add a device to {room.name}
-              </button>
-            )}
-          </section>
-        );
-      })}
-
-      <button className="fab" onClick={() => setForm({ roomId: filter !== 'all' ? filter : undefined })}>
-        <Icon name="add" /> Add device
-      </button>
-
-      {openDevice && (
-        <Modal
-          title={openDevice.name}
-          onClose={() => setOpenId(null)}
-          actions={
-            <button className="icon-btn" aria-label="Edit device" title="Edit device"
-              onClick={() => { setForm({ device: openDevice }); setOpenId(null); }}>
-              <Icon name="edit" />
-            </button>
-          }
-        >
-          <p className="sheet-sub">
-            {DEVICE_TYPES[openDevice.type].label} · {rooms.find((r) => r.id === openDevice.roomId)?.name}
-          </p>
-          <DeviceControls device={openDevice} update={update} />
-        </Modal>
-      )}
-
-      {form && (
-        <DeviceForm
-          device={form.device}
-          rooms={rooms}
-          defaultRoom={form.roomId}
-          onClose={() => setForm(null)}
-          onDelete={() => { dispatch({ type: 'removeDevice', id: form.device.id }); setForm(null); setToast('Device removed'); }}
-          onSave={(data) => {
-            if (form.device) dispatch({ type: 'update', id: form.device.id, patch: data });
-            else dispatch({ type: 'addDevice', device: data });
-            setToast(form.device ? 'Device saved' : `${data.name} added`);
-            setForm(null);
-          }}
-        />
-      )}
-
-      {showRooms && <RoomManager rooms={rooms} devices={devices} dispatch={dispatch} onClose={() => setShowRooms(false)} />}
-
-      {toast && <div className="toast" role="status"><Icon name="check_circle" fill /> {toast}</div>}
-    </div>
-  );
+  switch (screen) {
+    case 'landing':
+      return <Landing planId={planId} onSelectPlan={setPlanId}
+        onProceed={() => setScreen(user ? 'homes' : 'auth')} />;
+    case 'auth':
+      return <AuthChoice plan={plan} onBack={() => setScreen('landing')}
+        onSignup={() => setScreen('signup')} onLogin={() => setScreen('login')} />;
+    case 'signup':
+    case 'login':
+      return <GoogleFlow mode={screen} plan={plan} onCancel={() => setScreen('auth')} onDone={signedIn} />;
+    case 'homes':
+      return <Homes user={user} onOpen={() => setScreen('dashboard')} onLogout={logout} />;
+    case 'dashboard':
+      return <Dashboard user={user} onBack={() => setScreen('homes')} />;
+    default:
+      return null;
+  }
 }

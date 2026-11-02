@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from 'react';
 import { DEFAULT_STATE, DEVICE_TYPES, matchesTarget, uid } from './data.js';
 
-const KEY = 'hearth-home-v1';
+const KEY = 'hearth-home-v2';
 
 function load() {
   try {
