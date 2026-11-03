@@ -472,3 +472,30 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
   .price-change.new .pc-delta { background: #8ab4f8; color: #1c2b4a; }
 }
 .pair .price-change { margin: 4px 0; }
+
+/* ---------- Subscription card inside a home ---------- */
+.sub-card { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; padding: 14px 16px; margin: -4px 0 20px;
+  border-radius: 18px; background: #e8f0fe; border: 1px solid #b8cdf6; color: #174ea6; }
+.sub-card:hover { filter: brightness(.98); }
+.sub-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--surface); display: grid; place-items: center; flex: none; }
+.sub-icon .msr { color: #1a73e8; }
+.sub-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sub-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sub-top b { font-size: 15px; font-weight: 600; }
+.sub-price { font-size: 18px; font-weight: 700; color: #1967d2; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sub-price small { font-size: 12px; font-weight: 400; opacity: .8; }
+.sub-meter { display: flex; align-items: center; gap: 4px; }
+.sub-meter i { flex: 1; max-width: 48px; height: 6px; border-radius: 3px; background: color-mix(in srgb, #1a73e8 18%, transparent); }
+.sub-meter i.on { background: #1a73e8; }
+.sub-meter em { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: #e37400; color: #fff; }
+.sub-body > small { font-size: 12.5px; opacity: .85; }
+@media (prefers-color-scheme: dark) {
+  .sub-card { background: #1c2b4a; border-color: #2f4f8a; color: #d2e3fc; }
+  .sub-icon .msr, .sub-price { color: #8ab4f8; }
+  .sub-meter i { background: color-mix(in srgb, #8ab4f8 22%, transparent); }
+  .sub-meter i.on { background: #8ab4f8; }
+  .sub-meter em { background: #fdd663; color: #3d3214; }
+}
+.sub-top { flex-direction: column; align-items: flex-start; gap: 0; }
+.sub-top b { font-size: 12.5px; font-weight: 500; opacity: .85; white-space: nowrap; }
+.sub-price { font-size: 20px; }

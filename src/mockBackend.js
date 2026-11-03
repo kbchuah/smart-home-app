@@ -65,6 +65,11 @@ export async function connectWifi({ ssid, password, override = 'auto' }) {
 // ---- Pricing business rule ----
 // Base price covers up to PLAN.devices devices per home; each extra device adds EXTRA_DEVICE_PRICE.
 export const EXTRA_DEVICE_PRICE = 15;
+// Current monthly charge for a home with `count` devices (same rule as quotePrice).
+export function monthlyPrice(count) {
+  const extra = Math.max(0, count - PLAN.devices);
+  return { base: PLAN.price, included: PLAN.devices, extraDevices: extra, extraEach: EXTRA_DEVICE_PRICE, total: count === 0 ? 0 : PLAN.price + extra * EXTRA_DEVICE_PRICE };
+}
 export async function quotePrice({ structureDeviceCount }) {
   await wait(1000);
   const after = structureDeviceCount + 1;

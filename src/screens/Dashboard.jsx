@@ -6,6 +6,7 @@ import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
 import FirstPairing from './FirstPairing.jsx';
+import SubscriptionCard from '../components/SubscriptionCard.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -100,6 +101,8 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           <div className="avatar" aria-hidden>{user?.initials ?? 'H'}</div>
         </div>
       </header>
+
+      <SubscriptionCard home={state} />
 
       <section className="summary">
         {devices.some((d) => d.type === 'light') && (

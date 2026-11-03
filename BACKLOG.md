@@ -38,3 +38,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Existing-home add device: Room step (pick existing room with device counts, or create a new one; duplicate names reuse the existing room)
 - “Reset all demo data” on the marketing page and in the Demo simulator (clears all saved homes and TAC locks, signs out)
 - Session kept across refresh (straight into the home, or homes list); cleared by Log out and Reset all demo data
+- Subscription card inside each home (plan, monthly charge from device count, included-device meter, payment method; tap for breakdown) and monthly price on the homes list
