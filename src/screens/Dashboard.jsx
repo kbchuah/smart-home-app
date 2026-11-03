@@ -93,7 +93,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
     const presetRoom = rooms.find((r) => r.id === pairing.roomId);
     return (
       <FirstPairing plan={plan} home={state} defaultRoom={presetRoom?.name ?? 'My room'} onCancel={() => setPairing(null)}
-        onDone={({ room, device, price }) => {
+        onDone={({ room, device, price, proratedCharge }) => {
           let roomId = rooms.find((r) => r.name.toLowerCase() === room.name.toLowerCase())?.id;
           if (!roomId) { roomId = uid('room'); dispatch({ type: 'addRoom', id: roomId, name: room.name }); }
           dispatch({ type: 'addDevice', device: { ...device, roomId } });
@@ -101,7 +101,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           if (!state.wifi && device.wifi) dispatch({ type: 'setWifi', wifi: device.wifi });
           // Adding raises the price immediately; it never lowers it (drops wait for renewal).
           if (isPremium(state.subscription) && price > billedPrice(state)) {
-            dispatch({ type: 'patchSubscription', patch: { price } });
+            dispatch({ type: 'patchSubscription', patch: { price, proratedCharges: [...(state.subscription.proratedCharges ?? []), ...(proratedCharge ? [proratedCharge] : [])] } });
           }
           setPairing(null);
           setFilter('all');
@@ -130,7 +130,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         onCancel={(price, endsOn) => setCancelling({ price, endsOn })}
         onUndo={async () => { await resumePremium(); dispatch({ type: 'patchSubscription', patch: { status: 'active', endsOn: null } }); setToast('Cancellation undone. Premium continues.'); }}
         onUpgrade={() => setUpgrading(true)}
-        onRenew={(next) => { dispatch({ type: 'patchSubscription', patch: { price: next, lastRenewal: renewsOn(state.subscription).toISOString() } }); setToast(`Renewed: now ${'MYR'} ${next.toFixed(2)}/month`); }}
+        onRenew={(next) => { dispatch({ type: 'patchSubscription', patch: { price: next, lastRenewal: renewsOn(state.subscription).toISOString(), proratedCharges: [] } }); setToast(`Renewed: now ${'MYR'} ${next.toFixed(2)}/month`); }}
         onEndPeriod={() => { dispatch({ type: 'patchSubscription', patch: { status: 'free', lastRenewal: renewsOn(state.subscription).toISOString() } }); setToast(`${state.homeName} is now on the free plan`); }} />
       {cancelling && (
         <CancelPremium home={state} price={cancelling.price} endsOn={cancelling.endsOn} onClose={() => setCancelling(null)}

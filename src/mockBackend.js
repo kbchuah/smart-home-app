@@ -241,3 +241,19 @@ export function prorateFirstBill({ price, start = new Date(), cycleDay }) {
   const lastDay = new Date(next.getTime() - DAY);
   return { amount, days, periodDays, from: s.toISOString(), to: lastDay.toISOString(), until: next.toISOString() };
 }
+
+// ---- Pro-rated mid-cycle increase ----
+// Adding a device that raises the price: (new − current) × days left in this billing period ÷ days in the period,
+// charged once on the next bill. The new monthly price applies in full from the renewal date.
+export function prorateIncrease({ from, to, sub, today = new Date() }) {
+  if (!(to > from)) return null;
+  const next = renewsOn(sub);
+  const day = anchorDay(sub);
+  const prev = new Date(next.getFullYear(), next.getMonth() - 1, Math.min(day, new Date(next.getFullYear(), next.getMonth(), 0).getDate()));
+  const t = dateOnly(today);
+  const days = Math.max(0, Math.round((next - t) / DAY));
+  const periodDays = Math.round((next - prev) / DAY);
+  if (days === 0) return null;
+  const amount = Math.round((to - from) * days / periodDays * 100) / 100;
+  return { amount, days, periodDays, from: t.toISOString(), to: new Date(next.getTime() - DAY).toISOString(), until: next.toISOString(), monthlyIncrease: to - from };
+}
