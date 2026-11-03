@@ -5,7 +5,7 @@ import Icon from '../components/Icon.jsx';
 import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
-import PairDevice from './PairDevice.jsx';
+import FirstPairing from './FirstPairing.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -67,12 +67,17 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
   };
 
   if (pairing) {
+    // Same pairing flow as first pairing, in existing-home mode (no TAC/payment; price re-quoted).
+    const presetRoom = rooms.find((r) => r.id === pairing.roomId);
     return (
-      <PairDevice home={state} presetRoomId={pairing.roomId} onCancel={() => setPairing(null)}
-        onDone={({ room, device }) => {
-          let roomId = room.id;
+      <FirstPairing plan={plan} home={state} defaultRoom={presetRoom?.name ?? 'My room'} onCancel={() => setPairing(null)}
+        onDone={({ room, device, price }) => {
+          let roomId = rooms.find((r) => r.name.toLowerCase() === room.name.toLowerCase())?.id;
           if (!roomId) { roomId = uid('room'); dispatch({ type: 'addRoom', id: roomId, name: room.name }); }
           dispatch({ type: 'addDevice', device: { ...device, roomId } });
+          if (state.subscription && price !== state.subscription.price) {
+            dispatch({ type: 'setSubscription', subscription: { ...state.subscription, price } });
+          }
           setPairing(null);
           setFilter('all');
           setToast(`${device.name} added`);

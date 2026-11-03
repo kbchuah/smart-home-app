@@ -69,7 +69,9 @@ export async function quotePrice({ structureDeviceCount }) {
   await wait(1000);
   const after = structureDeviceCount + 1;
   const extra = Math.max(0, after - PLAN.devices);
+  const extraNow = Math.max(0, structureDeviceCount - PLAN.devices);
   return {
+    currentTotal: structureDeviceCount === 0 ? 0 : PLAN.price + extraNow * EXTRA_DEVICE_PRICE,
     currentDevices: structureDeviceCount,
     devicesAfter: after,
     included: PLAN.devices,
@@ -152,3 +154,19 @@ export async function checkEligibility({ eligibility, attempt }) {
   if (code === 'ok') return { ok: true };
   return { ok: false, code, ...FAILURES[code] };
 }
+
+// ---- Processing after payment/agreement (create home, register device, activate/update subscription) ----
+// The customer is never charged unless every step succeeds.
+export const PROCESSING_FAILURES = {
+  device: { title: "Couldn't register your camera", message: 'Your camera is online, but we couldn\'t register it to your home.' },
+  subscription_new: { title: "Couldn't activate your subscription", message: 'Your camera is registered, but your subscription isn\'t active yet.' },
+  subscription_update: { title: "Couldn't update your subscription", message: 'Your camera is registered, but we couldn\'t update your subscription. Your price hasn\'t changed.' },
+};
+// mode: 'auto'/'ok' | 'device_fail_once' | 'sub_fail_once' | 'sub_fail_always'
+export function processingFails({ mode, task, failedBefore }) {
+  if (mode === 'device_fail_once') return task === 'device' && !failedBefore;
+  if (mode === 'sub_fail_once') return task === 'subscription' && !failedBefore;
+  if (mode === 'sub_fail_always') return task === 'subscription';
+  return false;
+}
+export const supportRef = () => `HRT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;

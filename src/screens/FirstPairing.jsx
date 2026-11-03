@@ -1,23 +1,29 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
+import Modal from '../components/Modal.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
+  PROCESSING_FAILURES, processingFails, supportRef,
 } from '../mockBackend.js';
 
-// First device pairing into a NEW home (structure), all mocked:
-// create home → scan QR (or key in serial) → compatibility check → price quote → agree
-// → TAC → Charge to Bill | Direct Debit → confirm → eligibility check → processing → success
+// Device pairing, all mocked. Two modes:
+// • New home (first pairing): scan → compatibility → Wi-Fi → price & agree → TAC → Charge to Bill | Direct Debit
+//   → confirm → eligibility → processing → success
+// • Existing home (already subscribed, `home` prop): scan → compatibility → Wi-Fi → price (agree only if the
+//   price goes up) → processing → success. No TAC or payment: the home's billing method is reused.
 
 // Pilot: the first home is always "My Home" on Google Home Premium (renamable later in Home settings).
 const PILOT_HOME_NAME = 'My Home';
 const PILOT_ECOSYSTEM = 'Google Home Premium';
 const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Done'];
 const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3, tacLocked: 3,
-  payment: 4, confirm: 4, eligFail: 4, processing: 4, success: 5 };
+  payment: 4, confirm: 4, eligFail: 4, processing: 4, procFail: 4, success: 5 };
+const STEPS_EXISTING = ['Device', 'Wi-Fi', 'Price', 'Done'];
+const STEP_OF_EXISTING = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, processing: 2, procFail: 2, success: 3 };
 const DEFAULT_ROOM = 'My room';
 // Demo mobile numbers shown as tappable cards on the TAC screen. 'other' = any non-telco number.
 const DEMO_PHONES = [
@@ -58,16 +64,17 @@ export function uniqueHomeName(taken, base = PILOT_HOME_NAME) {
   return `${base} ${i}`;
 }
 
-export default function FirstPairing({ plan, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
+export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_ROOM, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
+  const isExisting = Boolean(home);
   const demo = useDemo();
   const isTried = useTried();
   const [view, setView] = useState('scan');
-  const tacLockedMins = useTacLock(account);
+  const tacLockedMins = useTacLock(account) * (isExisting ? 0 : 1); // TAC isn't used for existing homes
   const [busy, setBusy] = useState(null);
 
   // home
-  const [homeName] = useState(() => uniqueHomeName(existingHomeNames));
-  const ecosystem = PILOT_ECOSYSTEM;
+  const [homeName] = useState(() => (isExisting ? home.homeName : uniqueHomeName(existingHomeNames)));
+  const ecosystem = home?.ecosystem ?? PILOT_ECOSYSTEM;
   // device
   const [selectedQr, setSelectedQr] = useState(null);
   const [serial, setSerial] = useState('');
@@ -96,6 +103,9 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
   const [wifiError, setWifiError] = useState(null);
   // processing
   const [doneTasks, setDoneTasks] = useState(0);
+  const [procError, setProcError] = useState(null); // { task, title, message, ref }
+  const [failedOnce, setFailedOnce] = useState({}); // task -> true (demo: fail-once modes)
+  const [confirmLeave, setConfirmLeave] = useState(false);
   // room & name (after activation)
   // Room and camera name use defaults during first pairing; users change them afterwards.
   const [deviceName, setDeviceName] = useState('');
@@ -110,19 +120,38 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
 
   const ddOption = DD_OPTIONS.find((o) => o.id === method);
   const methodLabel = method === 'ctb' ? 'Charge to Bill' : ddOption ? `Direct Debit · ${ddOption.label}` : '';
-  const tasks = [
-    `Creating ${homeName.trim()} (${ecosystem})`,
-    `Registering ${device?.model ?? 'camera'}`,
-    `Activating ${plan.name} subscription`,
-  ];
+  const priceUp = Boolean(quote) && quote.total > quote.currentTotal;
+  const tasks = isExisting
+    ? [
+      { key: 'device', label: `Registering ${device?.model ?? 'camera'} to ${homeName}` },
+      ...(priceUp ? [{ key: 'subscription', label: `Updating subscription to ${rm(quote.total)}/month` }] : []),
+    ]
+    : [
+      { key: 'home', label: `Creating ${homeName.trim()} (${ecosystem})` },
+      { key: 'device', label: `Registering ${device?.model ?? 'camera'}` },
+      { key: 'subscription', label: `Activating ${plan.name} subscription` },
+    ];
 
   // Processing: tick tasks one by one, then show success.
   useEffect(() => {
     if (view !== 'processing') return;
     if (doneTasks >= tasks.length) { const t = setTimeout(() => { setDeviceName(device.model); setView('success'); }, 500); return () => clearTimeout(t); }
-    const t = setTimeout(() => setDoneTasks((n) => n + 1), 800);
+    const task = tasks[doneTasks].key;
+    const t = setTimeout(() => {
+      if (processingFails({ mode: demo.processing, task, failedBefore: failedOnce[task] })) {
+        setFailedOnce((f) => ({ ...f, [task]: true }));
+        const kind = task === 'subscription' ? (isExisting ? 'subscription_update' : 'subscription_new') : 'device';
+        setProcError({ task, ...PROCESSING_FAILURES[kind], ref: supportRef() });
+        setView('procFail');
+        return;
+      }
+      setDoneTasks((n) => n + 1);
+    }, 800);
     return () => clearTimeout(t);
-  }, [view, doneTasks, tasks.length, device]);
+  }, [view, doneTasks, tasks.map((t) => t.key).join(), device, demo.processing, failedOnce, isExisting]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Leaving mid-flow loses progress, so ask first (except at the very first screen).
+  const requestLeave = () => (view === 'scan' && !selectedQr ? onCancel() : setConfirmLeave(true));
 
   const verifyDevice = (input) => run('Checking device compatibility…', async () => {
     const r = await checkCompatibility({ ...input, override: demo.compat });
@@ -139,7 +168,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
     setBusy('Camera is online. Checking for updates…');
     await wait(1000);
     setBusy(`Checking devices on ${homeName.trim()}…`);
-    setQuote(await quotePrice({ structureDeviceCount: 0 })); // new home: backend returns 0 devices
+    setQuote(await quotePrice({ structureDeviceCount: isExisting ? home.devices.length : 0 })); // new home: 0 devices
     setView('price');
   });
 
@@ -218,7 +247,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
           ))}
         </div>
         <button className="btn subtle" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number instead</button>
-        <Actions onBack={onCancel} backLabel="Cancel">
+        <Actions onBack={requestLeave} backLabel="Cancel">
           <button className="btn primary" disabled={!selectedQr} onClick={() => {
             markTried(`qr:${selectedQr.id}`);
             if (selectedQr.unreadable || demo.scan === 'unreadable') run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
@@ -285,6 +314,35 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
           <button key={a} className={`btn wide ${i === 0 ? 'primary' : 'outline'}`} onClick={act[a][2]}><Icon name={act[a][1]} /> {act[a][0]}</button>
         ))}
         <p className="note"><Icon name="info" /> You haven't been charged. Billing only starts once your camera is online.</p>
+      </div>
+    );
+  } else if (view === 'price' && isExisting) {
+    const start = () => { setDoneTasks(0); setView('processing'); };
+    body = (
+      <div className="auth-card left">
+        <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
+        <h1>Camera is online</h1>
+        <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
+        <div className="summary-box">
+          <div><span>Home</span><b>{homeName}</b></div>
+          <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter}</b></div>
+          <div><span>Included in {plan.name}</span><b>Up to {quote.included}</b></div>
+          {priceUp
+            ? <div className="total"><span>Monthly price</span><b>{rm(quote.currentTotal)} → {rm(quote.total)}</b></div>
+            : <div className="total"><span>Monthly price</span><b>{rm(quote.total)} (no change)</b></div>}
+          <div><span>Billed via</span><b>{home.subscription?.method ?? 'Current method'}</b></div>
+        </div>
+        {priceUp ? (<>
+          <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices. Each extra device is {rm(quote.extraEach)}/month.</p>
+          <label className="consent">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <span>I agree that my <b>{plan.name}</b> subscription for <b>{homeName}</b> increases from <b>{rm(quote.currentTotal)}</b> to <b>{rm(quote.total)}/month</b>, billed via {home.subscription?.method ?? 'my current payment method'}, starting when this device is paired.</span>
+          </label>
+          <Actions onBack={() => setView('wifi')}><button className="btn primary" disabled={!agreed} onClick={start}>Proceed <Icon name="arrow_forward" /></button></Actions>
+        </>) : (<>
+          <p className="note"><Icon name="check" /> This device is included in your current plan.</p>
+          <Actions onBack={() => setView('wifi')}><button className="btn primary" onClick={start}>Add device <Icon name="arrow_forward" /></button></Actions>
+        </>)}
       </div>
     );
   } else if (view === 'price') {
@@ -423,7 +481,19 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         {toPayment
           ? <button className="btn primary wide" onClick={() => { setMethod(null); setView('payment'); }}>Choose another payment method</button>
           : <button className="btn primary wide" onClick={confirmPayment}><Icon name="refresh" /> Try again</button>}
-        <button className="btn outline wide" onClick={onCancel}>Cancel setup</button>
+        <button className="btn outline wide" onClick={requestLeave}>Cancel setup</button>
+      </div>
+    );
+  } else if (view === 'procFail') {
+    body = (
+      <div className="auth-card">
+        <span className="auth-logo err"><Icon name="sync_problem" /></span>
+        <h1>{procError.title}</h1>
+        <p className="muted">{procError.message}</p>
+        <div className="alert ok-alert"><Icon name="verified_user" fill /><span><b>You haven't been charged.</b> {isExisting ? 'Nothing changes on your bill' : 'Billing only starts'} once setup finishes.</span></div>
+        <button className="btn primary wide" onClick={() => setView('processing')}><Icon name="refresh" /> Try again</button>
+        <button className="btn outline wide" onClick={requestLeave}>Cancel setup</button>
+        <p className="fineprint">Need help? Contact support with reference <b>{procError.ref}</b>.</p>
       </div>
     );
   } else if (view === 'processing') {
@@ -432,12 +502,40 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         <h1>Setting things up…</h1>
         <ul className="task-list">
           {tasks.map((t, i) => (
-            <li key={t} className={i < doneTasks ? 'done' : i === doneTasks ? 'active' : ''}>
+            <li key={t.key} className={i < doneTasks ? 'done' : i === doneTasks ? 'active' : ''}>
               {i < doneTasks ? <Icon name="check_circle" fill /> : i === doneTasks ? <span className="mini-spinner" /> : <Icon name="radio_button_unchecked" />}
-              {t}
+              {t.label}
             </li>
           ))}
         </ul>
+      </div>
+    );
+  } else if (isExisting) {
+    body = (
+      <div className="auth-card left">
+        <span className="auth-logo ok"><Icon name="celebration" fill /></span>
+        <h1>Camera added!</h1>
+        <p className="muted"><b>{deviceName}</b> is now in <b>{defaultRoom}</b> in <b>{homeName}</b>.</p>
+        <div className="summary-box">
+          <div className="sb-title"><Icon name="videocam" /> Paired device</div>
+          <div><span>Name</span><b>{deviceName}</b></div>
+          <div><span>Type</span><b>{device.brand === '3P' ? '3P · Google Home enabled' : 'Google Nest'}</b></div>
+          <div><span>Wi-Fi</span><b>{ssid}</b></div>
+          <div><span>Serial number</span><b>{device.serial}</b></div>
+          <div><span>Room</span><b>{defaultRoom}</b></div>
+        </div>
+        <div className="summary-box">
+          <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
+          <div><span>Devices on home</span><b>{quote.devicesAfter} (up to {quote.included} included)</b></div>
+          <div><span>Monthly price</span><b>{priceUp ? `${rm(quote.currentTotal)} → ${rm(quote.total)}` : `${rm(quote.total)} (no change)`}</b></div>
+          <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>
+        </div>
+        <p className="note"><Icon name="edit" /><span>To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
+        <button className="btn primary wide" onClick={() => onDone({
+          room: { name: defaultRoom },
+          device: { type: 'camera', name: deviceName, model: device.model, serial: device.serial, brand: device.brand },
+          price: quote.total,
+        })}>OK</button>
       </div>
     );
   } else {
@@ -488,10 +586,20 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
 
   return (
     <div className="auth pair">
-      {!['processing', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel setup"><Icon name="close" /></button>}
-      <Stepper steps={STEPS} step={STEP_OF[view]} label="Setup progress" />
+      {!['processing', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={requestLeave} aria-label="Cancel setup"><Icon name="close" /></button>}
+      <Stepper steps={isExisting ? STEPS_EXISTING : STEPS} step={(isExisting ? STEP_OF_EXISTING : STEP_OF)[view]} label="Setup progress" />
       {body}
       <DemoPanel />
+      {confirmLeave && (
+        <Modal title="Leave setup?" onClose={() => setConfirmLeave(false)}>
+          <p className="muted leave-text">Your progress will be lost and you'll need to start again from <b>Add device</b>. You haven't been charged.</p>
+          <div className="form-actions">
+            <button className="btn" onClick={() => { setConfirmLeave(false); onCancel(); }}>Leave setup</button>
+            <span className="spacer" />
+            <button className="btn primary" onClick={() => setConfirmLeave(false)}>Stay</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

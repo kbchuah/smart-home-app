@@ -11,6 +11,10 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 | 3 | Rooms synced from the home's ecosystem | For homes powered by Google Home / SmartThings / Apple Home, rooms should come from that system ("Synced from …"), and local room editing turned off. Check each system's developer API for write access. | Idea |
 | 4 | Enable more device types in pairing | Speaker, smart display, light, plug, aircond, lock, doorbell are currently "Coming soon". Only Camera works. | Later |
 | 5 | AI features from the marketing page | AI assistant (plain-language control), suggested routines, smart camera alerts, energy insights. Marketing copy only so far. | Later |
+| 7 | Own-device message | Scanning a camera already in the customer's *own* home should say “This camera is already in My Home” (not “registered to another account”). | Later |
+| 8 | Backend errors before payment | Simulate the compatibility / price-quote services being unreachable, with retry. | Later |
+| 9 | Success follow-ups | “We've sent a confirmation by SMS and email”, plus a place to view / cancel the subscription later. | Later |
+| 10 | Legal links on price agreement | Terms of service and privacy policy links on the agreement checkbox. | Later |
 
 ## Done
 
@@ -28,3 +32,6 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - TAC lock is account-wide (all mobile numbers) for 30 min, persists across restarting the flow and page reloads; shown from the first pairing step; demo “Clear TAC lock”
 - First pairing: room & name step removed — camera goes to “My room”, named after its model; change later via Home settings (⚙) and the camera's Edit (✏️)
 - Payment: Charge to Bill-eligible customers see only Charge to Bill; Direct Debit shown only when Charge to Bill isn't possible (not telco, blocked after TAC, or fails at Confirm)
+- Processing failures after payment/agreement (device registration, subscription activate/update) with “not charged”, retry and support reference
+- Adding devices to an existing home uses the new flow (scan → compatibility → Wi-Fi → price); 5th+ device shows current → new price with agreement
+- “Leave setup?” confirmation when exiting the pairing flow mid-way

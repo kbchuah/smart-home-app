@@ -4,7 +4,7 @@ import Modal from './Modal.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
 import { clearAllTacLocks, useAnyTacLock } from '../tacLock.js';
-import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES } from '../mockBackend.js';
+import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES, PROCESSING_FAILURES } from '../mockBackend.js';
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
 const ELIG_TEXT = { ok: 'passes', spend_limit: 'spend limit reached', inactive: 'account inactive', timeout_once: 'timeout on 1st try, then passes' };
@@ -100,6 +100,17 @@ export default function DemoPanel() {
               {Object.entries(FAILURES).map(([k, f]) => <tr key={k}><td><b>{f.title}</b></td><td>{f.message}</td><td>{BACK_TO[f.backTo]}</td></tr>)}
             </tbody></table>
             <p className="note"><Icon name="info" /> After any billing failure the user never repeats TAC or the device scan.</p>
+            <h4>Processing failures (after payment / agreement)</h4>
+            <table className="fail-table"><thead><tr><th>Failure</th><th>Message</th><th>Options</th></tr></thead><tbody>
+              {Object.entries(PROCESSING_FAILURES).map(([k, f]) => <tr key={k}><td><b>{f.title}</b></td><td>{f.message} You haven't been charged.</td><td>Try again (resumes from the failed step) · Cancel setup · support reference shown</td></tr>)}
+            </tbody></table>
+            <p className="note"><Icon name="info" /> Force these with “Processing” in Simulate. Leaving setup (✕ or Cancel) always asks for confirmation first.</p>
+            <h4>Adding devices to an existing home</h4>
+            <table><tbody>
+              <tr><td>Up to 4 devices</td><td>“Included in your plan”, no agreement needed</td></tr>
+              <tr><td>5th device onwards</td><td>Shows current → new price (+MYR 15 each); agreement checkbox required</td></tr>
+              <tr><td>No TAC / payment step</td><td>The home's existing billing method is used</td></tr>
+            </tbody></table>
           </div>
         )}
       </Modal>
