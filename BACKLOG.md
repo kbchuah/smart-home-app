@@ -16,6 +16,10 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 | 8 | Success follow-ups | “We've sent a confirmation by SMS and email”, plus a place to view / cancel the subscription later. | Later |
 | 9 | Legal links on price agreement | Terms of service and privacy policy links on the agreement checkbox. | Later |
 
+## Decisions
+
+- **No pro-rating, in any scenario** (first bill, mid-cycle increases, unpairing). Our commercial terms with Google don't include pro-rating: Google charges us the full monthly amount for a device even if it's paired for only one day of the month (e.g. at month end). We charge customers the same way, full monthly amounts only. Pro-rating was built and then reverted.
+
 ## Done
 
 - Marketing page with single Premium Home plan (MYR 60/month), consent + Malaysia-only checkboxes

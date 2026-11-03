@@ -64,6 +64,9 @@ export async function connectWifi({ ssid, password, override = 'auto' }) {
 
 // ---- Pricing business rule ----
 // Base price covers up to PLAN.devices devices per home; each extra device adds EXTRA_DEVICE_PRICE.
+// No pro-rating anywhere (first bill, mid-cycle additions, unpairing): our commercial terms with Google
+// don't include it. Google charges us the full monthly amount even for a device paired for 1 day of the
+// month, so customers are charged full monthly amounts too. Increases apply in full; drops wait for renewal.
 export const EXTRA_DEVICE_PRICE = PLAN.extraDevicePrice;
 // Current monthly charge for a home with `count` devices (same rule as quotePrice).
 export function monthlyPrice(count) {
