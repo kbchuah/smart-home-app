@@ -19,6 +19,7 @@ const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Done'];
 const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3, tacLocked: 3,
   payment: 4, confirm: 4, eligFail: 4, processing: 4, success: 5 };
 const DEFAULT_ROOM = 'My room';
+const DEMO_WIFI_PW = 'homewifi123'; // demo: pre-filled valid Wi-Fi password
 
 const digits = (v) => v.replace(/\D/g, '');
 const fmtPhone = (n) => (n.length > 3 ? `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n).trim();
@@ -242,7 +243,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         <p className="muted">Your <b>{device.model}</b> needs Wi-Fi to work. Choose your home network.</p>
         <div className="options">
           {WIFI_NETWORKS.map((n) => (
-            <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''}`} onClick={() => setSsid(n.ssid)}>
+            <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''}`} onClick={() => { setSsid(n.ssid); setWifiPw(DEMO_WIFI_PW); }}>
               <Icon name={n.icon} />
               <span className="option-body"><b>{n.ssid}</b><small>Demo: {n.hint}</small></span>
               <Icon name="lock" className="muted" />
@@ -252,13 +253,13 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         {ssid && (
           <label className="field"><span>Password for {ssid}</span>
             <input type="password" autoFocus value={wifiPw} onChange={(e) => setWifiPw(e.target.value)} />
-            <small className="field-hint"><Icon name="science" /> Demo: 8+ characters connects; shorter is a wrong password. Not saved.</small></label>
+            <small className="field-hint"><Icon name="science" /> Demo: password pre-filled. 8+ characters connects; shorter is a wrong password. Not saved.</small></label>
         )}
         <Actions onBack={() => setView('scan')}><button className="btn primary" disabled={!ssid || !wifiPw}>Connect</button></Actions>
       </form>
     );
   } else if (view === 'wifiFail') {
-    const act = { password: ['Re-enter password', 'key', () => { setWifiPw(''); setView('wifi'); }],
+    const act = { password: ['Re-enter password', 'key', () => { setWifiPw(DEMO_WIFI_PW); setView('wifi'); }],
       network: ['Choose another network', 'wifi_find', () => { setSsid(null); setWifiPw(''); setView('wifi'); }],
       retry: ['Try again', 'refresh', joinWifi] };
     body = (
