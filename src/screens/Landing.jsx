@@ -2,12 +2,13 @@ import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
 import { confirmResetAll } from '../resetAll.js';
+import TierCompare from '../components/TierCompare.jsx';
 
 const FEATURES = [
-  ['auto_awesome', 'Just ask', 'Say “dim the living room and lock the front door” and your AI assistant does it.'],
-  ['psychology', 'Learns your routine', 'AI notices your daily patterns and suggests routines, like lights on at sunset.'],
-  ['notifications_active', 'Smarter alerts', 'Cameras tell a person from a pet or a package, so you only get alerts that matter.'],
-  ['bolt', 'Save energy', 'See which devices use the most power and get tips to cut your bill.'],
+  ['history', '30 days of video history', 'See what happened while you were out. Event clips up to 5 minutes, kept for 30 days.'],
+  ['face', "Know who's at the door", 'Familiar face detection tells you who is there. Garage door alerts too.'],
+  ['detector_smoke', 'Hear what matters', 'Get alerted when a smoke or CO alarm goes off, or glass breaks.'],
+  ['auto_awesome', 'Gemini for your home', 'Talk naturally with Gemini Live, get a Daily Home Brief, and create automations just by describing them.'],
 ];
 
 export default function Landing({ plan, onProceed }) {
@@ -25,7 +26,7 @@ export default function Landing({ plan, onProceed }) {
         <span className="hero-badge"><Icon name="auto_awesome" fill /> Premium Home · with AI</span>
         <span className="region-note">🇲🇾 Available in Malaysia only</span>
         <h1>A home that <span>thinks ahead.</span></h1>
-        <p>Premium Home brings all your smart devices into one app, with built-in AI that understands what you ask, learns your routines and keeps an eye on things while you're away.</p>
+        <p>Premium Home brings all your smart devices into one app, with 30-day video history, smarter camera and sound alerts, and Gemini built in.</p>
       </section>
 
       <section className="features">
@@ -46,6 +47,10 @@ export default function Landing({ plan, onProceed }) {
           <span className="plan-extra"><Icon name="add_circle" /><span>{plan.devices} devices included · <b>+MYR {plan.extraDevicePrice}/month</b> for each additional device</span></span>
           <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
         </div>
+      </section>
+
+      <section className="compare-section">
+        <TierCompare note="Free features are always included. Premium is billed per home." />
       </section>
 
       <section className="consent-box">

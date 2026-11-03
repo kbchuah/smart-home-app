@@ -14,7 +14,7 @@ export default function PremiumFeatures({ premium, onUpgrade, onTry }) {
           <button key={f.id} className={`pf ${premium ? '' : 'locked'}`} onClick={() => (premium ? onTry(f) : onUpgrade())}
             aria-label={premium ? f.name : `${f.name} (needs Premium)`}>
             <span className="pf-icon"><Icon name={premium ? f.icon : 'lock'} fill={premium} /></span>
-            <span className="pf-body"><b>{f.name}</b><small>{premium ? f.desc : 'Needs Premium'}</small></span>
+            <span className="pf-body"><b>{f.name}</b><small>{premium ? f.desc : `Free: ${f.freeDesc}`}</small></span>
           </button>
         ))}
       </div>

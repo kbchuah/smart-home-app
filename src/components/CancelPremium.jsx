@@ -2,7 +2,8 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { rm } from './PriceCards.jsx';
-import { PLAN, PREMIUM_FEATURES, FREE_KEEPS } from '../plans.js';
+import { PLAN, FREE_KEEPS } from '../plans.js';
+import TierCompare from './TierCompare.jsx';
 import { cancelPremium, fmtDate } from '../mockBackend.js';
 
 // Cancel Premium for one home: show what changes, confirm, then Premium runs until the period ends.
@@ -19,10 +20,7 @@ export default function CancelPremium({ home, price, endsOn, onClose, onCancelle
           <div className="alert warn"><Icon name="event" fill /><span>
             <b>Premium stays active until {fmtDate(endsOn)}.</b> After that, {home.homeName} moves to the free plan and the {rm(price)}/month charge stops.
           </span></div>
-          <div className="field-label">You'll lose</div>
-          <ul className="lose-list">
-            {PREMIUM_FEATURES.map((f) => <li key={f.id}><Icon name={f.icon} /><span><b>{f.name}</b><small>{f.desc}</small></span><Icon name="remove_circle" fill className="x" /></li>)}
-          </ul>
+          <TierCompare title="What changes" note="On the free plan you get the Free column only." />
           <div className="field-label">You'll keep</div>
           <ul className="keep-list">{FREE_KEEPS.map((k) => <li key={k}><Icon name="check" /> {k}</li>)}</ul>
           <p className="note"><Icon name="info" /><span>You can undo this until {fmtDate(endsOn)}, or upgrade again any time after.</span></p>
