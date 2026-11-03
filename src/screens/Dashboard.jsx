@@ -7,6 +7,7 @@ import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
 import FirstPairing from './FirstPairing.jsx';
 import SubscriptionCard from '../components/SubscriptionCard.jsx';
+import WifiChange from '../components/WifiChange.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -23,6 +24,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
   const [openId, setOpenId] = useState(null);
   const [form, setForm] = useState(null); // { device } | null — edit an existing device
   const [pairing, setPairing] = useState(null); // { roomId? } | null — pair a new device
+  const [wifiFor, setWifiFor] = useState(null); // device id whose Wi-Fi is being changed
   const [showRooms, setShowRooms] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -61,6 +63,10 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
 
   const visibleRooms = filter === 'all' ? rooms : rooms.filter((r) => r.id === filter);
   const openDevice = devices.find((d) => d.id === openId);
+  // Wi-Fi per device: devices without a saved network are assumed to be on the home's network.
+  const homeWifi = state.wifi ?? null;
+  const wifiOf = (d) => d.wifi ?? homeWifi;
+  const offNetwork = homeWifi ? devices.filter((d) => wifiOf(d) && wifiOf(d) !== homeWifi) : [];
 
   const runRoutine = (r) => {
     dispatch({ type: 'runRoutine', id: r.id });
@@ -146,6 +152,13 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         ))}
       </nav>
 
+      {offNetwork.length > 0 && (
+        <div className="alert warn wifi-banner"><Icon name="wifi_off" />
+          <span><b>{offNetwork.length} device{offNetwork.length === 1 ? ' is' : 's are'} on a different Wi-Fi network.</b>{' '}
+            Your home network is {homeWifi}. Open {offNetwork.length === 1 ? 'it' : 'each one'} to change its Wi-Fi: {offNetwork.map((d) => d.name).join(', ')}.</span>
+        </div>
+      )}
+
       {visibleRooms.map((room) => {
         const list = devices.filter((d) => d.roomId === room.id);
         const anyOn = list.some((d) => d.on && d.type !== 'lock' && d.type !== 'camera');
@@ -161,7 +174,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
             </div>
             {list.length ? (
               <div className="grid">
-                {list.map((d) => <DeviceTile key={d.id} device={d} onToggle={toggle} onOpen={setOpenId} />)}
+                {list.map((d) => <DeviceTile key={d.id} device={d} onToggle={toggle} onOpen={setOpenId} wifiMismatch={offNetwork.includes(d)} />)}
               </div>
             ) : (
               <button className="empty" onClick={() => setPairing({ roomId: room.id })}>
@@ -190,9 +203,27 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           <p className="sheet-sub">
             {DEVICE_TYPES[openDevice.type].label} · {rooms.find((r) => r.id === openDevice.roomId)?.name}
           </p>
+          {wifiOf(openDevice) && (
+            <div className={`wifi-row ${offNetwork.includes(openDevice) ? 'warn' : ''}`}>
+              <Icon name={offNetwork.includes(openDevice) ? 'wifi_off' : 'wifi'} />
+              <span className="wifi-row-body"><small>Wi-Fi</small><b>{wifiOf(openDevice)}</b>
+                {offNetwork.includes(openDevice)
+                  ? <small>Different from your home network ({homeWifi}). Service might be impacted.</small>
+                  : homeWifi === wifiOf(openDevice) && <small>Home network</small>}</span>
+              <button className="btn subtle" onClick={() => setWifiFor(openDevice.id)}>Change Wi-Fi</button>
+            </div>
+          )}
           <DeviceControls device={openDevice} update={update} />
         </Modal>
       )}
+
+      {wifiFor && (() => {
+        const d = devices.find((x) => x.id === wifiFor);
+        return (
+          <WifiChange device={d} current={wifiOf(d)} homeWifi={homeWifi} onClose={() => setWifiFor(null)}
+            onChanged={(ssid) => { update(d.id, { wifi: ssid }); setWifiFor(null); setToast(`${d.name} moved to ${ssid}`); }} />
+        );
+      })()}
 
       {form && (
         <DeviceForm

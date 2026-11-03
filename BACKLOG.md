@@ -40,3 +40,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Session kept across refresh (straight into the home, or homes list); cleared by Log out and Reset all demo data
 - Subscription card inside each home (plan, monthly charge from device count, included-device meter, payment method; tap for breakdown) and monthly price on the homes list
 - Add device on existing home: home Wi-Fi hint and pre-selection; warning (not a block) when a different network is chosen, repeated on success
+- Device Wi-Fi visibility: per-device network in device details, 'Different Wi-Fi' tile label and home banner, Change Wi-Fi (mock reconnect with failures)
