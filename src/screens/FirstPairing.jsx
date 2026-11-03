@@ -38,13 +38,22 @@ function Actions({ onBack, backLabel = 'Back', children }) {
   );
 }
 
-export default function FirstPairing({ plan, onCancel, onDone }) {
+// "My Home", or "My Home 2", "My Home 3"… if the user already has a home with that name.
+export function uniqueHomeName(taken, base = PILOT_HOME_NAME) {
+  const names = new Set(taken.map((n) => n.trim().toLowerCase()));
+  if (!names.has(base.toLowerCase())) return base;
+  let i = 2;
+  while (names.has(`${base} ${i}`.toLowerCase())) i += 1;
+  return `${base} ${i}`;
+}
+
+export default function FirstPairing({ plan, existingHomeNames = [], onCancel, onDone }) {
   const demo = useDemo();
   const [view, setView] = useState('scan');
   const [busy, setBusy] = useState(null);
 
   // home
-  const homeName = PILOT_HOME_NAME;
+  const [homeName] = useState(() => uniqueHomeName(existingHomeNames));
   const ecosystem = PILOT_ECOSYSTEM;
   // device
   const [selectedQr, setSelectedQr] = useState(null);
