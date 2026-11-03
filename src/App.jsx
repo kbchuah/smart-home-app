@@ -5,7 +5,8 @@ import GoogleFlow from './screens/GoogleFlow.jsx';
 import Homes from './screens/Homes.jsx';
 import Dashboard from './screens/Dashboard.jsx';
 import PairDevice from './screens/PairDevice.jsx';
-import { createHome } from './store.js';
+import Subscribe from './screens/Subscribe.jsx';
+import { createHome, loadHome } from './store.js';
 import { DEVICE_TYPES, GENERIC_ROUTINES, uid } from './data.js';
 import { PLAN as plan } from './plans.js';
 
@@ -34,6 +35,9 @@ export default function App() {
     setStructureId(id);
     setScreen('dashboard');
   };
+  // First pairing needs an active subscription (TAC check → Charge to Bill / Direct Debit → agree).
+  const pairedCount = () => (user?.structures ?? []).reduce((n, id) => n + loadHome(id).devices.length, 0);
+  const subscribed = (subscription) => setUser((u) => ({ ...u, subscription }));
   const logout = () => { setUser(null); setScreen('landing'); };
 
   switch (screen) {
@@ -47,11 +51,15 @@ export default function App() {
     case 'login':
       return <GoogleFlow mode={screen} plan={plan} onCancel={() => setScreen('auth')} onDone={signedIn} />;
     case 'homes':
-      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddDevice={() => setScreen('pair')} />;
+      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddDevice={() => setScreen(user.subscription ? 'pair' : 'subscribe')} />;
+    case 'subscribe':
+      return <Subscribe plan={plan} pairedCount={pairedCount()} onCancel={() => setScreen('homes')}
+        onDone={(sub) => { subscribed(sub); setScreen('pair'); }} />;
     case 'pair':
       return <PairDevice onCancel={() => setScreen('homes')} onDone={firstDevicePaired} />;
     case 'dashboard':
-      return <Dashboard key={structureId} structureId={structureId} user={user} onBack={() => setScreen('homes')} />;
+      return <Dashboard key={structureId} structureId={structureId} user={user} plan={plan}
+        pairedCount={pairedCount} onSubscribed={subscribed} onBack={() => setScreen('homes')} />;
     default:
       return null;
   }

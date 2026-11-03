@@ -14,7 +14,7 @@ export const PLAN = {
 
 // Mock accounts for the simulated Google sign-in.
 export const DEMO_USERS = {
-  existing: { name: 'KB', email: 'kb.demo@gmail.com', initials: 'K', structures: ['kb'] },
-  future: { name: 'Future', email: 'future@example.com', initials: 'F', structures: ['future_kl', 'future_penang', 'future_office'] },
+  existing: { name: 'KB', email: 'kb.demo@gmail.com', initials: 'K', structures: ['kb'], subscription: { method: 'Charge to Bill' } },
+  future: { name: 'Future', email: 'future@example.com', initials: 'F', structures: ['future_kl', 'future_penang', 'future_office'], subscription: { method: 'Direct Debit' } },
   fresh: { name: 'New User', email: 'new.user.demo@gmail.com', initials: 'N', structures: [] },
 };

@@ -6,6 +6,7 @@ import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
 import PairDevice from './PairDevice.jsx';
+import Subscribe from './Subscribe.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -15,7 +16,7 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
 
-export default function Dashboard({ structureId, user, onBack }) {
+export default function Dashboard({ structureId, user, plan, pairedCount, onSubscribed, onBack }) {
   const [state, dispatch] = useHome(structureId);
   const { rooms, devices, routines } = state;
   const [filter, setFilter] = useState('all');
@@ -66,6 +67,9 @@ export default function Dashboard({ structureId, user, onBack }) {
     setToast(`“${r.name}” routine ran`);
   };
 
+  if (pairing && !user?.subscription) {
+    return <Subscribe plan={plan} pairedCount={pairedCount()} onCancel={() => setPairing(null)} onDone={onSubscribed} />;
+  }
   if (pairing) {
     return (
       <PairDevice home={state} presetRoomId={pairing.roomId} onCancel={() => setPairing(null)}
