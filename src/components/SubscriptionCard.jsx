@@ -2,13 +2,13 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { rm } from './PriceCards.jsx';
-import { monthlyPrice, subStatus, renewsOn, fmtDate } from '../mockBackend.js';
+import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice } from '../mockBackend.js';
 import { PLAN } from '../plans.js';
 
 const fmtPhone = (n) => (n && n.length > 3 ? `+60 ${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n);
 
 // Current subscription for one home, shown inside the home. Handles active, cancelling and free.
-export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, onEndPeriod }) {
+export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, onEndPeriod, onRenew }) {
   const [open, setOpen] = useState(false);
   const sub = home.subscription;
   if (!sub) return null;
@@ -18,6 +18,9 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
   const used = Math.min(count, price.included);
   const over = count > price.included;
   const endsOn = renewsOn(sub);
+  const billed = status === 'free' ? 0 : billedPrice(home);
+  const next = nextPrice(home);
+  const pendingDrop = status === 'active' && next < billed; // lower price from the next renewal
   const detail = sub.method === 'Charge to Bill' ? (sub.billingAccount ?? sub.detail) : (sub.detail ?? sub.bank);
   const close = () => setOpen(false);
 
@@ -38,7 +41,8 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
     <button className={`sub-card ${status === 'cancelling' ? 'ending' : ''}`} onClick={() => setOpen(true)} aria-label="Subscription details">
       <span className="sub-icon"><Icon name="workspace_premium" fill /></span>
       <span className="sub-body">
-        <span className="sub-top"><b>{PLAN.name}{status === 'cancelling' && ` · ends ${fmtDate(endsOn)}`}</b><span className="sub-price">{rm(price.total)}<small>/month</small></span></span>
+        <span className="sub-top"><b>{PLAN.name}{status === 'cancelling' && ` · ends ${fmtDate(endsOn)}`}</b><span className="sub-price">{rm(billed)}<small>/month</small></span></span>
+        {pendingDrop && <span className="sub-next"><Icon name="trending_down" /> {rm(next)} from {fmtDate(endsOn)}</span>}
         <span className="sub-meter" aria-hidden>
           {Array.from({ length: price.included }, (_, i) => <i key={i} className={i < used ? 'on' : ''} />)}
           {over && <em>+{price.extraDevices}</em>}
@@ -58,20 +62,23 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
           <div><span>Status</span>{status === 'cancelling' ? <b className="warn-text">Ends {fmtDate(endsOn)}</b> : <b className="ok-text">Active</b>}</div>
           <div><span>{status === 'cancelling' ? 'Ends on' : 'Renews on'}</span><b>{fmtDate(endsOn)}</b></div>
           <div><span>Devices on home</span><b>{count}</b></div>
-          <div><span>{PLAN.name} (up to {price.included} devices)</span><b>{rm(price.base)}</b></div>
-          {over && <div><span>{price.extraDevices} extra × {rm(price.extraEach)}</span><b>{rm(price.extraDevices * price.extraEach)}</b></div>}
-          <div className="total"><span>Monthly charge</span><b>{rm(price.total)}</b></div>
+          {!pendingDrop && <div><span>{PLAN.name} (up to {price.included} devices)</span><b>{rm(price.base)}</b></div>}
+          {!pendingDrop && over && <div><span>{price.extraDevices} extra × {rm(price.extraEach)}</span><b>{rm(price.extraDevices * price.extraEach)}</b></div>}
+          <div className="total"><span>{pendingDrop ? 'Charged now' : 'Monthly charge'}</span><b>{rm(billed)}</b></div>
+          {pendingDrop && <div className="next-row"><span>From {fmtDate(endsOn)}</span><b>{rm(next)}</b></div>}
         </div>
+        {pendingDrop && <p className="note"><Icon name="trending_down" /><span>You unpaired devices, so your price drops to {rm(next)} at your next renewal. You keep paying {rm(billed)} until then.</span></p>}
         <div className="summary-box">
           <div><span>Payment method</span><b>{sub.method}</b></div>
           {detail && <div><span>{sub.method === 'Charge to Bill' ? 'Billing account' : 'Paid from'}</span><b>{detail}</b></div>}
           {sub.phone && <div><span>Verified mobile</span><b>{fmtPhone(sub.phone)}</b></div>}
         </div>
-        {status === 'active' ? (
+        {status === 'active' ? (<>
           <div className="form-actions sub-actions">
-            <button className="btn danger" onClick={() => { close(); onCancel(price.total, endsOn); }}>Cancel Premium</button>
+            <button className="btn danger" onClick={() => { close(); onCancel(billed, endsOn); }}>Cancel Premium</button>
           </div>
-        ) : (<>
+          {pendingDrop && <button className="btn subtle demo-skip" onClick={() => { close(); onRenew(next); }}><Icon name="science" /> Demo: skip to renewal date</button>}
+        </>) : (<>
           <div className="form-actions sub-actions">
             <button className="btn primary" onClick={() => { close(); onUndo(); }}><Icon name="undo" /> Undo cancellation</button>
           </div>

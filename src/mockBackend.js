@@ -190,3 +190,13 @@ export const oneMonthFromNow = () => { const d = new Date(); d.setMonth(d.getMon
 export const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 export async function cancelPremium() { await wait(1400); return { ok: true }; }
 export async function resumePremium() { await wait(1000); return { ok: true }; }
+
+// ---- Billed vs next price (unpairing lowers the price from the next renewal, not immediately) ----
+// Premium always costs at least the base price, even with fewer devices.
+export const premiumPrice = (count) => PLAN.price + Math.max(0, count - PLAN.devices) * EXTRA_DEVICE_PRICE;
+// What the home is charged now: the saved price, else the rule for its devices.
+export const billedPrice = (home) => home.subscription?.price ?? premiumPrice(home.devices.length);
+// What it will be charged from the next renewal, based on its current devices.
+export const nextPrice = (home) => premiumPrice(home.devices.length);
+export async function unpairDevice() { await wait(1300); return { ok: true }; }
+export const addMonth = (d) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString(); };

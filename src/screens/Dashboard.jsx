@@ -10,7 +10,8 @@ import SubscriptionCard from '../components/SubscriptionCard.jsx';
 import WifiChange from '../components/WifiChange.jsx';
 import CancelPremium from '../components/CancelPremium.jsx';
 import PremiumFeatures from '../components/PremiumFeatures.jsx';
-import { isPremium, resumePremium } from '../mockBackend.js';
+import { isPremium, resumePremium, billedPrice, addMonth, renewsOn } from '../mockBackend.js';
+import UnpairDevice from '../components/UnpairDevice.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -30,6 +31,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
   const [wifiFor, setWifiFor] = useState(null); // device id whose Wi-Fi is being changed
   const [cancelling, setCancelling] = useState(null); // { price, endsOn } while the cancel dialog is open
   const [upgrading, setUpgrading] = useState(false); // free home re-subscribing
+  const [unpairId, setUnpairId] = useState(null); // device being unpaired
   const [showRooms, setShowRooms] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -97,8 +99,9 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           dispatch({ type: 'addDevice', device: { ...device, roomId } });
           // Homes created before Wi-Fi was saved learn it from their next device.
           if (!state.wifi && device.wifi) dispatch({ type: 'setWifi', wifi: device.wifi });
-          if (isPremium(state.subscription) && price !== state.subscription.price) {
-            dispatch({ type: 'setSubscription', subscription: { ...state.subscription, price } });
+          // Adding raises the price immediately; it never lowers it (drops wait for renewal).
+          if (isPremium(state.subscription) && price > billedPrice(state)) {
+            dispatch({ type: 'patchSubscription', patch: { price } });
           }
           setPairing(null);
           setFilter('all');
@@ -127,6 +130,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         onCancel={(price, endsOn) => setCancelling({ price, endsOn })}
         onUndo={async () => { await resumePremium(); dispatch({ type: 'patchSubscription', patch: { status: 'active' } }); setToast('Cancellation undone. Premium continues.'); }}
         onUpgrade={() => setUpgrading(true)}
+        onRenew={(next) => { dispatch({ type: 'patchSubscription', patch: { price: next, renewsOn: addMonth(renewsOn(state.subscription)) } }); setToast(`Renewed: now ${'MYR'} ${next.toFixed(2)}/month`); }}
         onEndPeriod={() => { dispatch({ type: 'patchSubscription', patch: { status: 'free' } }); setToast(`${state.homeName} is now on the free plan`); }} />
       {cancelling && (
         <CancelPremium home={state} price={cancelling.price} endsOn={cancelling.endsOn} onClose={() => setCancelling(null)}
@@ -240,8 +244,22 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
             </div>
           )}
           <DeviceControls device={openDevice} update={update} />
+          <button className="btn subtle unpair-btn" onClick={() => { setUnpairId(openDevice.id); setOpenId(null); }}><Icon name="link_off" /> Unpair device</button>
         </Modal>
       )}
+
+      {unpairId && (() => {
+        const d = devices.find((x) => x.id === unpairId);
+        if (!d) return null;
+        return (
+          <UnpairDevice home={state} device={d} onClose={() => setUnpairId(null)}
+            onUnpaired={() => {
+              // Keep the billed price until renewal: save it now if it was only derived from the device count.
+              if (isPremium(state.subscription) && state.subscription.price == null) dispatch({ type: 'patchSubscription', patch: { price: billedPrice(state) } });
+              dispatch({ type: 'removeDevice', id: d.id }); setUnpairId(null); setToast(`${d.name} unpaired`);
+            }} />
+        );
+      })()}
 
       {wifiFor && (() => {
         const d = devices.find((x) => x.id === wifiFor);
@@ -257,7 +275,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           rooms={rooms}
           defaultRoom={form.roomId}
           onClose={() => setForm(null)}
-          onDelete={() => { dispatch({ type: 'removeDevice', id: form.device.id }); setForm(null); setToast('Device removed'); }}
+          onDelete={() => { setUnpairId(form.device.id); setForm(null); }}
           onSave={(data) => {
             if (form.device) dispatch({ type: 'update', id: form.device.id, patch: data });
             else dispatch({ type: 'addDevice', device: data });

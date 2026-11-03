@@ -41,7 +41,7 @@ export default function DeviceForm({ device, rooms, defaultRoom, onSave, onDelet
           </select>
         </label>
         <div className="form-actions">
-          {editing && <button type="button" className="btn danger" onClick={onDelete}><Icon name="delete" /> Remove</button>}
+          {editing && <button type="button" className="btn danger" onClick={onDelete}><Icon name="link_off" /> Unpair</button>}
           <span className="spacer" />
           <button type="button" className="btn" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn primary" disabled={!name.trim() || !roomId}>{editing ? 'Save' : 'Add'}</button>

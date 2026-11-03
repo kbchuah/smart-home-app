@@ -42,3 +42,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Add device on existing home: home Wi-Fi hint and pre-selection; warning (not a block) when a different network is chosen, repeated on success
 - Device Wi-Fi visibility: per-device network in device details, 'Different Wi-Fi' tile label and home banner, Change Wi-Fi (mock reconnect with failures)
 - Cancel Premium per home (what you lose / keep, ends at billing period, undo), free tier (Premium features locked, devices kept, add devices free), upgrade back via TAC + payment
+- Unpair device with fee impact (drop applies from next renewal, current price kept until then; no change within 4 included, free/ending homes, last-device note); demo skip to renewal

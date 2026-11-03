@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { loadHome } from '../store.js';
-import { monthlyPrice, subStatus } from '../mockBackend.js';
+import { billedPrice, subStatus } from '../mockBackend.js';
 
 export default function Homes({ user, onOpen, onLogout, onAddHome }) {
   const [toast, setToast] = useState(null);
   const structures = (user?.structures ?? []).map((id) => {
     const h = loadHome(id);
-    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? monthlyPrice(h.devices.length).total : null, status: subStatus(h.subscription) };
+    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? billedPrice(h) : null, status: subStatus(h.subscription) };
   });
 
   useEffect(() => {

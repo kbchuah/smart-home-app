@@ -30,7 +30,7 @@ export function PriceSame({ price, used, included, done = false }) {
         <span className="pc-delta">Included</span>
       </div>
       <div className="pc-prices"><span className="pc-new"><b>{rm(price)}</b><small>/month</small></span></div>
-      <small className="pc-sub">{used} of {included} devices included in your plan</small>
+      <small className="pc-sub">{used > included ? `${used} devices · covered by your current price` : `${used} of ${included} devices included in your plan`}</small>
     </div>
   );
 }

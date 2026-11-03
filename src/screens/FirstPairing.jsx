@@ -8,7 +8,7 @@ import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
-  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, oneMonthFromNow,
+  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, oneMonthFromNow, billedPrice,
 } from '../mockBackend.js';
 
 // Device pairing, all mocked. Two modes:
@@ -191,7 +191,8 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     await wait(1000);
     setBusy(`Checking devices on ${homeName.trim()}…`);
     const q = await quotePrice({ structureDeviceCount: isExisting ? home.devices.length : 0 }); // new home: 0 devices
-    setQuote(isFreeHome ? { ...q, total: 0, currentTotal: 0 } : q); // free plan: adding devices costs nothing
+    // Free plan: adding costs nothing. Premium: compare with what's billed now (a pending drop may already cover it).
+    setQuote(isFreeHome ? { ...q, total: 0, currentTotal: 0 } : isExisting ? { ...q, currentTotal: billedPrice(home), total: Math.max(q.total, billedPrice(home)) } : q);
     setView(isExisting ? 'room' : 'price');
   });
 
