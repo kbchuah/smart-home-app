@@ -12,7 +12,12 @@ export default function App() {
   const [user, setUser] = useState(null); // demo: always starts logged out
   const [structureId, setStructureId] = useState(null);
 
-  const signedIn = (u) => { setUser(u); setScreen('homes'); };
+  const signedIn = (u) => {
+    setUser(u);
+    // Only one home? Skip the list and go straight into it.
+    if (u.structures?.length === 1) { setStructureId(u.structures[0]); setScreen('dashboard'); }
+    else setScreen('homes');
+  };
   const logout = () => { setUser(null); setScreen('landing'); };
 
   switch (screen) {
