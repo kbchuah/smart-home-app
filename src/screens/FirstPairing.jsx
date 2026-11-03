@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Stepper from '../components/Stepper.jsx';
+import DemoPanel from '../components/DemoPanel.jsx';
+import { useDemo } from '../demoStore.js';
 import { ECOSYSTEMS } from './PairDevice.jsx';
 import {
   QR_CODES, DD_OPTIONS, checkCompatibility, quotePrice, lookupCustomer, checkEligibility, wait,
@@ -34,6 +36,7 @@ function Actions({ onBack, backLabel = 'Back', children }) {
 }
 
 export default function FirstPairing({ plan, onCancel, onDone }) {
+  const demo = useDemo();
   const [view, setView] = useState('home');
   const [busy, setBusy] = useState(null);
 
@@ -87,7 +90,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
   }, [view, doneTasks, tasks.length]);
 
   const verifyDevice = (input) => run('Checking device compatibility…', async () => {
-    const r = await checkCompatibility(input);
+    const r = await checkCompatibility({ ...input, override: demo.compat });
     if (!r.ok) { setCompatError(r.reason); setView('compatFail'); return; }
     setDevice(r.device);
     setBusy(`Checking devices on ${homeName.trim()}…`);
@@ -98,7 +101,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
   const confirmPayment = () => run('Checking billing eligibility…', async () => {
     const n = attempts + 1;
     setAttempts(n);
-    const eligibility = method === 'ctb' ? customer.eligibility : ddOption.eligibility;
+    const eligibility = demo.eligibility !== 'auto' ? demo.eligibility : method === 'ctb' ? customer.eligibility : ddOption.eligibility;
     const r = await checkEligibility({ eligibility, attempt: n });
     if (r.ok) { setDoneTasks(0); setView('processing'); return; }
     if (r.backTo === 'payment') { setBlocked((b) => ({ ...b, [method]: r.title })); }
@@ -149,7 +152,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
         <button className="btn subtle" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number instead</button>
         <Actions onBack={() => setView('home')}>
           <button className="btn primary" disabled={!selectedQr} onClick={() => {
-            if (selectedQr.unreadable) run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
+            if (selectedQr.unreadable || demo.scan === 'unreadable') run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
             else run('Reading QR code…', async () => { await wait(800); await verifyDevice({ qr: selectedQr }); });
           }}><Icon name="qr_code_scanner" /> Scan</button>
         </Actions>
@@ -355,6 +358,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
       {!['processing', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel setup"><Icon name="close" /></button>}
       <Stepper steps={STEPS} step={STEP_OF[view]} label="Setup progress" />
       {body}
+      <DemoPanel />
     </div>
   );
 }

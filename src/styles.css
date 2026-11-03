@@ -367,3 +367,20 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .summary-box div > b { flex: 0 1 auto; text-align: right; }
 .summary-box .total b, .summary-box div > b:only-of-type { white-space: nowrap; }
 .summary-box div.sb-title { gap: 6px; }
+
+/* ---------- Demo simulator ---------- */
+.demo-fab { position: fixed; right: 16px; bottom: 16px; z-index: 15; display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px;
+  background: #3c4043; color: #fff; font-weight: 500; font-size: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.demo-fab .msr { font-size: 18px; color: #fdd663; }
+.demo-badge { background: #fdd663; color: #202124; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 1px 7px; }
+.demo-tabs { margin: 12px 0 16px; }
+.demo-sim { display: flex; flex-direction: column; gap: 14px; }
+.demo-sim > .muted { margin: 0; font-size: 14px; line-height: 1.45; }
+.demo-guide h4 { margin: 18px 0 8px; font-size: 14px; font-weight: 500; }
+.demo-guide h4:first-child { margin-top: 0; }
+.demo-guide table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.demo-guide td, .demo-guide th { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.4; }
+.demo-guide th { color: var(--muted); font-weight: 500; }
+.demo-guide td:first-child { white-space: nowrap; }
+.fail-table td:first-child { white-space: normal !important; min-width: 90px; }
+.pair { padding-bottom: 80px; }

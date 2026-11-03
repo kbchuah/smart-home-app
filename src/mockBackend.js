@@ -16,8 +16,17 @@ export const QR_CODES = [
 ];
 
 // Serial numbers accepted in "Key in serial number". Anything else is unknown.
-export async function checkCompatibility({ serial, qr }) {
+const COMPAT_REASONS = {
+  incompatible: "This camera isn't compatible with Google Home Premium.",
+  registered: 'This camera is already registered to another account. Ask the owner to remove it first.',
+};
+export async function checkCompatibility({ serial, qr, override = 'auto' }) {
   await wait(1400);
+  if (override !== 'auto') {
+    if (override !== 'pass') return { ok: false, reason: COMPAT_REASONS[override] };
+    const src = qr && !qr.unreadable ? qr : null;
+    return { ok: true, device: { serial: src?.serial ?? (serial?.trim().toUpperCase() || 'NC-IW-00001'), model: src?.model ?? 'Nest Cam' } };
+  }
   if (qr) return qr.compatible ? { ok: true, device: { serial: qr.serial, model: qr.model } } : { ok: false, reason: qr.reason };
   const s = serial.trim().toUpperCase();
   const known = QR_CODES.find((q) => q.serial === s);
@@ -68,7 +77,7 @@ export const DD_OPTIONS = [
 
 // ---- Billing eligibility check ----
 // Returns { ok } or { ok: false, code, title, message, backTo } where backTo is the screen to send the user to.
-const FAILURES = {
+export const FAILURES = {
   spend_limit: { title: 'Spend limit reached', backTo: 'payment',
     message: "Your telco account has reached its spend limit, so we can't add this subscription to your bill. Please pay by Direct Debit instead." },
   inactive: { title: 'Telco account inactive', backTo: 'payment',
