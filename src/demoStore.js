@@ -18,7 +18,7 @@ export const DEMO_CONTROLS = [
     ['auto', 'Use the QR code / serial I pick'],
     ['pass', 'Pass'],
     ['incompatible', 'Fail: device not compatible'],
-    ['registered', 'Fail: registered to another account'],
+    ['registered', 'Fail: device already registered'],
   ] },
   { key: 'wifi', label: 'Wi-Fi connection', options: [
     ['auto', 'Use the network / password I pick'],

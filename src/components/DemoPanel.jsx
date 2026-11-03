@@ -47,13 +47,13 @@ export default function DemoPanel() {
           <div className="demo-guide">
             <h4>QR codes</h4>
             <table><tbody>
-              {QR_CODES.map((q) => <tr key={q.id}><td>{q.brand ? `${q.brand} · ` : ''}{q.label}</td><td>{q.unreadable ? "Can't read → Scan again / Key in serial" : q.compatible ? 'Compatible' : `Not compatible → Scan again / Key in serial`}</td></tr>)}
+              {QR_CODES.map((q) => <tr key={q.id}><td>{q.brand ? `${q.brand} · ` : ''}{q.label}</td><td>{q.unreadable ? "Can't read → Scan again / Key in serial" : q.compatible ? 'Compatible' : `${q.registered ? 'Device already registered' : 'Device not compatible'} → Scan again / Key in serial`}</td></tr>)}
             </tbody></table>
             <h4>Serial numbers</h4>
             <table><tbody>
               <tr><td>NC-XX-12345 (e.g. NC-IW-48213)</td><td>Nest · Compatible</td></tr>
               <tr><td>3P-XXXX-12345 (e.g. 3P-AERO-20415)</td><td>3P Google Home enabled · Compatible</td></tr>
-              <tr><td>NC-IW-11002</td><td>Registered to another account</td></tr>
+              <tr><td>NC-IW-11002</td><td>Device already registered</td></tr>
               <tr><td>Anything else</td><td>Not found</td></tr>
             </tbody></table>
             <h4>Wi-Fi networks (password: 8+ characters, shorter = wrong password)</h4>

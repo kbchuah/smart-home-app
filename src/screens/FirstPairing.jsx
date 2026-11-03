@@ -111,7 +111,7 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
 
   const verifyDevice = (input) => run('Checking device compatibility…', async () => {
     const r = await checkCompatibility({ ...input, override: demo.compat });
-    if (!r.ok) { setCompatError(r.reason); setView('compatFail'); return; }
+    if (!r.ok) { setCompatError(r); setView('compatFail'); return; }
     setDevice(r.device);
     setView('wifi');
   });
@@ -183,8 +183,8 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
     body = (
       <div className="auth-card">
         <span className="auth-logo err"><Icon name={scan ? 'qr_code_2' : 'error'} fill /></span>
-        <h1>{scan ? "Couldn't read the QR code" : 'Device not compatible'}</h1>
-        <p className="muted">{scan ? 'The code may be damaged or too far away. Try scanning again, or key in the serial number.' : compatError}</p>
+        <h1>{scan ? "Couldn't read the QR code" : compatError.title}</h1>
+        <p className="muted">{scan ? 'The code may be damaged or too far away. Try scanning again, or key in the serial number.' : compatError.reason}</p>
         <button className="btn primary wide" onClick={() => { setSelectedQr(null); setView('scan'); }}><Icon name="qr_code_scanner" /> Scan again</button>
         <button className="btn outline wide" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number</button>
       </div>

@@ -14,11 +14,14 @@ export const QR_CODES = [
   { id: 'qr3', brand: '3P', label: 'XView IP Camera', hint: 'Fails compatibility · not Google Home enabled', serial: 'IPC-7781-X', model: 'XView IP Camera 2K',
     compatible: false, reason: "This camera isn't Google Home enabled, so it can't be added to Google Home Premium. Look for “Works with Google Home” or Matter on the box." },
   { id: 'qr4', brand: 'Nest', label: 'Nest Cam (registered elsewhere)', hint: 'Fails compatibility · already registered', serial: 'NC-IW-11002', model: 'Nest Cam (indoor, wired)',
-    compatible: false, reason: 'This camera is already registered to another account. Ask the owner to remove it first.' },
+    compatible: false, registered: true, reason: 'This camera is already registered to another account. Ask the owner to remove it first.' },
   { id: 'qr5', label: 'Damaged QR sticker', hint: 'Fails scan', unreadable: true },
 ];
 
 // Serial numbers accepted in "Key in serial number". Anything else is unknown.
+// Error titles shown to the user. Already paired/registered devices get their own title.
+const COMPAT_TITLES = { incompatible: 'Device not compatible', registered: 'Device already registered' };
+const failTitle = (q) => (q.registered ? COMPAT_TITLES.registered : COMPAT_TITLES.incompatible);
 const COMPAT_REASONS = {
   incompatible: "This camera isn't Google Home enabled, so it can't be added to Google Home Premium.",
   registered: 'This camera is already registered to another account. Ask the owner to remove it first.',
@@ -26,17 +29,17 @@ const COMPAT_REASONS = {
 export async function checkCompatibility({ serial, qr, override = 'auto' }) {
   await wait(1400);
   if (override !== 'auto') {
-    if (override !== 'pass') return { ok: false, reason: COMPAT_REASONS[override] };
+    if (override !== 'pass') return { ok: false, title: COMPAT_TITLES[override], reason: COMPAT_REASONS[override] };
     const src = qr && !qr.unreadable ? qr : null;
     return { ok: true, device: { serial: src?.serial ?? (serial?.trim().toUpperCase() || 'NC-IW-00001'), model: src?.model ?? 'Nest Cam', brand: src?.brand ?? 'Nest' } };
   }
-  if (qr) return qr.compatible ? { ok: true, device: { serial: qr.serial, model: qr.model, brand: qr.brand } } : { ok: false, reason: qr.reason };
+  if (qr) return qr.compatible ? { ok: true, device: { serial: qr.serial, model: qr.model, brand: qr.brand } } : { ok: false, title: failTitle(qr), reason: qr.reason };
   const s = serial.trim().toUpperCase();
   const known = QR_CODES.find((q) => q.serial === s);
-  if (known) return known.compatible ? { ok: true, device: { serial: known.serial, model: known.model, brand: known.brand } } : { ok: false, reason: known.reason };
+  if (known) return known.compatible ? { ok: true, device: { serial: known.serial, model: known.model, brand: known.brand } } : { ok: false, title: failTitle(known), reason: known.reason };
   if (/^NC-[A-Z]{2}-\d{5}$/.test(s)) return { ok: true, device: { serial: s, model: 'Nest Cam', brand: 'Nest' } };
   if (/^3P-[A-Z]{3,5}-\d{5}$/.test(s)) return { ok: true, device: { serial: s, model: 'Google Home enabled camera', brand: '3P' } };
-  return { ok: false, reason: "We couldn't find a compatible camera with that serial number. Check the number and try again." };
+  return { ok: false, title: COMPAT_TITLES.incompatible, reason: "We couldn't find a compatible camera with that serial number. Check the number and try again." };
 }
 
 // ---- Wi-Fi: camera joins the network and must come online before we bill ----
