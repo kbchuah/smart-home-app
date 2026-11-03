@@ -8,7 +8,7 @@ import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
-  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, oneMonthFromNow, billedPrice,
+  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice,
 } from '../mockBackend.js';
 
 // Device pairing, all mocked. Two modes:
@@ -606,7 +606,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     const subscription = {
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
       detail: method === 'ctb' ? customer.account : ddOption.label,
-      price: quote.total, phone, status: 'active', renewsOn: oneMonthFromNow(),
+      price: quote.total, phone, status: 'active', startedOn: new Date().toISOString(), billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
     };
     body = (
       <div className="auth-card left">
@@ -662,7 +662,8 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       price: quote.total,
       phone,
       status: 'active',
-      renewsOn: oneMonthFromNow(),
+      startedOn: new Date().toISOString(),
+      billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
     };
     body = (
       <div className="auth-card left">

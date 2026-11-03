@@ -598,3 +598,5 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
   .price-change.down .pc-head .msr, .price-change.down .pc-prices b, .sub-next, .next-row { color: #81c995; }
   .price-change.down .pc-delta { background: #81c995; color: #0d3a1f; }
 }
+.summary-box .rule-row { margin-top: -6px; }
+.summary-box .rule-row span { font-size: 12px; color: var(--muted); }

@@ -109,11 +109,11 @@ export async function verifyTac({ tac, sentAt, wrongSoFar, override = 'auto' }) 
 // status: Charge to Bill pre-check right after TAC (decides whether Charge to Bill is offered).
 // eligibility: final billing check at Confirm (backup; the account can change in between).
 export const TELCO_CUSTOMERS = {
-  '0123456789': { name: 'KB Chuah', account: 'BA-2209-4821', plan: 'Postpaid 98', status: 'ok', eligibility: 'ok' },
-  '0121111111': { name: 'Aisyah', account: 'BA-1001-0001', plan: 'Postpaid 68', status: 'spend_limit', eligibility: 'spend_limit' },
-  '0122222222': { name: 'Raj', account: 'BA-1002-0002', plan: 'Postpaid 48', status: 'inactive', eligibility: 'inactive' },
-  '0123333333': { name: 'Mei Ling', account: 'BA-1003-0003', plan: 'Postpaid 128', status: 'ok', eligibility: 'timeout_once' },
-  '0124444444': { name: 'Farid', account: 'BA-1004-0004', plan: 'Postpaid 58', status: 'ok', eligibility: 'spend_limit',
+  '0123456789': { name: 'KB Chuah', account: 'BA-2209-4821', plan: 'Postpaid 98', billCycleDay: 15, status: 'ok', eligibility: 'ok' },
+  '0121111111': { name: 'Aisyah', account: 'BA-1001-0001', plan: 'Postpaid 68', billCycleDay: 5, status: 'spend_limit', eligibility: 'spend_limit' },
+  '0122222222': { name: 'Raj', account: 'BA-1002-0002', plan: 'Postpaid 48', billCycleDay: 20, status: 'inactive', eligibility: 'inactive' },
+  '0123333333': { name: 'Mei Ling', account: 'BA-1003-0003', plan: 'Postpaid 128', billCycleDay: 25, status: 'ok', eligibility: 'timeout_once' },
+  '0124444444': { name: 'Farid', account: 'BA-1004-0004', plan: 'Postpaid 58', billCycleDay: 10, status: 'ok', eligibility: 'spend_limit',
     demoNote: 'Account changes before Confirm (rare): fine after TAC, so Charge to Bill is offered; by Confirm the spend limit is reached (e.g. another charge posted) → back to payment method, Direct Debit only' },
 };
 export const TELCO_PRECHECK = {
@@ -182,11 +182,33 @@ export const supportRef = () => `HRT-${Math.random().toString(36).slice(2, 8).to
 export const subStatus = (sub) => (sub ? sub.status ?? 'active' : null);
 export const isPremium = (sub) => ['active', 'cancelling'].includes(subStatus(sub));
 // Next billing date: saved on the subscription, else the 1st of next month.
-export function renewsOn(sub) {
-  if (sub?.renewsOn) return new Date(sub.renewsOn);
-  const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+// Renewal date rules:
+//  • Charge to Bill: the telco account's bill cycle day (lands on the same telco bill).
+//  • Direct Debit: the subscription anniversary (day it started).
+//  In shorter months the day moves to the month's last day (e.g. the 31st → 30 Nov, 28 Feb).
+const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+const onDay = (y, m, day) => new Date(y, m, Math.min(day, daysIn(y, m)));
+export function anchorDay(sub) {
+  if (sub?.method === 'Charge to Bill') return sub.billCycleDay ?? 1;
+  return sub?.startedOn ? new Date(sub.startedOn).getDate() : 1;
 }
-export const oneMonthFromNow = () => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString(); };
+// First billing date strictly after `after` that falls on `day` (clamped to month end).
+export function nextOnDay(after, day) {
+  const a = new Date(after); a.setHours(0, 0, 0, 0);
+  const here = onDay(a.getFullYear(), a.getMonth(), day);
+  return here > a ? here : onDay(a.getFullYear(), a.getMonth() + 1, day);
+}
+export function renewsOn(sub) {
+  if (sub?.status === 'cancelling' && sub.endsOn) return new Date(sub.endsOn);
+  const today = new Date();
+  const last = sub?.lastRenewal ? new Date(sub.lastRenewal) : null;
+  return nextOnDay(last && last > today ? last : today, anchorDay(sub));
+}
+export const renewalRule = (sub) => (sub?.method === 'Charge to Bill'
+  ? `With your telco bill, on day ${anchorDay(sub)} of each month`
+  : `Every month on day ${anchorDay(sub)} (or the month's last day)`);
+const ordinal = (n) => `${n}${[, 'st', 'nd', 'rd'][(n % 100 >> 3) ^ 1 && n % 10] || 'th'}`;
+export const renewalRuleShort = (sub) => (sub?.method === 'Charge to Bill' ? `Telco bill cycle · ${ordinal(anchorDay(sub))}` : `Anniversary · ${ordinal(anchorDay(sub))}`);
 export const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 export async function cancelPremium() { await wait(1400); return { ok: true }; }
 export async function resumePremium() { await wait(1000); return { ok: true }; }

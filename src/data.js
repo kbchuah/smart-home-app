@@ -24,7 +24,7 @@ export const DEFAULT_STATE = {
   homeName: 'KB home',
   wifi: 'unifi-home-5G', // the home's Wi-Fi network; new devices should join it
   ecosystem: 'Google Home Premium',
-  subscription: { method: 'Charge to Bill', billingAccount: 'BA-2209-4821', phone: '0123456789' },
+  subscription: { method: 'Charge to Bill', billingAccount: 'BA-2209-4821', billCycleDay: 15, startedOn: '2026-03-15', phone: '0123456789' },
   rooms: [
     { id: 'living', name: 'Living Room' },
     { id: 'kitchen', name: 'Kitchen' },
@@ -111,7 +111,7 @@ export const STRUCTURES = {
     homeName: 'Future home, KL',
     wifi: 'unifi-home-5G',
     ecosystem: 'Google Home Premium',
-    subscription: { method: 'Charge to Bill', billingAccount: 'BA-3310-1177', phone: '0198765432' },
+    subscription: { method: 'Charge to Bill', billingAccount: 'BA-3310-1177', billCycleDay: 22, startedOn: '2026-05-22', phone: '0198765432' },
     rooms: [{ id: 'living', name: 'Living Room' }, { id: 'kitchen', name: 'Kitchen' }, { id: 'master', name: 'Master Bedroom' }],
     devices: [
       dev('f1', 'Living Room Lights', 'light', 'living', { on: true, brightness: 60 }),
@@ -126,7 +126,7 @@ export const STRUCTURES = {
     homeName: 'Penang condo',
     wifi: 'unifi-home-2.4G',
     ecosystem: 'Samsung SmartThings',
-    subscription: { method: 'Direct Debit', bank: 'Maybank', phone: '0174441234' },
+    subscription: { method: 'Direct Debit', bank: 'Maybank', startedOn: '2026-08-17', phone: '0174441234' },
     rooms: [{ id: 'living', name: 'Living Room' }, { id: 'bedroom', name: 'Bedroom' }],
     devices: [
       dev('p1', 'Living Room TV', 'tv', 'living'),
@@ -140,7 +140,7 @@ export const STRUCTURES = {
     homeName: 'Office',
     wifi: 'unifi-home-5G',
     ecosystem: 'Apple Home',
-    subscription: { method: 'Direct Debit', bank: 'CIMB Bank', phone: '0165550199' },
+    subscription: { method: 'Direct Debit', bank: 'CIMB Bank', startedOn: '2026-01-31', phone: '0165550199' }, // shows month-end clamping
     rooms: [{ id: 'work', name: 'Workspace' }, { id: 'meeting', name: 'Meeting Room' }],
     devices: [
       dev('o1', 'Desk Lights', 'light', 'work', { on: true, brightness: 90, color: '#ffffff' }),

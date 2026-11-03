@@ -10,7 +10,7 @@ import SubscriptionCard from '../components/SubscriptionCard.jsx';
 import WifiChange from '../components/WifiChange.jsx';
 import CancelPremium from '../components/CancelPremium.jsx';
 import PremiumFeatures from '../components/PremiumFeatures.jsx';
-import { isPremium, resumePremium, billedPrice, addMonth, renewsOn } from '../mockBackend.js';
+import { isPremium, resumePremium, billedPrice, renewsOn } from '../mockBackend.js';
 import UnpairDevice from '../components/UnpairDevice.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
@@ -128,13 +128,13 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
 
       <SubscriptionCard home={state}
         onCancel={(price, endsOn) => setCancelling({ price, endsOn })}
-        onUndo={async () => { await resumePremium(); dispatch({ type: 'patchSubscription', patch: { status: 'active' } }); setToast('Cancellation undone. Premium continues.'); }}
+        onUndo={async () => { await resumePremium(); dispatch({ type: 'patchSubscription', patch: { status: 'active', endsOn: null } }); setToast('Cancellation undone. Premium continues.'); }}
         onUpgrade={() => setUpgrading(true)}
-        onRenew={(next) => { dispatch({ type: 'patchSubscription', patch: { price: next, renewsOn: addMonth(renewsOn(state.subscription)) } }); setToast(`Renewed: now ${'MYR'} ${next.toFixed(2)}/month`); }}
-        onEndPeriod={() => { dispatch({ type: 'patchSubscription', patch: { status: 'free' } }); setToast(`${state.homeName} is now on the free plan`); }} />
+        onRenew={(next) => { dispatch({ type: 'patchSubscription', patch: { price: next, lastRenewal: renewsOn(state.subscription).toISOString() } }); setToast(`Renewed: now ${'MYR'} ${next.toFixed(2)}/month`); }}
+        onEndPeriod={() => { dispatch({ type: 'patchSubscription', patch: { status: 'free', lastRenewal: renewsOn(state.subscription).toISOString() } }); setToast(`${state.homeName} is now on the free plan`); }} />
       {cancelling && (
         <CancelPremium home={state} price={cancelling.price} endsOn={cancelling.endsOn} onClose={() => setCancelling(null)}
-          onCancelled={() => dispatch({ type: 'patchSubscription', patch: { status: 'cancelling', renewsOn: new Date(cancelling.endsOn).toISOString() } })} />
+          onCancelled={() => dispatch({ type: 'patchSubscription', patch: { status: 'cancelling', endsOn: new Date(cancelling.endsOn).toISOString() } })} />
       )}
 
       <section className="summary">

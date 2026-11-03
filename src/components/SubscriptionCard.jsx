@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { rm } from './PriceCards.jsx';
-import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice } from '../mockBackend.js';
+import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice, renewalRule } from '../mockBackend.js';
 import { PLAN } from '../plans.js';
 
 const fmtPhone = (n) => (n && n.length > 3 ? `+60 ${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n);
@@ -61,6 +61,7 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
           <div><span>Plan</span><b>{PLAN.name}</b></div>
           <div><span>Status</span>{status === 'cancelling' ? <b className="warn-text">Ends {fmtDate(endsOn)}</b> : <b className="ok-text">Active</b>}</div>
           <div><span>{status === 'cancelling' ? 'Ends on' : 'Renews on'}</span><b>{fmtDate(endsOn)}</b></div>
+          {status === 'active' && <div className="rule-row"><span>{renewalRule(sub)}</span></div>}
           <div><span>Devices on home</span><b>{count}</b></div>
           {!pendingDrop && <div><span>{PLAN.name} (up to {price.included} devices)</span><b>{rm(price.base)}</b></div>}
           {!pendingDrop && over && <div><span>{price.extraDevices} extra × {rm(price.extraEach)}</span><b>{rm(price.extraDevices * price.extraEach)}</b></div>}

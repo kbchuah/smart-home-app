@@ -18,6 +18,9 @@ export function loadHome(id) {
       const saved = JSON.parse(raw);
       // Homes saved before the Wi-Fi field existed pick it up from their defaults.
       if (!saved.wifi && defaultsFor(id)?.wifi) saved.wifi = defaultsFor(id).wifi;
+      // ...and billing anchors (bill cycle day / start date) for renewal dates.
+      const dsub = defaultsFor(id)?.subscription;
+      if (saved.subscription && dsub) for (const k of ['billCycleDay', 'startedOn']) if (saved.subscription[k] == null && dsub[k] != null) saved.subscription[k] = dsub[k];
       return saved;
     }
   } catch { /* storage unavailable */ }
