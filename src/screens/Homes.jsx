@@ -5,7 +5,7 @@ import { useHome } from '../store.js';
 export default function Homes({ user, onOpen, onLogout }) {
   const [home] = useHome();
   const [toast, setToast] = useState(null);
-  const structures = user?.isNew ? [] : [{ id: 'kb', name: home.homeName, rooms: home.rooms.length, devices: home.devices.length }];
+  const structures = user?.isNew ? [] : [{ id: 'kb', name: home.homeName, rooms: home.rooms.length, devices: home.devices.length, ecosystem: 'Google Home Premium' }];
 
   useEffect(() => {
     if (!toast) return;
@@ -45,6 +45,7 @@ export default function Homes({ user, onOpen, onLogout }) {
               <span className="structure-body">
                 <b>{s.name}</b>
                 <small>{s.rooms} rooms · {s.devices} devices</small>
+                {s.ecosystem && <span className="ecosystem"><Icon name="hub" /> Powered by {s.ecosystem}</span>}
               </span>
               <Icon name="chevron_right" />
             </button>
