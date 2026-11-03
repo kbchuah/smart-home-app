@@ -22,8 +22,8 @@ const PILOT_ECOSYSTEM = 'Google Home Premium';
 const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Done'];
 const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3, tacLocked: 3,
   payment: 4, confirm: 4, eligFail: 4, processing: 4, procFail: 4, success: 5 };
-const STEPS_EXISTING = ['Device', 'Wi-Fi', 'Price', 'Done'];
-const STEP_OF_EXISTING = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, processing: 2, procFail: 2, success: 3 };
+const STEPS_EXISTING = ['Device', 'Wi-Fi', 'Room', 'Price', 'Done'];
+const STEP_OF_EXISTING = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, room: 2, price: 3, processing: 3, procFail: 3, success: 4 };
 const DEFAULT_ROOM = 'My room';
 // Demo mobile numbers shown as tappable cards on the TAC screen. 'other' = any non-telco number.
 const DEMO_PHONES = [
@@ -109,6 +109,14 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
   // room & name (after activation)
   // Room and camera name use defaults during first pairing; users change them afterwards.
   const [deviceName, setDeviceName] = useState('');
+  // existing homes: choose a room (existing or new) before pricing
+  const homeRooms = home?.rooms ?? [];
+  const initialRoom = homeRooms.find((r) => r.name.toLowerCase() === defaultRoom.toLowerCase()) ?? homeRooms[0];
+  const [roomPick, setRoomPick] = useState(initialRoom ? { id: initialRoom.id } : { id: null }); // { id } | { id: null } = new
+  const [newRoom, setNewRoom] = useState(initialRoom ? '' : defaultRoom);
+  const matchRoom = (name) => homeRooms.find((r) => r.name.trim().toLowerCase() === name.trim().toLowerCase());
+  const chosenRoomName = roomPick.id ? homeRooms.find((r) => r.id === roomPick.id)?.name : (matchRoom(newRoom)?.name ?? newRoom.trim());
+  const roomLabel = isExisting ? chosenRoomName : defaultRoom;
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -169,7 +177,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
     await wait(1000);
     setBusy(`Checking devices on ${homeName.trim()}…`);
     setQuote(await quotePrice({ structureDeviceCount: isExisting ? home.devices.length : 0 })); // new home: 0 devices
-    setView('price');
+    setView(isExisting ? 'room' : 'price');
   });
 
   // Demo: auto-fill a random valid TAC, like SMS autofill (never 000000 / 999999).
@@ -316,6 +324,40 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <p className="note"><Icon name="info" /> You haven't been charged. Billing only starts once your camera is online.</p>
       </div>
     );
+  } else if (view === 'room') {
+    const creating = !roomPick.id;
+    const dup = creating && newRoom.trim() && matchRoom(newRoom);
+    body = (
+      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (chosenRoomName) setView('price'); }}>
+        <span className="auth-logo"><Icon name="meeting_room" /></span>
+        <h1>Which room is this camera in?</h1>
+        <p className="muted">Choose a room in <b>{homeName}</b>, or create a new one.</p>
+        <div className="options">
+          {homeRooms.map((r) => {
+            const count = home.devices.filter((d) => d.roomId === r.id).length;
+            return (
+              <button type="button" key={r.id} className={`option compact ${roomPick.id === r.id ? 'sel' : ''}`} onClick={() => setRoomPick({ id: r.id })}>
+                <span className="option-icon"><Icon name="meeting_room" fill={roomPick.id === r.id} /></span>
+                <span className="option-body"><b>{r.name}</b><small>{count} device{count === 1 ? '' : 's'}</small></span>
+                <Icon name={roomPick.id === r.id ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
+              </button>
+            );
+          })}
+          <button type="button" className={`option compact ${creating ? 'sel' : ''}`} onClick={() => setRoomPick({ id: null })}>
+            <span className="option-icon"><Icon name="add" /></span>
+            <span className="option-body"><b>Create a new room</b><small>e.g. Car porch, Study</small></span>
+            <Icon name={creating ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
+          </button>
+        </div>
+        {creating && (
+          <label className="field"><span>New room name</span>
+            <input autoFocus maxLength={30} value={newRoom} placeholder="e.g. Car porch" onChange={(e) => setNewRoom(e.target.value)} />
+            {dup && <small className="field-hint"><Icon name="info" /> {dup.name} already exists. The camera will be added there.</small>}
+          </label>
+        )}
+        <Actions onBack={() => setView('wifi')}><button className="btn primary" disabled={!chosenRoomName}>Next</button></Actions>
+      </form>
+    );
   } else if (view === 'price' && isExisting) {
     const start = () => { setDoneTasks(0); setView('processing'); };
     body = (
@@ -325,6 +367,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
         <div className="summary-box">
           <div><span>Home</span><b>{homeName}</b></div>
+          <div><span>Room</span><b>{roomLabel}{roomPick.id || matchRoom(newRoom) ? '' : ' (new)'}</b></div>
           <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter}</b></div>
           <div><span>Included in {plan.name}</span><b>Up to {quote.included}</b></div>
           {priceUp
@@ -338,10 +381,10 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
             <span>I agree that my <b>{plan.name}</b> subscription for <b>{homeName}</b> increases from <b>{rm(quote.currentTotal)}</b> to <b>{rm(quote.total)}/month</b>, billed via {home.subscription?.method ?? 'my current payment method'}, starting when this device is paired.</span>
           </label>
-          <Actions onBack={() => setView('wifi')}><button className="btn primary" disabled={!agreed} onClick={start}>Proceed <Icon name="arrow_forward" /></button></Actions>
+          <Actions onBack={() => setView('room')}><button className="btn primary" disabled={!agreed} onClick={start}>Proceed <Icon name="arrow_forward" /></button></Actions>
         </>) : (<>
           <p className="note"><Icon name="check" /> This device is included in your current plan.</p>
-          <Actions onBack={() => setView('wifi')}><button className="btn primary" onClick={start}>Add device <Icon name="arrow_forward" /></button></Actions>
+          <Actions onBack={() => setView('room')}><button className="btn primary" onClick={start}>Add device <Icon name="arrow_forward" /></button></Actions>
         </>)}
       </div>
     );
@@ -515,14 +558,14 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
       <div className="auth-card left">
         <span className="auth-logo ok"><Icon name="celebration" fill /></span>
         <h1>Camera added!</h1>
-        <p className="muted"><b>{deviceName}</b> is now in <b>{defaultRoom}</b> in <b>{homeName}</b>.</p>
+        <p className="muted"><b>{deviceName}</b> is now in <b>{roomLabel}</b> in <b>{homeName}</b>.</p>
         <div className="summary-box">
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName}</b></div>
           <div><span>Type</span><b>{device.brand === '3P' ? '3P · Google Home enabled' : 'Google Nest'}</b></div>
           <div><span>Wi-Fi</span><b>{ssid}</b></div>
           <div><span>Serial number</span><b>{device.serial}</b></div>
-          <div><span>Room</span><b>{defaultRoom}</b></div>
+          <div><span>Room</span><b>{roomLabel}</b></div>
         </div>
         <div className="summary-box">
           <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
@@ -532,7 +575,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         </div>
         <p className="note"><Icon name="edit" /><span>To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
         <button className="btn primary wide" onClick={() => onDone({
-          room: { name: defaultRoom },
+          room: { name: roomLabel },
           device: { type: 'camera', name: deviceName, model: device.model, serial: device.serial, brand: device.brand },
           price: quote.total,
         })}>OK</button>

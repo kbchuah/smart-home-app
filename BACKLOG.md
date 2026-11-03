@@ -35,3 +35,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Processing failures after payment/agreement (device registration, subscription activate/update) with “not charged”, retry and support reference
 - Adding devices to an existing home uses the new flow (scan → compatibility → Wi-Fi → price); 5th+ device shows current → new price with agreement
 - “Leave setup?” confirmation when exiting the pairing flow mid-way
+- Existing-home add device: Room step (pick existing room with device counts, or create a new one; duplicate names reuse the existing room)
