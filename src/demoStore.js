@@ -51,3 +51,13 @@ export const DEMO_CONTROLS = [
     ['timeout', 'Error: timeout every time'],
   ] },
 ];
+
+// Demo inputs already tried in this page session (in memory only: a page refresh clears it).
+const tried = new Set();
+const triedListeners = new Set();
+let triedVersion = 0;
+export const markTried = (key) => { if (!tried.has(key)) { tried.add(key); triedVersion += 1; triedListeners.forEach((l) => l()); } };
+export const useTried = () => {
+  useSyncExternalStore((l) => { triedListeners.add(l); return () => triedListeners.delete(l); }, () => triedVersion);
+  return (key) => tried.has(key);
+};

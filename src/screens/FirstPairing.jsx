@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
-import { useDemo } from '../demoStore.js';
+import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
@@ -19,6 +19,16 @@ const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Done'];
 const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3, tacLocked: 3,
   payment: 4, confirm: 4, eligFail: 4, processing: 4, success: 5 };
 const DEFAULT_ROOM = 'My room';
+// Demo mobile numbers shown as tappable cards on the TAC screen. 'other' = any non-telco number.
+const DEMO_PHONES = [
+  { n: '0123456789', icon: 'verified', label: 'Telco · Charge to Bill OK' },
+  { n: '0121111111', icon: 'block', label: 'Telco · spend limit (found after TAC)' },
+  { n: '0122222222', icon: 'person_off', label: 'Telco · account inactive (found after TAC)' },
+  { n: '0124444444', icon: 'update', label: 'Telco · account changes before Confirm (rare)' },
+  { n: '0123333333', icon: 'hourglass_empty', label: 'Telco · timeout once at Confirm' },
+  { n: '0178881234', icon: 'account_balance', label: 'Not a telco customer → Direct Debit only', other: true },
+];
+const phoneKey = (n) => (DEMO_PHONES.some((d) => d.n === n && !d.other) ? `phone:${n}` : 'phone:other');
 const DEMO_WIFI_PW = 'homewifi123'; // demo: pre-filled valid Wi-Fi password
 
 const digits = (v) => v.replace(/\D/g, '');
@@ -50,6 +60,7 @@ export function uniqueHomeName(taken, base = PILOT_HOME_NAME) {
 
 export default function FirstPairing({ plan, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
   const demo = useDemo();
+  const isTried = useTried();
   const [view, setView] = useState('scan');
   const tacLockedMins = useTacLock(account);
   const [busy, setBusy] = useState(null);
@@ -307,20 +318,26 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
   } else if (view === 'phone') {
     const ok = /^01\d{8,9}$/.test(phone);
     body = (
-      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) run('Sending TAC…', async () => { await wait(900); sendTac(); setView('tac'); }); }}>
+      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) run('Sending TAC…', async () => { markTried(phoneKey(phone)); await wait(900); sendTac(); setView('tac'); }); }}>
         <span className="auth-logo"><Icon name="sms" /></span>
         <h1>Verify your mobile number</h1>
         <p className="muted">We'll send a TAC to check if you're an existing telco customer, so we can offer the best way to pay.</p>
         <label className="field"><span>Mobile number</span>
           <div className="phone-input"><span>+60</span>
             <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789" onChange={(e) => setPhone(digits(e.target.value).slice(0, 11))} /></div></label>
-        <div className="demo-hint"><Icon name="science" /><span>
-          Demo numbers:{' '}
-          {[['0123456789', 'telco, Charge to Bill OK'], ['0121111111', 'telco, spend limit (found after TAC)'], ['0122222222', 'telco, inactive (found after TAC)'], ['0124444444', 'telco, account changes before Confirm (rare)'], ['0123333333', 'telco, timeout once at Confirm']].map(([n, l]) => (
-            <span key={n} className="demo-num"><button type="button" onClick={() => setPhone(n)}>{fmtPhone(n)}</button> {l}</span>
-          ))}
-          <span className="demo-num">Any other number: not a telco customer → Direct Debit</span>
-        </span></div>
+        <div className="field-label">Demo: tap a number to use it</div>
+        <div className="options">
+          {DEMO_PHONES.map((d) => {
+            const triedIt = isTried(d.other ? 'phone:other' : `phone:${d.n}`);
+            return (
+              <button type="button" key={d.n} className={`option compact ${phone === d.n ? 'sel' : ''} ${triedIt ? 'tried' : ''}`} onClick={() => setPhone(d.n)}>
+                <span className="option-icon"><Icon name={d.icon} /></span>
+                <span className="option-body"><b>{d.other ? 'Any other number' : fmtPhone(d.n)}</b><small>{d.label}</small></span>
+                {triedIt && <span className="tried-tag"><Icon name="check" /> Tried</span>}
+              </button>
+            );
+          })}
+        </div>
         <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send TAC</button></Actions>
       </form>
     );

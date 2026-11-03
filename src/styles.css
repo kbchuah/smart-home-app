@@ -414,3 +414,8 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .demo-lock { align-items: center; background: var(--surface-2); }
 .demo-lock span { flex: 1; }
 .demo-lock .btn { padding: 6px 10px; }
+/* Demo inputs already tried this session */
+.option.tried { opacity: .5; }
+.option.tried.sel { opacity: .8; }
+.tried-tag { flex: none; display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); }
+.tried-tag .msr { font-size: 14px; }
