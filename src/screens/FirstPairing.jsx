@@ -130,7 +130,9 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
     setView('price');
   });
 
-  const sendTac = () => { setTac(''); setTacWrong(0); setTacError(null); setTacSentAt(Date.now()); setResendIn(30); };
+  // Demo: auto-fill a random valid TAC, like SMS autofill (never 000000 / 999999).
+  const randomTac = () => String(100000 + Math.floor(Math.random() * 899999));
+  const sendTac = () => { setTac(randomTac()); setTacWrong(0); setTacError(null); setTacSentAt(Date.now()); setResendIn(30); };
 
   // TAC → telco lookup → Charge to Bill pre-check (account status) before showing payment options.
   const submitTac = () => run('Verifying TAC…', async () => {
@@ -333,7 +335,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
             disabled={expired} onChange={(e) => { setTac(digits(e.target.value)); if (tacError?.code === 'wrong') setTacError(null); }} />
           {tacError
             ? <small className="field-error"><Icon name="error" /> {tacError.text}</small>
-            : <small className="field-hint"><Icon name="science" /> Demo: any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
+            : <small className="field-hint"><Icon name="science" /> Demo: TAC auto-filled from “SMS”. Any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
         </label>
         <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={sendTac}>{resendIn > 0 ? `Resend TAC in ${resendIn}s` : 'Resend TAC'}</button>
         <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!ok || expired}>Verify</button></Actions>
