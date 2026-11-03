@@ -2,9 +2,10 @@ import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
 
 const FEATURES = [
-  ['devices', 'All your devices, one app', 'Lights, thermostats, locks, cameras and speakers, room by room.'],
-  ['auto_mode', 'Routines that run your day', 'One tap for “Good morning”, “Leaving home” or “Movie time”.'],
-  ['shield_lock', 'Peace of mind', 'Check your locks and doorbell camera from anywhere.'],
+  ['auto_awesome', 'Just ask', 'Say “dim the living room and lock the front door” and your AI assistant does it.'],
+  ['psychology', 'Learns your routine', 'AI notices your daily patterns and suggests routines, like lights on at sunset.'],
+  ['notifications_active', 'Smarter alerts', 'Cameras tell a person from a pet or a package, so you only get alerts that matter.'],
+  ['bolt', 'Save energy', 'See which devices use the most power and get tips to cut your bill.'],
 ];
 
 export default function Landing({ plan, onProceed }) {
@@ -18,8 +19,9 @@ export default function Landing({ plan, onProceed }) {
       </header>
 
       <section className="hero">
-        <h1>Your whole home, <span>in one place.</span></h1>
-        <p>Control every smart device, automate your routines, and keep your family safe with a simple monthly plan.</p>
+        <span className="hero-badge"><Icon name="auto_awesome" fill /> Premium Home · with AI</span>
+        <h1>A home that <span>thinks ahead.</span></h1>
+        <p>Premium Home brings all your smart devices into one app, with built-in AI that understands what you ask, learns your routines and keeps an eye on things while you're away.</p>
       </section>
 
       <section className="features">
@@ -32,9 +34,10 @@ export default function Landing({ plan, onProceed }) {
       </section>
 
       <section>
-        <h2 className="plans-title">One simple plan</h2>
+        <h2 className="plans-title">Your Premium Home plan</h2>
         <div className="plan single">
-          <span className="plan-name">{plan.name}</span>
+          <span className="plan-name"><Icon name="auto_awesome" fill /> {plan.name}</span>
+          <span className="plan-tagline">{plan.tagline}</span>
           <span className="plan-price">MYR {plan.price}<small>/month</small></span>
           <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
         </div>
@@ -44,7 +47,7 @@ export default function Landing({ plan, onProceed }) {
         <label className="consent">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
           <span>
-            I understand that the <b>{plan.name}</b> plan costs <b>MYR {plan.price}/month</b>, supports up to{' '}
+            I understand that the <b>{plan.name}</b> plan, including its AI features, costs <b>MYR {plan.price}/month</b>, supports up to{' '}
             <b>{plan.devices} devices</b>, renews automatically each month, and can be cancelled anytime.
           </span>
         </label>

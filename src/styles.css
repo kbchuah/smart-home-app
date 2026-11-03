@@ -279,3 +279,9 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 }
 .plan.single { max-width: 560px; margin: 0 auto; border-color: var(--primary); cursor: default; }
 .plan.single:active { transform: none; }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; background: var(--primary-soft); font-size: 14px; font-weight: 500; margin-bottom: 18px; }
+.hero-badge .msr { font-size: 18px; color: var(--primary); }
+.plan-name { display: flex; align-items: center; gap: 6px; }
+.plan-name .msr { color: var(--primary); }
+.plan-tagline { color: var(--muted); font-size: 14px; margin-top: -4px; }
+.plan li { display: flex; gap: 6px; align-items: flex-start; line-height: 1.35; }

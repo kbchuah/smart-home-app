@@ -1,6 +1,15 @@
 export const PLAN = {
-  id: 'starter', name: 'Starter', price: 60, devices: 4,
-  perks: ['Up to 4 devices', '1 home', 'Routines & schedules', 'Live camera view', 'Email support'],
+  id: 'premium', name: 'Premium Home', price: 60, devices: 4,
+  tagline: 'Smart home control, powered by AI.',
+  perks: [
+    'Up to 4 devices in 1 home',
+    'AI home assistant: control devices in plain language',
+    'AI-suggested routines based on your habits',
+    'Smart camera alerts: people, packages and pets',
+    'Energy insights and saving tips',
+    'Routines, schedules and live camera view',
+    'Priority support',
+  ],
 };
 
 // Mock accounts for the simulated Google sign-in.
