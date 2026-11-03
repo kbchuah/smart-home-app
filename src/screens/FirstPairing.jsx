@@ -15,11 +15,10 @@ import {
 // Pilot: the first home is always "My Home" on Google Home Premium (renamable later in Home settings).
 const PILOT_HOME_NAME = 'My Home';
 const PILOT_ECOSYSTEM = 'Google Home Premium';
-const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Room', 'Done'];
+const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Done'];
 const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3, tacLocked: 3,
-  payment: 4, confirm: 4, eligFail: 4, processing: 4, roomName: 5, success: 6 };
+  payment: 4, confirm: 4, eligFail: 4, processing: 4, success: 5 };
 const DEFAULT_ROOM = 'My room';
-const ROOM_SUGGESTIONS = ['Living Room', 'Front Door', 'Porch', 'Garage', 'Backyard', 'Kitchen', 'Bedroom', 'Hallway'];
 
 const digits = (v) => v.replace(/\D/g, '');
 const fmtPhone = (n) => (n.length > 3 ? `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n).trim();
@@ -86,10 +85,8 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
   // processing
   const [doneTasks, setDoneTasks] = useState(0);
   // room & name (after activation)
-  const [room, setRoom] = useState(DEFAULT_ROOM);
-  const [customRoom, setCustomRoom] = useState('');
+  // Room and camera name use defaults during first pairing; users change them afterwards.
   const [deviceName, setDeviceName] = useState('');
-  const [nameEdited, setNameEdited] = useState(false);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -110,7 +107,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
   // Processing: tick tasks one by one, then show success.
   useEffect(() => {
     if (view !== 'processing') return;
-    if (doneTasks >= tasks.length) { const t = setTimeout(() => { setDeviceName(device.model); setView('roomName'); }, 500); return () => clearTimeout(t); }
+    if (doneTasks >= tasks.length) { const t = setTimeout(() => { setDeviceName(device.model); setView('success'); }, 500); return () => clearTimeout(t); }
     const t = setTimeout(() => setDoneTasks((n) => n + 1), 800);
     return () => clearTimeout(t);
   }, [view, doneTasks, tasks.length, device]);
@@ -418,37 +415,8 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         </ul>
       </div>
     );
-  } else if (view === 'roomName') {
-    const pick = (r) => { setRoom(r); setCustomRoom(''); if (!nameEdited) setDeviceName(r === DEFAULT_ROOM ? device.model : `${r} camera`); };
-    const finalRoom = customRoom.trim() || room;
-    body = (
-      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (deviceName.trim() && finalRoom) setView('success'); }}>
-        <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
-        <h1>Subscription active. Where is your camera?</h1>
-        <p className="muted">Choose a room and name for your camera, or keep the defaults. You can change these later.</p>
-        <div className="field-label">Room</div>
-        <div className="chips">
-          {[DEFAULT_ROOM, ...ROOM_SUGGESTIONS].map((r) => (
-            <button type="button" key={r} className={!customRoom.trim() && room === r ? 'sel' : ''} onClick={() => pick(r)}>{r}</button>
-          ))}
-        </div>
-        <label className="field"><span>Or add a custom room</span>
-          <input value={customRoom} placeholder="e.g. Car porch" onChange={(e) => {
-            setCustomRoom(e.target.value);
-            if (!nameEdited) setDeviceName(e.target.value.trim() ? `${e.target.value.trim()} camera` : device.model);
-          }} /></label>
-        <label className="field"><span>Camera name</span>
-          <input value={deviceName} onChange={(e) => { setDeviceName(e.target.value); setNameEdited(true); }} />
-          <small className="field-hint"><Icon name="info" /> Shown on your home screen and used for voice commands.</small></label>
-        <div className="form-actions">
-          <button type="button" className="btn" onClick={() => { setRoom(DEFAULT_ROOM); setCustomRoom(''); setDeviceName(device.model); setView('success'); }}>Use defaults</button>
-          <span className="spacer" />
-          <button className="btn primary" disabled={!deviceName.trim() || !finalRoom}>Save</button>
-        </div>
-      </form>
-    );
   } else {
-    const roomName = customRoom.trim() || room;
+    const roomName = DEFAULT_ROOM;
     const subscription = {
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
       detail: method === 'ctb' ? customer.account : ddOption.label,
@@ -477,12 +445,12 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName.trim()}</b></div>
           <div><span>Model</span><b>{device.model}</b></div>
-          <div><span>Type</span><b>{device.brand === '3P' ? 'Third-party · Works with Google Home' : 'Google Nest'}</b></div>
+          <div><span>Type</span><b>{device.brand === '3P' ? '3P · Google Home enabled' : 'Google Nest'}</b></div>
           <div><span>Wi-Fi</span><b>{ssid}</b></div>
           <div><span>Serial number</span><b>{device.serial}</b></div>
           <div><span>Devices on home</span><b>{quote.devicesAfter} of {quote.included}</b></div>
         </div>
-        <p className="note"><Icon name="edit" /><span>Want a different name for {homeName} or {roomName}? Change them anytime in <b>Home settings</b> (the ⚙ icon in your home).</span></p>
+        <p className="note"><Icon name="edit" /><span>Your camera is in <b>{roomName}</b>. To rename your home or rooms, use <b>Home settings</b> (⚙). To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
         <button className="btn primary wide" onClick={() => onDone({
           home: { homeName: homeName.trim(), ecosystem },
           room: { name: roomName },
@@ -495,7 +463,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
 
   return (
     <div className="auth pair">
-      {!['processing', 'roomName', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel setup"><Icon name="close" /></button>}
+      {!['processing', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel setup"><Icon name="close" /></button>}
       <Stepper steps={STEPS} step={STEP_OF[view]} label="Setup progress" />
       {body}
       <DemoPanel />
