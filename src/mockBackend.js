@@ -1,0 +1,88 @@
+// Simulated backend for the first-pairing flow. Every outcome here is mock data.
+import { PLAN } from './plans.js';
+
+export const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ---- QR codes the user can "scan" ----
+// result: 'unreadable' fails at scan; others go to the compatibility check.
+export const QR_CODES = [
+  { id: 'qr1', label: 'Nest Cam (indoor, wired)', hint: 'Passes', serial: 'NC-IW-48213', model: 'Nest Cam (indoor, wired)', compatible: true },
+  { id: 'qr2', label: 'Nest Cam (battery)', hint: 'Passes', serial: 'NC-BT-90377', model: 'Nest Cam (battery)', compatible: true },
+  { id: 'qr3', label: 'Generic IP camera', hint: 'Fails compatibility', serial: 'IPC-7781-X', model: 'XView IP Camera 2K',
+    compatible: false, reason: "This camera isn't compatible with Google Home Premium." },
+  { id: 'qr4', label: 'Nest Cam (registered elsewhere)', hint: 'Fails compatibility', serial: 'NC-IW-11002', model: 'Nest Cam (indoor, wired)',
+    compatible: false, reason: 'This camera is already registered to another account. Ask the owner to remove it first.' },
+  { id: 'qr5', label: 'Damaged QR sticker', hint: 'Fails scan', unreadable: true },
+];
+
+// Serial numbers accepted in "Key in serial number". Anything else is unknown.
+export async function checkCompatibility({ serial, qr }) {
+  await wait(1400);
+  if (qr) return qr.compatible ? { ok: true, device: { serial: qr.serial, model: qr.model } } : { ok: false, reason: qr.reason };
+  const s = serial.trim().toUpperCase();
+  const known = QR_CODES.find((q) => q.serial === s);
+  if (known) return known.compatible ? { ok: true, device: { serial: known.serial, model: known.model } } : { ok: false, reason: known.reason };
+  if (/^NC-[A-Z]{2}-\d{5}$/.test(s)) return { ok: true, device: { serial: s, model: 'Nest Cam' } };
+  return { ok: false, reason: "We couldn't find a compatible camera with that serial number. Check the number and try again." };
+}
+
+// ---- Pricing business rule ----
+// Base price covers up to PLAN.devices devices per home; each extra device adds EXTRA_DEVICE_PRICE.
+export const EXTRA_DEVICE_PRICE = 15;
+export async function quotePrice({ structureDeviceCount }) {
+  await wait(1000);
+  const after = structureDeviceCount + 1;
+  const extra = Math.max(0, after - PLAN.devices);
+  return {
+    currentDevices: structureDeviceCount,
+    devicesAfter: after,
+    included: PLAN.devices,
+    base: PLAN.price,
+    extraDevices: extra,
+    extraEach: EXTRA_DEVICE_PRICE,
+    total: PLAN.price + extra * EXTRA_DEVICE_PRICE,
+  };
+}
+
+// ---- Telco customer lookup (after TAC) ----
+// eligibility: outcome of the Charge to Bill eligibility check.
+export const TELCO_CUSTOMERS = {
+  '0123456789': { name: 'KB Chuah', account: 'BA-2209-4821', plan: 'Postpaid 98', eligibility: 'ok' },
+  '0121111111': { name: 'Aisyah', account: 'BA-1001-0001', plan: 'Postpaid 68', eligibility: 'spend_limit' },
+  '0122222222': { name: 'Raj', account: 'BA-1002-0002', plan: 'Postpaid 48', eligibility: 'inactive' },
+  '0123333333': { name: 'Mei Ling', account: 'BA-1003-0003', plan: 'Postpaid 128', eligibility: 'timeout_once' },
+};
+export async function lookupCustomer(phone) {
+  await wait(1400);
+  return TELCO_CUSTOMERS[phone] ?? null;
+}
+
+// ---- Direct Debit options (mock; no real card or bank details are collected) ----
+export const DD_OPTIONS = [
+  { id: 'card_ok', kind: 'card', label: 'Visa debit •••• 4242', hint: 'Passes', eligibility: 'ok' },
+  { id: 'card_declined', kind: 'card', label: 'Mastercard •••• 0002', hint: 'Invalid card', eligibility: 'card_invalid' },
+  { id: 'card_expired', kind: 'card', label: 'Visa credit •••• 0069', hint: 'Expired card', eligibility: 'card_expired' },
+  { id: 'bank_ok', kind: 'bank', label: 'Maybank account (FPX Direct Debit)', hint: 'Passes', eligibility: 'ok' },
+  { id: 'bank_ok2', kind: 'bank', label: 'CIMB Bank account (FPX Direct Debit)', hint: 'Passes', eligibility: 'ok' },
+];
+
+// ---- Billing eligibility check ----
+// Returns { ok } or { ok: false, code, title, message, backTo } where backTo is the screen to send the user to.
+const FAILURES = {
+  spend_limit: { title: 'Spend limit reached', backTo: 'payment',
+    message: "Your telco account has reached its spend limit, so we can't add this subscription to your bill. Please pay by Direct Debit instead." },
+  inactive: { title: 'Telco account inactive', backTo: 'payment',
+    message: 'Your telco billing account is inactive, so Charge to Bill is not available. Please pay by Direct Debit, or contact your telco to reactivate the account.' },
+  card_invalid: { title: 'Card declined', backTo: 'payment',
+    message: 'Your bank declined this card. Please choose another card or a bank account.' },
+  card_expired: { title: 'Card expired', backTo: 'payment',
+    message: 'This card has expired. Please choose another card or a bank account.' },
+  timeout: { title: "We couldn't reach the billing system", backTo: 'confirm',
+    message: 'This is usually temporary. Your details are fine. Please try again.' },
+};
+export async function checkEligibility({ eligibility, attempt }) {
+  await wait(1600);
+  const code = eligibility === 'timeout_once' ? (attempt === 1 ? 'timeout' : 'ok') : eligibility;
+  if (code === 'ok') return { ok: true };
+  return { ok: false, code, ...FAILURES[code] };
+}

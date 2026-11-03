@@ -11,6 +11,7 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 | 3 | Rooms synced from the home's ecosystem | For homes powered by Google Home / SmartThings / Apple Home, rooms should come from that system ("Synced from …"), and local room editing turned off. Check each system's developer API for write access. | Idea |
 | 4 | Enable more device types in pairing | Speaker, smart display, light, plug, aircond, lock, doorbell are currently "Coming soon". Only Camera works. | Later |
 | 5 | AI features from the marketing page | AI assistant (plain-language control), suggested routines, smart camera alerts, energy insights. Marketing copy only so far. | Later |
+| 6 | Review eligibility-failure routing | Spend limit / inactive / card declined / expired → back to payment method (failed option disabled). Technical timeout → retry on confirm screen. Never back to TAC or scan. Confirm with business. | Proposed |
 
 ## Done
 
@@ -19,3 +20,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Homes ("structures") with "Powered by" ecosystem label
 - Device pairing flow modelled on Google Home (create home → system → camera → scan → Wi-Fi → room → name)
 - Per-home subscription: TAC → Charge to Bill (telco customer) or Direct Debit → paired-device count → agree
+- First-pairing flow v2: home (default “My home”, Google) → mock QR/serial → compatibility → price rule → agree → TAC → payment → eligibility checks with retry → processing → success (room “My room”)

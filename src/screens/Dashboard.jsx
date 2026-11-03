@@ -6,7 +6,6 @@ import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
 import PairDevice from './PairDevice.jsx';
-import Subscribe from './Subscribe.jsx';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -67,10 +66,6 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
     setToast(`“${r.name}” routine ran`);
   };
 
-  if (pairing && !state.subscription) {
-    return <Subscribe plan={plan} homeName={state.homeName} pairedCount={devices.length} onCancel={() => setPairing(null)}
-      onDone={(subscription) => dispatch({ type: 'setSubscription', subscription })} />;
-  }
   if (pairing) {
     return (
       <PairDevice home={state} presetRoomId={pairing.roomId} onCancel={() => setPairing(null)}
@@ -102,10 +97,12 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
       </header>
 
       <section className="summary">
-        <button className="chip-card" onClick={() => setFilter('all')}>
-          <Icon name="lightbulb" fill={summary.lightsOn > 0} />
-          <span><b>{summary.lightsOn}</b> light{summary.lightsOn === 1 ? '' : 's'} on</span>
-        </button>
+        {devices.some((d) => d.type === 'light') && (
+          <button className="chip-card" onClick={() => setFilter('all')}>
+            <Icon name="lightbulb" fill={summary.lightsOn > 0} />
+            <span><b>{summary.lightsOn}</b> light{summary.lightsOn === 1 ? '' : 's'} on</span>
+          </button>
+        )}
         {summary.thermo && (
           <button className="chip-card" onClick={() => setOpenId(summary.thermo.id)}>
             <Icon name="thermostat" />
