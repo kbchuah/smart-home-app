@@ -419,8 +419,8 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <div><span>Included in {plan.name}</span><b>Up to {quote.included}</b></div>
           {priceUp
             ? <div className="total"><span>Monthly price</span><b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b></div>
-            : <div className="total"><span>Monthly price</span><b>{rm(quote.total)} (no change)</b></div>}
-          <div><span>Billed via</span><b>{home.subscription?.method ?? 'Current method'}</b></div>
+            : <div className="total"><span>Monthly price</span><b>{rm(quote.total)} {isFreeHome ? '(free plan)' : '(no change)'}</b></div>}
+          {isFreeHome ? <div><span>Plan</span><b>Free</b></div> : <div><span>Billed via</span><b>{home.subscription?.method ?? 'Current method'}</b></div>}
         </div>
         {priceUp ? (<>
           <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices. Each extra device is {rm(quote.extraEach)}/month.</p>
@@ -638,9 +638,9 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         </div>
         <div className="summary-box">
           <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
-          <div><span>Devices on home</span><b>{quote.devicesAfter} (up to {quote.included} included)</b></div>
-          <div><span>Monthly price</span>{priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} (no change)</b>}</div>
-          <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>
+          <div><span>Devices on home</span><b>{isFreeHome ? quote.devicesAfter : `${quote.devicesAfter} (up to ${quote.included} included)`}</b></div>
+          <div><span>Monthly price</span>{priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} {isFreeHome ? '(free plan)' : '(no change)'}</b>}</div>
+          {isFreeHome ? <div><span>Plan</span><b>Free</b></div> : <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>}
         </div>
         {homeWifi && ssid !== homeWifi && (
           <div className="alert warn"><Icon name="warning" fill /><span>This camera is on <b>{ssid}</b>, but your other devices are on <b>{homeWifi}</b>. Some features may not work. To fix it, set the camera up again on {homeWifi}.</span></div>
