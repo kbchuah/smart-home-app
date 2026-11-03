@@ -43,6 +43,7 @@ export default function Landing({ plan, onProceed }) {
           <span className="plan-name"><Icon name="auto_awesome" fill /> {plan.name}</span>
           <span className="plan-tagline">{plan.tagline}</span>
           <span className="plan-price">MYR {plan.price}<small>/month</small></span>
+          <span className="plan-extra"><Icon name="add_circle" /><span>{plan.devices} devices included · <b>+MYR {plan.extraDevicePrice}/month</b> for each additional device</span></span>
           <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
         </div>
       </section>
@@ -51,8 +52,8 @@ export default function Landing({ plan, onProceed }) {
         <label className="consent">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
           <span>
-            I understand that the <b>{plan.name}</b> plan, including its AI features, costs <b>MYR {plan.price}/month</b>, supports up to{' '}
-            <b>{plan.devices} devices</b>, renews automatically each month, and can be cancelled anytime.
+            I understand that the <b>{plan.name}</b> plan, including its AI features, costs <b>MYR {plan.price}/month</b>, includes up to{' '}
+            <b>{plan.devices} devices</b> per home with an extra <b>MYR {plan.extraDevicePrice}/month for each additional device</b>, renews automatically each month, and can be cancelled anytime.
           </span>
         </label>
         <label className="consent">

@@ -519,3 +519,6 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
   .wifi-row.warn { background: #3d3214; color: #fde293; }
   .wifi-row.warn > .msr { color: #fdd663; }
 }
+.plan-extra { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; line-height: 1.4; padding: 8px 10px; border-radius: 10px; background: #fef7e0; color: #5f4300; margin: 2px 0 4px; }
+.plan-extra .msr { font-size: 17px; color: #e37400; }
+@media (prefers-color-scheme: dark) { .plan-extra { background: #3d3214; color: #fde293; } .plan-extra .msr { color: #fdd663; } }

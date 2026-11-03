@@ -1,8 +1,8 @@
 export const PLAN = {
-  id: 'premium', name: 'Premium Home', price: 60, devices: 4,
+  id: 'premium', name: 'Premium Home', price: 60, devices: 4, extraDevicePrice: 15, // MYR/month per device beyond `devices`
   tagline: 'Smart home control, powered by AI.',
   perks: [
-    'Up to 4 devices in 1 home',
+    '4 devices included per home',
     'AI home assistant: control devices in plain language',
     'AI-suggested routines based on your habits',
     'Smart camera alerts: people, packages and pets',
