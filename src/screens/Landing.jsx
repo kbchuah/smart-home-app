@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
-import { PLANS } from '../plans.js';
 
 const FEATURES = [
   ['devices', 'All your devices, one app', 'Lights, thermostats, locks, cameras and speakers, room by room.'],
@@ -8,9 +7,8 @@ const FEATURES = [
   ['shield_lock', 'Peace of mind', 'Check your locks and doorbell camera from anywhere.'],
 ];
 
-export default function Landing({ planId, onSelectPlan, onProceed }) {
+export default function Landing({ plan, onProceed }) {
   const [agreed, setAgreed] = useState(false);
-  const plan = PLANS.find((p) => p.id === planId);
 
   return (
     <div className="landing">
@@ -34,18 +32,11 @@ export default function Landing({ planId, onSelectPlan, onProceed }) {
       </section>
 
       <section>
-        <h2 className="plans-title">Choose your plan</h2>
-        <div className="plans" role="radiogroup" aria-label="Subscription plan">
-          {PLANS.map((p) => (
-            <button key={p.id} role="radio" aria-checked={p.id === planId}
-              className={`plan ${p.id === planId ? 'sel' : ''}`} onClick={() => onSelectPlan(p.id)}>
-              {p.popular && <span className="plan-tag">Most popular</span>}
-              <span className="plan-name">{p.name}</span>
-              <span className="plan-price">MYR {p.price}<small>/month</small></span>
-              <ul>{p.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
-              <span className="plan-radio"><Icon name={p.id === planId ? 'radio_button_checked' : 'radio_button_unchecked'} /></span>
-            </button>
-          ))}
+        <h2 className="plans-title">One simple plan</h2>
+        <div className="plan single">
+          <span className="plan-name">{plan.name}</span>
+          <span className="plan-price">MYR {plan.price}<small>/month</small></span>
+          <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
         </div>
       </section>
 
