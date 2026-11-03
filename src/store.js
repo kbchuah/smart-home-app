@@ -62,6 +62,8 @@ function reducer(state, a) {
           : state.devices.filter((d) => d.roomId !== a.id),
       };
     }
+    case 'setWifi':
+      return { ...state, wifi: a.wifi };
     case 'setSubscription':
       return { ...state, subscription: a.subscription };
     case 'reset':

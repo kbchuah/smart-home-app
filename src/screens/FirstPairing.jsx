@@ -298,6 +298,9 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         {homeWifi && (
           <p className="home-tag"><Icon name="wifi" /><span>Your other devices in <b>{homeName}</b> are on <b>{homeWifi}</b>.</span></p>
         )}
+        {isExisting && !homeWifi && home.devices.length > 0 && (
+          <p className="home-tag"><Icon name="wifi" /><span>Choose the same Wi-Fi as your other devices in <b>{homeName}</b>. We'll remember it for next time.</span></p>
+        )}
         <div className="options">
           {WIFI_NETWORKS.map((n) => (
             <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''} ${isTried(`wifi:${n.ssid}`) ? 'tried' : ''}`} onClick={() => { setSsid(n.ssid); setWifiPw(DEMO_WIFI_PW); }}>
@@ -592,7 +595,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <p className="note"><Icon name="edit" /><span>To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
         <button className="btn primary wide" onClick={() => onDone({
           room: { name: roomLabel },
-          device: { type: 'camera', name: deviceName, model: device.model, serial: device.serial, brand: device.brand },
+          device: { type: 'camera', name: deviceName, model: device.model, serial: device.serial, brand: device.brand, wifi: ssid },
           price: quote.total,
         })}>OK</button>
       </div>
@@ -637,7 +640,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <button className="btn primary wide" onClick={() => onDone({
           home: { homeName: homeName.trim(), ecosystem, wifi: ssid },
           room: { name: roomName },
-          device: { type: 'camera', name: deviceName.trim(), model: device.model, serial: device.serial, brand: device.brand },
+          device: { type: 'camera', name: deviceName.trim(), model: device.model, serial: device.serial, brand: device.brand, wifi: ssid },
           subscription,
         })}>OK</button>
       </div>

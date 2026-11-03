@@ -76,6 +76,8 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           let roomId = rooms.find((r) => r.name.toLowerCase() === room.name.toLowerCase())?.id;
           if (!roomId) { roomId = uid('room'); dispatch({ type: 'addRoom', id: roomId, name: room.name }); }
           dispatch({ type: 'addDevice', device: { ...device, roomId } });
+          // Homes created before Wi-Fi was saved learn it from their next device.
+          if (!state.wifi && device.wifi) dispatch({ type: 'setWifi', wifi: device.wifi });
           if (state.subscription && price !== state.subscription.price) {
             dispatch({ type: 'setSubscription', subscription: { ...state.subscription, price } });
           }
