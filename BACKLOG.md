@@ -45,4 +45,3 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Unpair device with fee impact (drop applies from next renewal, current price kept until then; no change within 4 included, free/ending homes, last-device note); demo skip to renewal
 - Renewal dates: Charge to Bill on the telco bill cycle day, Direct Debit on the subscription anniversary, clamped to month end; demo homes have fixed anchors
 - Pro-rated first bill for Charge to Bill (sign-up to first bill cycle date: price × days ÷ days in period); shown on payment option, confirm, success and subscription details
-- Pro-rated mid-cycle increases: (new − current) × days left ÷ days in period, one-off on next bill (both payment methods); shown on price/success and 'On your next bill' in details; cleared at renewal

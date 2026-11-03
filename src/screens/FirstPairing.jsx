@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
 import { PriceChange, PriceSame, PriceNew, PriceFree } from '../components/PriceCards.jsx';
-import ProrateBox, { ProrateIncrease } from '../components/ProrateBox.jsx';
+import ProrateBox from '../components/ProrateBox.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
-  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice, prorateFirstBill, prorateIncrease,
+  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice, prorateFirstBill,
 } from '../mockBackend.js';
 
 // Device pairing, all mocked. Two modes:
@@ -140,8 +140,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
 
   const ddOption = DD_OPTIONS.find((o) => o.id === method);
   // Charge to Bill: the first bill is pro-rated up to the telco bill cycle date.
-  // Existing home: a price increase mid-cycle is pro-rated for the days left in this billing period.
-  const midCharge = isExisting && quote ? prorateIncrease({ from: quote.currentTotal, to: quote.total, sub: home.subscription }) : null;
   const firstBill = method === 'ctb' && customer && quote ? prorateFirstBill({ price: quote.total, cycleDay: customer.billCycleDay }) : null;
   const methodLabel = method === 'ctb' ? 'Charge to Bill' : ddOption ? `Direct Debit · ${ddOption.label}` : '';
   const priceUp = isExisting && !isFreeHome && Boolean(quote) && quote.total > quote.currentTotal;
@@ -418,7 +416,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <h1>Camera is online</h1>
         <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
         {isFreeHome ? <PriceFree /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} />}
-        {priceUp && <ProrateIncrease charge={midCharge} newPrice={quote.total} />}
         <div className="summary-box">
           <div><span>Home</span><b>{homeName}</b></div>
           <div><span>Room</span><b>{roomLabel}{roomPick.id || matchRoom(newRoom) ? '' : ' (new)'}</b></div>
@@ -433,7 +430,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices. Each extra device is {rm(quote.extraEach)}/month.</p>
           <label className="consent">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            <span>I agree that my <b>{plan.name}</b> subscription for <b>{homeName}</b> increases from <b>{rm(quote.currentTotal)}</b> to <b>{rm(quote.total)}/month</b>{midCharge ? <>, with a one-off pro-rated <b>{rm(midCharge.amount)}</b> for the rest of this billing period</> : null}, billed via {home.subscription?.method ?? 'my current payment method'}, starting when this device is paired.</span>
+            <span>I agree that my <b>{plan.name}</b> subscription for <b>{homeName}</b> increases from <b>{rm(quote.currentTotal)}</b> to <b>{rm(quote.total)}/month</b>, billed via {home.subscription?.method ?? 'my current payment method'}, starting when this device is paired.</span>
           </label>
           <Actions onBack={() => setView('room')}><button className="btn primary" disabled={!agreed} onClick={start}>Proceed <Icon name="arrow_forward" /></button></Actions>
         </>) : (<>
@@ -638,7 +635,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <h1>Camera added!</h1>
         <p className="muted"><b>{deviceName}</b> is now in <b>{roomLabel}</b> in <b>{homeName}</b>.</p>
         {isFreeHome ? <PriceFree done /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} done /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} done />}
-        {priceUp && <ProrateIncrease charge={midCharge} newPrice={quote.total} />}
         <div className="summary-box">
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName}</b></div>
@@ -661,7 +657,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           room: { name: roomLabel },
           device: { type: 'camera', name: deviceName, model: device.model, serial: device.serial, brand: device.brand, wifi: ssid },
           price: quote.total,
-          proratedCharge: priceUp ? midCharge : null,
         })}>OK</button>
       </div>
     );
