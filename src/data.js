@@ -22,6 +22,7 @@ const dev = (id, name, type, roomId, extra = {}) => ({
 
 export const DEFAULT_STATE = {
   homeName: 'KB home',
+  wifi: 'unifi-home-5G', // the home's Wi-Fi network; new devices should join it
   ecosystem: 'Google Home Premium',
   subscription: { method: 'Charge to Bill', billingAccount: 'BA-2209-4821', phone: '0123456789' },
   rooms: [
@@ -108,6 +109,7 @@ export const STRUCTURES = {
   kb: DEFAULT_STATE,
   future_kl: {
     homeName: 'Future home, KL',
+    wifi: 'unifi-home-5G',
     ecosystem: 'Google Home Premium',
     subscription: { method: 'Charge to Bill', billingAccount: 'BA-3310-1177', phone: '0198765432' },
     rooms: [{ id: 'living', name: 'Living Room' }, { id: 'kitchen', name: 'Kitchen' }, { id: 'master', name: 'Master Bedroom' }],
@@ -122,6 +124,7 @@ export const STRUCTURES = {
   },
   future_penang: {
     homeName: 'Penang condo',
+    wifi: 'unifi-home-2.4G',
     ecosystem: 'Samsung SmartThings',
     subscription: { method: 'Direct Debit', bank: 'Maybank', phone: '0174441234' },
     rooms: [{ id: 'living', name: 'Living Room' }, { id: 'bedroom', name: 'Bedroom' }],
@@ -135,6 +138,7 @@ export const STRUCTURES = {
   },
   future_office: {
     homeName: 'Office',
+    wifi: 'unifi-home-5G',
     ecosystem: 'Apple Home',
     subscription: { method: 'Direct Debit', bank: 'CIMB Bank', phone: '0165550199' },
     rooms: [{ id: 'work', name: 'Workspace' }, { id: 'meeting', name: 'Meeting Room' }],

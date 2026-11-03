@@ -67,6 +67,7 @@ export function uniqueHomeName(taken, base = PILOT_HOME_NAME) {
 
 export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_ROOM, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
   const isExisting = Boolean(home);
+  const homeWifi = home?.wifi ?? null; // existing homes: the network their devices use
   const demo = useDemo();
   const isTried = useTried();
   const [view, setView] = useState('scan');
@@ -166,6 +167,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
     const r = await checkCompatibility({ ...input, override: demo.compat });
     if (!r.ok) { setCompatError(r); setView('compatFail'); return; }
     setDevice(r.device);
+    if (homeWifi && !ssid) { setSsid(homeWifi); setWifiPw(DEMO_WIFI_PW); }
     setView('wifi');
   });
 
@@ -293,15 +295,22 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo"><Icon name="wifi" /></span>
         <h1>Connect camera to Wi-Fi</h1>
         <p className="muted">Your <b>{device.model}</b> needs Wi-Fi to work. Choose your home network.</p>
+        {homeWifi && (
+          <p className="home-tag"><Icon name="wifi" /><span>Your other devices in <b>{homeName}</b> are on <b>{homeWifi}</b>.</span></p>
+        )}
         <div className="options">
           {WIFI_NETWORKS.map((n) => (
             <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''} ${isTried(`wifi:${n.ssid}`) ? 'tried' : ''}`} onClick={() => { setSsid(n.ssid); setWifiPw(DEMO_WIFI_PW); }}>
               <Icon name={n.icon} />
-              <span className="option-body"><b>{n.ssid}</b><small>Demo: {n.hint}</small></span>
+              <span className="option-body"><b>{n.ssid}</b><small>{homeWifi === n.ssid && <span className="net-tag">Home network</span>}Demo: {n.hint}</small></span>
               {isTried(`wifi:${n.ssid}`) ? <span className="tried-tag"><Icon name="check" /> Tried</span> : <Icon name="lock" className="muted" />}
             </button>
           ))}
         </div>
+        {homeWifi && ssid && ssid !== homeWifi && (
+          <div className="alert warn"><Icon name="warning" fill />
+            <span><b>{ssid} isn't your home network.</b> Your other devices are on <b>{homeWifi}</b>. Devices on different Wi-Fi networks may not work together, so your service might be impacted. You can still continue.</span></div>
+        )}
         {ssid && (
           <label className="field"><span>Password for {ssid}</span>
             <input type="password" autoFocus value={wifiPw} onChange={(e) => setWifiPw(e.target.value)} />
@@ -577,6 +586,9 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
           <div><span>Monthly price</span>{priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} (no change)</b>}</div>
           <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>
         </div>
+        {homeWifi && ssid !== homeWifi && (
+          <div className="alert warn"><Icon name="warning" fill /><span>This camera is on <b>{ssid}</b>, but your other devices are on <b>{homeWifi}</b>. Some features may not work. To fix it, set the camera up again on {homeWifi}.</span></div>
+        )}
         <p className="note"><Icon name="edit" /><span>To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
         <button className="btn primary wide" onClick={() => onDone({
           room: { name: roomLabel },
@@ -623,7 +635,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         </div>
         <p className="note"><Icon name="edit" /><span>Your camera is in <b>{roomName}</b>. To rename your home or rooms, use <b>Home settings</b> (⚙). To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
         <button className="btn primary wide" onClick={() => onDone({
-          home: { homeName: homeName.trim(), ecosystem },
+          home: { homeName: homeName.trim(), ecosystem, wifi: ssid },
           room: { name: roomName },
           device: { type: 'camera', name: deviceName.trim(), model: device.model, serial: device.serial, brand: device.brand },
           subscription,

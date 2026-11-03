@@ -14,7 +14,12 @@ export function createHome(id, state) {
 export function loadHome(id) {
   try {
     const raw = localStorage.getItem(keyFor(id));
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      // Homes saved before the Wi-Fi field existed pick it up from their defaults.
+      if (!saved.wifi && defaultsFor(id)?.wifi) saved.wifi = defaultsFor(id).wifi;
+      return saved;
+    }
   } catch { /* storage unavailable */ }
   return structuredClone(defaultsFor(id));
 }
