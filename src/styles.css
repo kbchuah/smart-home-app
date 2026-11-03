@@ -285,3 +285,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .plan-name .msr { color: var(--primary); }
 .plan-tagline { color: var(--muted); font-size: 14px; margin-top: -4px; }
 .plan li { display: flex; gap: 6px; align-items: flex-start; line-height: 1.35; }
+.region-note { display: block; color: var(--muted); font-size: 14px; margin: -8px 0 14px; }
+.field input[readonly] { background: var(--surface-2); color: var(--muted); }
+.field-hint { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.field-hint .msr { font-size: 16px; }

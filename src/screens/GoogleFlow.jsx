@@ -98,7 +98,11 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
         <p className="muted">We've filled this in from your Google account.</p>
         <label className="field"><span>Name</span><input value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label className="field"><span>Email</span><input value={account.email} readOnly /></label>
-        <label className="field"><span>Country</span><select defaultValue="MY"><option value="MY">Malaysia</option><option value="SG">Singapore</option></select></label>
+        <label className="field">
+          <span>Country</span>
+          <input value="Malaysia" readOnly aria-readonly="true" />
+          <small className="field-hint"><Icon name="info" /> Hearth is only available in Malaysia.</small>
+        </label>
         <button className="btn primary wide" disabled={!name.trim()}>Continue</button>
       </form>
     );

@@ -10,6 +10,7 @@ const FEATURES = [
 
 export default function Landing({ plan, onProceed }) {
   const [agreed, setAgreed] = useState(false);
+  const [inMalaysia, setInMalaysia] = useState(false);
 
   return (
     <div className="landing">
@@ -20,6 +21,7 @@ export default function Landing({ plan, onProceed }) {
 
       <section className="hero">
         <span className="hero-badge"><Icon name="auto_awesome" fill /> Premium Home · with AI</span>
+        <span className="region-note">🇲🇾 Available in Malaysia only</span>
         <h1>A home that <span>thinks ahead.</span></h1>
         <p>Premium Home brings all your smart devices into one app, with built-in AI that understands what you ask, learns your routines and keeps an eye on things while you're away.</p>
       </section>
@@ -51,7 +53,14 @@ export default function Landing({ plan, onProceed }) {
             <b>{plan.devices} devices</b>, renews automatically each month, and can be cancelled anytime.
           </span>
         </label>
-        <button className="btn primary cta" disabled={!agreed} onClick={onProceed}>
+        <label className="consent">
+          <input type="checkbox" checked={inMalaysia} onChange={(e) => setInMalaysia(e.target.checked)} />
+          <span>
+            I confirm that I live in <b>Malaysia</b>. I understand that Hearth is <b>only available in Malaysia</b> and
+            can only be used with a home located in Malaysia.
+          </span>
+        </label>
+        <button className="btn primary cta" disabled={!agreed || !inMalaysia} onClick={onProceed}>
           Agree and continue <Icon name="arrow_forward" />
         </button>
         <p className="fineprint">Demo only. No payment is taken and no data is collected.</p>
