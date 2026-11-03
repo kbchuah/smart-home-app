@@ -27,3 +27,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - TAC failures (incorrect with tries left, expired → resend, 3 wrong → locked 30 min) and telco account check right after TAC (spend limit / inactive → Charge to Bill not offered); Confirm-time check kept as backup
 - TAC lock is account-wide (all mobile numbers) for 30 min, persists across restarting the flow and page reloads; shown from the first pairing step; demo “Clear TAC lock”
 - First pairing: room & name step removed — camera goes to “My room”, named after its model; change later via Home settings (⚙) and the camera's Edit (✏️)
+- Payment: Charge to Bill-eligible customers see only Charge to Bill; Direct Debit shown only when Charge to Bill isn't possible (not telco, blocked after TAC, or fails at Confirm)

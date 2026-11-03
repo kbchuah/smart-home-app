@@ -381,18 +381,20 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
             <span><b>Charge to Bill isn't available: {ctbNotice.title.toLowerCase()}.</b> {ctbNotice.message} Please pay by Direct Debit.</span></div>
         ) : (
           <p className="muted">{customer
-            ? <>You're an existing telco customer. You can add this subscription to your monthly bill.</>
+            ? <>You're an existing telco customer. Your subscription will be added to your monthly telco bill.</>
             : <>We couldn't find a telco account for <b>+60 {fmtPhone(phone)}</b>. Your subscription will be paid by Direct Debit.</>}</p>
         )}
         {customer && (<>
-          <div className="field-label">{ctbNotice ? 'Charge to Bill' : 'Recommended'}</div>
+          <div className="field-label">Charge to Bill</div>
           <div className="options">{opt('ctb', 'receipt_long', 'Charge to Bill', `Billing account ${customer.account} · ${customer.plan}`)}</div>
         </>)}
-        <div className="field-label">Direct Debit</div>
-        <div className="options">
-          {DD_OPTIONS.map((o) => opt(o.id, o.kind === 'card' ? 'credit_card' : 'account_balance', o.label, `Demo: ${o.hint}`))}
-        </div>
-        <small className="field-hint"><Icon name="science" /> Demo only. No real card or bank details are collected.</small>
+        {(!customer || blocked.ctb) && (<>
+          <div className="field-label">Direct Debit</div>
+          <div className="options">
+            {DD_OPTIONS.map((o) => opt(o.id, o.kind === 'card' ? 'credit_card' : 'account_balance', o.label, `Demo: ${o.hint}`))}
+          </div>
+          <small className="field-hint"><Icon name="science" /> Demo only. No real card or bank details are collected.</small>
+        </>)}
         <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!method || blocked[method]} onClick={() => setView('confirm')}>Continue</button></Actions>
       </div>
     );
