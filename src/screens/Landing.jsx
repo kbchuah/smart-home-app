@@ -52,7 +52,7 @@ export default function Landing({ plan, onProceed }) {
           </span>
         </label>
         <button className="btn primary cta" disabled={!agreed} onClick={onProceed}>
-          Proceed <Icon name="arrow_forward" />
+          Agree and continue <Icon name="arrow_forward" />
         </button>
         <p className="fineprint">Demo only. No payment is taken and no data is collected.</p>
       </section>
