@@ -452,3 +452,13 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .pc-new { white-space: nowrap; }
 .pc-new small { margin-left: 2px !important; }
 .pc-prices b { font-size: 24px; }
+.price-change.same { background: #e6f4ea; border-color: #a8dab5; color: #0d652d; }
+.price-change.same .pc-head .msr { color: #1e8e3e; }
+.price-change.same .pc-prices b { color: #137333; }
+.price-change.same .pc-delta { background: #1e8e3e; color: #fff; }
+.pc-sub { display: block; margin-top: 4px; font-size: 12px; opacity: .85; }
+@media (prefers-color-scheme: dark) {
+  .price-change.same { background: #0d3a1f; border-color: #1e5b34; color: #ceead6; }
+  .price-change.same .pc-head .msr, .price-change.same .pc-prices b { color: #81c995; }
+  .price-change.same .pc-delta { background: #81c995; color: #0d3a1f; }
+}

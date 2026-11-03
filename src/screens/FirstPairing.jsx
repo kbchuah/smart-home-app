@@ -62,6 +62,20 @@ function PriceChange({ from, to, done = false }) {
   );
 }
 
+// Highlighted "no change" when the new device is included in the plan.
+function PriceSame({ price, used, included, done = false }) {
+  return (
+    <div className="price-change same" role="status">
+      <div className="pc-head">
+        <span><Icon name="check_circle" fill /> {done ? 'Your monthly price stays the same' : 'No change to your monthly price'}</span>
+        <span className="pc-delta">Included</span>
+      </div>
+      <div className="pc-prices"><span className="pc-new"><b>{rm(price)}</b><small>/month</small></span></div>
+      <small className="pc-sub">{used} of {included} devices included in your plan</small>
+    </div>
+  );
+}
+
 function Actions({ onBack, backLabel = 'Back', children }) {
   return (
     <div className="form-actions">
@@ -382,7 +396,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
         <h1>Camera is online</h1>
         <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
-        {priceUp && <PriceChange from={quote.currentTotal} to={quote.total} />}
+        {priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} />}
         <div className="summary-box">
           <div><span>Home</span><b>{homeName}</b></div>
           <div><span>Room</span><b>{roomLabel}{roomPick.id || matchRoom(newRoom) ? '' : ' (new)'}</b></div>
@@ -401,7 +415,6 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
           </label>
           <Actions onBack={() => setView('room')}><button className="btn primary" disabled={!agreed} onClick={start}>Proceed <Icon name="arrow_forward" /></button></Actions>
         </>) : (<>
-          <p className="note"><Icon name="check" /> This device is included in your current plan.</p>
           <Actions onBack={() => setView('room')}><button className="btn primary" onClick={start}>Add device <Icon name="arrow_forward" /></button></Actions>
         </>)}
       </div>
@@ -577,7 +590,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo ok"><Icon name="celebration" fill /></span>
         <h1>Camera added!</h1>
         <p className="muted"><b>{deviceName}</b> is now in <b>{roomLabel}</b> in <b>{homeName}</b>.</p>
-        {priceUp && <PriceChange from={quote.currentTotal} to={quote.total} done />}
+        {priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} done /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} done />}
         <div className="summary-box">
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName}</b></div>
