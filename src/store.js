@@ -66,6 +66,8 @@ function reducer(state, a) {
       return { ...state, wifi: a.wifi };
     case 'setSubscription':
       return { ...state, subscription: a.subscription };
+    case 'patchSubscription':
+      return { ...state, subscription: { ...state.subscription, ...a.patch } };
     case 'reset':
       return a.defaults ? structuredClone(a.defaults) : state; // homes created in an earlier page session have no defaults
     default:

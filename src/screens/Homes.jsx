@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { loadHome } from '../store.js';
-import { monthlyPrice } from '../mockBackend.js';
+import { monthlyPrice, subStatus } from '../mockBackend.js';
 
 export default function Homes({ user, onOpen, onLogout, onAddHome }) {
   const [toast, setToast] = useState(null);
   const structures = (user?.structures ?? []).map((id) => {
     const h = loadHome(id);
-    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? monthlyPrice(h.devices.length).total : null };
+    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? monthlyPrice(h.devices.length).total : null, status: subStatus(h.subscription) };
   });
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function Homes({ user, onOpen, onLogout, onAddHome }) {
               <span className="structure-icon"><Icon name="home" fill /></span>
               <span className="structure-body">
                 <b>{s.name}</b>
-                <small>{s.rooms} room{s.rooms === 1 ? '' : 's'} · {s.devices} device{s.devices === 1 ? '' : 's'}{s.price ? ` · MYR ${s.price}/month` : ''}{s.billing ? ` · ${s.billing}` : ''}</small>
+                <small>{s.rooms} room{s.rooms === 1 ? '' : 's'} · {s.devices} device{s.devices === 1 ? '' : 's'}{s.status === 'free' ? ' · Free plan' : `${s.price ? ` · MYR ${s.price}/month` : ''}${s.billing ? ` · ${s.billing}` : ''}${s.status === 'cancelling' ? ' · Ending' : ''}`}</small>
                 {s.ecosystem && <span className="ecosystem"><Icon name="hub" /> Powered by {s.ecosystem}</span>}
               </span>
               <Icon name="chevron_right" />

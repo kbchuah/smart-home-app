@@ -8,6 +8,9 @@ import DeviceForm from '../components/DeviceForm.jsx';
 import FirstPairing from './FirstPairing.jsx';
 import SubscriptionCard from '../components/SubscriptionCard.jsx';
 import WifiChange from '../components/WifiChange.jsx';
+import CancelPremium from '../components/CancelPremium.jsx';
+import PremiumFeatures from '../components/PremiumFeatures.jsx';
+import { isPremium, resumePremium } from '../mockBackend.js';
 import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
@@ -25,6 +28,8 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
   const [form, setForm] = useState(null); // { device } | null — edit an existing device
   const [pairing, setPairing] = useState(null); // { roomId? } | null — pair a new device
   const [wifiFor, setWifiFor] = useState(null); // device id whose Wi-Fi is being changed
+  const [cancelling, setCancelling] = useState(null); // { price, endsOn } while the cancel dialog is open
+  const [upgrading, setUpgrading] = useState(false); // free home re-subscribing
   const [showRooms, setShowRooms] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -73,6 +78,14 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
     setToast(`“${r.name}” routine ran`);
   };
 
+  if (upgrading) {
+    // Free home re-subscribes: same billing steps as first pairing (price → TAC → payment).
+    return (
+      <FirstPairing plan={plan} home={state} upgrade account={user?.email} onCancel={() => setUpgrading(false)}
+        onDone={({ subscription }) => { dispatch({ type: 'setSubscription', subscription }); setUpgrading(false); setToast(`${plan.name} is active again`); }} />
+    );
+  }
+
   if (pairing) {
     // Same pairing flow as first pairing, in existing-home mode (no TAC/payment; price re-quoted).
     const presetRoom = rooms.find((r) => r.id === pairing.roomId);
@@ -84,7 +97,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           dispatch({ type: 'addDevice', device: { ...device, roomId } });
           // Homes created before Wi-Fi was saved learn it from their next device.
           if (!state.wifi && device.wifi) dispatch({ type: 'setWifi', wifi: device.wifi });
-          if (state.subscription && price !== state.subscription.price) {
+          if (isPremium(state.subscription) && price !== state.subscription.price) {
             dispatch({ type: 'setSubscription', subscription: { ...state.subscription, price } });
           }
           setPairing(null);
@@ -110,7 +123,15 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         </div>
       </header>
 
-      <SubscriptionCard home={state} />
+      <SubscriptionCard home={state}
+        onCancel={(price, endsOn) => setCancelling({ price, endsOn })}
+        onUndo={async () => { await resumePremium(); dispatch({ type: 'patchSubscription', patch: { status: 'active' } }); setToast('Cancellation undone. Premium continues.'); }}
+        onUpgrade={() => setUpgrading(true)}
+        onEndPeriod={() => { dispatch({ type: 'patchSubscription', patch: { status: 'free' } }); setToast(`${state.homeName} is now on the free plan`); }} />
+      {cancelling && (
+        <CancelPremium home={state} price={cancelling.price} endsOn={cancelling.endsOn} onClose={() => setCancelling(null)}
+          onCancelled={() => dispatch({ type: 'patchSubscription', patch: { status: 'cancelling', renewsOn: new Date(cancelling.endsOn).toISOString() } })} />
+      )}
 
       <section className="summary">
         {devices.some((d) => d.type === 'light') && (
@@ -144,6 +165,11 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           ))}
         </div>
       </section>
+
+      {state.subscription && (
+        <PremiumFeatures premium={isPremium(state.subscription)} onUpgrade={() => setUpgrading(true)}
+          onTry={(f) => setToast(`${f.name} is on for this home`)} />
+      )}
 
       <nav className="filters" aria-label="Filter by room">
         <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All rooms</button>

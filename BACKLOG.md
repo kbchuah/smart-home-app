@@ -41,3 +41,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Subscription card inside each home (plan, monthly charge from device count, included-device meter, payment method; tap for breakdown) and monthly price on the homes list
 - Add device on existing home: home Wi-Fi hint and pre-selection; warning (not a block) when a different network is chosen, repeated on success
 - Device Wi-Fi visibility: per-device network in device details, 'Different Wi-Fi' tile label and home banner, Change Wi-Fi (mock reconnect with failures)
+- Cancel Premium per home (what you lose / keep, ends at billing period, undo), free tier (Premium features locked, devices kept, add devices free), upgrade back via TAC + payment

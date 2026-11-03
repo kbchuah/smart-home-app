@@ -49,3 +49,17 @@ export function PriceNew({ price, included, label = 'Your monthly subscription',
   );
 }
 
+
+// Free plan: adding a device costs nothing.
+export function PriceFree({ done = false }) {
+  return (
+    <div className="price-change same" role="status">
+      <div className="pc-head">
+        <span><Icon name="check_circle" fill /> {done ? 'Added on the free plan' : 'Free plan: no charge'}</span>
+        <span className="pc-delta">Free</span>
+      </div>
+      <div className="pc-prices"><span className="pc-new"><b>MYR 0.00</b><small>/month</small></span></div>
+      <small className="pc-sub">Premium features stay off. Upgrade any time from the subscription card.</small>
+    </div>
+  );
+}

@@ -165,6 +165,7 @@ export async function checkEligibility({ eligibility, attempt }) {
 export const PROCESSING_FAILURES = {
   device: { title: "Couldn't register your camera", message: 'Your camera is online, but we couldn\'t register it to your home.' },
   subscription_new: { title: "Couldn't activate your subscription", message: 'Your camera is registered, but your subscription isn\'t active yet.' },
+  subscription_upgrade: { title: "Couldn't reactivate Premium", message: 'Your home is still on the free plan. Please try again.' },
   subscription_update: { title: "Couldn't update your subscription", message: 'Your camera is registered, but we couldn\'t update your subscription. Your price hasn\'t changed.' },
 };
 // mode: 'auto'/'ok' | 'device_fail_once' | 'sub_fail_once' | 'sub_fail_always'
@@ -175,3 +176,17 @@ export function processingFails({ mode, task, failedBefore }) {
   return false;
 }
 export const supportRef = () => `HRT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+// ---- Subscription lifecycle (per home) ----
+// status: 'active' | 'cancelling' (Premium until renewsOn, then Free) | 'free'
+export const subStatus = (sub) => (sub ? sub.status ?? 'active' : null);
+export const isPremium = (sub) => ['active', 'cancelling'].includes(subStatus(sub));
+// Next billing date: saved on the subscription, else the 1st of next month.
+export function renewsOn(sub) {
+  if (sub?.renewsOn) return new Date(sub.renewsOn);
+  const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+}
+export const oneMonthFromNow = () => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d.toISOString(); };
+export const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+export async function cancelPremium() { await wait(1400); return { ok: true }; }
+export async function resumePremium() { await wait(1000); return { ok: true }; }
