@@ -8,7 +8,7 @@ export function resetAllDemoData() {
 }
 
 export function confirmResetAll() {
-  if (window.confirm('Reset all demo data?\n\nAll homes go back to their original devices and rooms, homes you created are removed, and any TAC lock is cleared. You will be signed out.')) {
+  if (window.confirm('Reset all demo data?\n\nAll homes go back to their original devices and rooms, homes you created are removed, any TAC lock is cleared, and you will be signed out and returned to the marketing page.')) {
     resetAllDemoData();
   }
 }

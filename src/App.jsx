@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Landing from './screens/Landing.jsx';
 import AuthChoice from './screens/AuthChoice.jsx';
 import GoogleFlow from './screens/GoogleFlow.jsx';
@@ -8,18 +8,24 @@ import FirstPairing from './screens/FirstPairing.jsx';
 import { createHome, loadHome } from './store.js';
 import { DEVICE_TYPES, GENERIC_ROUTINES, uid } from './data.js';
 import { PLAN as plan } from './plans.js';
+import { loadSession, saveSession } from './session.js';
+
+// Where a signed-in user lands: their only home, or the homes list.
+const landingFor = (u) => (u?.structures?.length === 1 ? { screen: 'dashboard', id: u.structures[0] } : { screen: 'homes', id: null });
 
 // Screens: landing → auth → signup | login → homes → dashboard
 export default function App() {
-  const [screen, setScreen] = useState('landing');
-  const [user, setUser] = useState(null); // demo: always starts logged out
-  const [structureId, setStructureId] = useState(null);
+  // A saved session skips the marketing page after a refresh.
+  const [user, setUser] = useState(loadSession);
+  const [screen, setScreen] = useState(() => (user ? landingFor(user).screen : 'landing'));
+  const [structureId, setStructureId] = useState(() => (user ? landingFor(user).id : null));
+  useEffect(() => { saveSession(user); }, [user]);
 
   const signedIn = (u) => {
     setUser(u);
     // Only one home? Skip the list and go straight into it.
-    if (u.structures?.length === 1) { setStructureId(u.structures[0]); setScreen('dashboard'); }
-    else setScreen('homes');
+    const to = landingFor(u);
+    setStructureId(to.id); setScreen(to.screen);
   };
   // New user with no home: create the home together with the first paired device.
   const firstDevicePaired = ({ home, room, device, subscription }) => {

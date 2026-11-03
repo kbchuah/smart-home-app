@@ -37,3 +37,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - “Leave setup?” confirmation when exiting the pairing flow mid-way
 - Existing-home add device: Room step (pick existing room with device counts, or create a new one; duplicate names reuse the existing room)
 - “Reset all demo data” on the marketing page and in the Demo simulator (clears all saved homes and TAC locks, signs out)
+- Session kept across refresh (straight into the home, or homes list); cleared by Log out and Reset all demo data

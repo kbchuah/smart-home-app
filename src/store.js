@@ -60,7 +60,7 @@ function reducer(state, a) {
     case 'setSubscription':
       return { ...state, subscription: a.subscription };
     case 'reset':
-      return structuredClone(a.defaults);
+      return a.defaults ? structuredClone(a.defaults) : state; // homes created in an earlier page session have no defaults
     default:
       return state;
   }
