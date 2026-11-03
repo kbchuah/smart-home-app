@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { STRUCTURES, DEVICE_TYPES, matchesTarget, uid } from './data.js';
 
-const keyFor = (id) => `hearth-home-v3-${id}`;
+const keyFor = (id) => `hearth-home-v4-${id}`;
 const CREATED = {}; // homes created during this session (e.g. by a new user)
 const defaultsFor = (id) => STRUCTURES[id] ?? CREATED[id];
 
@@ -55,6 +55,8 @@ function reducer(state, a) {
           : state.devices.filter((d) => d.roomId !== a.id),
       };
     }
+    case 'setSubscription':
+      return { ...state, subscription: a.subscription };
     case 'reset':
       return structuredClone(a.defaults);
     default:

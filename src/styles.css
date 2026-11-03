@@ -339,3 +339,4 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .option.static { cursor: default; }
 .option.static:hover { background: var(--primary-soft); }
 .pair .consent { box-shadow: none; border: 1px solid var(--border); }
+.room-head + .structures, .room-head + .empty-state { margin-top: 12px; }

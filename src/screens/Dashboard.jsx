@@ -16,7 +16,7 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
 
-export default function Dashboard({ structureId, user, plan, pairedCount, onSubscribed, onBack }) {
+export default function Dashboard({ structureId, user, plan, onBack }) {
   const [state, dispatch] = useHome(structureId);
   const { rooms, devices, routines } = state;
   const [filter, setFilter] = useState('all');
@@ -67,8 +67,9 @@ export default function Dashboard({ structureId, user, plan, pairedCount, onSubs
     setToast(`“${r.name}” routine ran`);
   };
 
-  if (pairing && !user?.subscription) {
-    return <Subscribe plan={plan} pairedCount={pairedCount()} onCancel={() => setPairing(null)} onDone={onSubscribed} />;
+  if (pairing && !state.subscription) {
+    return <Subscribe plan={plan} homeName={state.homeName} pairedCount={devices.length} onCancel={() => setPairing(null)}
+      onDone={(subscription) => dispatch({ type: 'setSubscription', subscription })} />;
   }
   if (pairing) {
     return (

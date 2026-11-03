@@ -19,7 +19,7 @@ function Spinner({ label }) {
   return <div className="spinner-wrap"><div className="spinner" /><p>{label}</p></div>;
 }
 
-export default function Subscribe({ plan, pairedCount = 0, onCancel, onDone }) {
+export default function Subscribe({ plan, homeName, pairedCount = 0, onCancel, onDone }) {
   const [view, setView] = useState('phone');
   const [busy, setBusy] = useState(null);
   const [phone, setPhone] = useState('');
@@ -50,7 +50,7 @@ export default function Subscribe({ plan, pairedCount = 0, onCancel, onDone }) {
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (phoneOk) wait('Sending TAC…', 900, () => { setResendIn(30); setView('tac'); }); }}>
         <span className="auth-logo"><Icon name="sms" /></span>
         <h1>Verify your mobile number</h1>
-        <p className="muted">Before adding your first device, we'll set up your <b>{plan.name}</b> subscription. We'll send a TAC to verify your number.</p>
+        <p className="muted">Each home has its own subscription. Before adding the first device to <b>{homeName ?? 'your new home'}</b>, we'll set up its <b>{plan.name}</b> plan. We'll send a TAC to verify the mobile number to bill.</p>
         <label className="field"><span>Mobile number</span>
           <div className="phone-input"><span>+60</span>
             <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789"
@@ -152,6 +152,7 @@ export default function Subscribe({ plan, pairedCount = 0, onCancel, onDone }) {
       <div className="auth-card left">
         <h1>Confirm your subscription</h1>
         <div className="summary-box">
+          <div><span>Home</span><b>{homeName ?? 'New home'}</b></div>
           <div><span>Plan</span><b>{plan.name}</b></div>
           <div><span>Paired devices</span><b>{pairedCount} of {plan.devices}</b></div>
           <div><span>Payment method</span><b>{method}{bank ? ` · ${bank}` : ''}</b></div>
@@ -161,7 +162,7 @@ export default function Subscribe({ plan, pairedCount = 0, onCancel, onDone }) {
         <label className="consent">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
           <span>
-            I agree to pay <b>MYR {plan.price}/month</b> for the {plan.name} plan via <b>{method}</b>
+            I agree to pay <b>MYR {plan.price}/month</b> for the {plan.name} plan for {homeName ?? 'my new home'} via <b>{method}</b>
             {customer ? ` on billing account ${customer.account}` : ` from my ${bank} account`}, starting from my first paired device.
             I can cancel anytime.
           </span>

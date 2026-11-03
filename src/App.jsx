@@ -6,7 +6,7 @@ import Homes from './screens/Homes.jsx';
 import Dashboard from './screens/Dashboard.jsx';
 import PairDevice from './screens/PairDevice.jsx';
 import Subscribe from './screens/Subscribe.jsx';
-import { createHome, loadHome } from './store.js';
+import { createHome } from './store.js';
 import { DEVICE_TYPES, GENERIC_ROUTINES, uid } from './data.js';
 import { PLAN as plan } from './plans.js';
 
@@ -27,17 +27,18 @@ export default function App() {
     const id = uid('home');
     createHome(id, {
       ...home,
+      subscription: pendingSub,
       rooms: [{ id: 'room1', name: room.name }],
       devices: [{ id: uid('d'), ...DEVICE_TYPES[device.type].defaults, ...device, roomId: 'room1' }],
       routines: GENERIC_ROUTINES,
     });
     setUser((u) => ({ ...u, structures: [...u.structures, id] }));
+    setPendingSub(null);
     setStructureId(id);
     setScreen('dashboard');
   };
-  // First pairing needs an active subscription (TAC check → Charge to Bill / Direct Debit → agree).
-  const pairedCount = () => (user?.structures ?? []).reduce((n, id) => n + loadHome(id).devices.length, 0);
-  const subscribed = (subscription) => setUser((u) => ({ ...u, subscription }));
+  // Billing is per home: a new home's first pairing starts with Subscribe (TAC → Charge to Bill / Direct Debit → agree).
+  const [pendingSub, setPendingSub] = useState(null);
   const logout = () => { setUser(null); setScreen('landing'); };
 
   switch (screen) {
@@ -51,15 +52,14 @@ export default function App() {
     case 'login':
       return <GoogleFlow mode={screen} plan={plan} onCancel={() => setScreen('auth')} onDone={signedIn} />;
     case 'homes':
-      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddDevice={() => setScreen(user.subscription ? 'pair' : 'subscribe')} />;
+      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddHome={() => setScreen('subscribe')} />;
     case 'subscribe':
-      return <Subscribe plan={plan} pairedCount={pairedCount()} onCancel={() => setScreen('homes')}
-        onDone={(sub) => { subscribed(sub); setScreen('pair'); }} />;
+      return <Subscribe plan={plan} pairedCount={0} onCancel={() => setScreen('homes')}
+        onDone={(sub) => { setPendingSub(sub); setScreen('pair'); }} />;
     case 'pair':
-      return <PairDevice onCancel={() => setScreen('homes')} onDone={firstDevicePaired} />;
+      return <PairDevice onCancel={() => { setPendingSub(null); setScreen('homes'); }} onDone={firstDevicePaired} />;
     case 'dashboard':
-      return <Dashboard key={structureId} structureId={structureId} user={user} plan={plan}
-        pairedCount={pairedCount} onSubscribed={subscribed} onBack={() => setScreen('homes')} />;
+      return <Dashboard key={structureId} structureId={structureId} user={user} plan={plan} onBack={() => setScreen('homes')} />;
     default:
       return null;
   }

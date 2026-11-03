@@ -23,6 +23,7 @@ const dev = (id, name, type, roomId, extra = {}) => ({
 export const DEFAULT_STATE = {
   homeName: 'KB home',
   ecosystem: 'Google Home Premium',
+  subscription: { method: 'Charge to Bill', billingAccount: 'BA-2209-4821', phone: '0123456789' },
   rooms: [
     { id: 'living', name: 'Living Room' },
     { id: 'kitchen', name: 'Kitchen' },
@@ -108,6 +109,7 @@ export const STRUCTURES = {
   future_kl: {
     homeName: 'Future home, KL',
     ecosystem: 'Google Home Premium',
+    subscription: { method: 'Charge to Bill', billingAccount: 'BA-3310-1177', phone: '0198765432' },
     rooms: [{ id: 'living', name: 'Living Room' }, { id: 'kitchen', name: 'Kitchen' }, { id: 'master', name: 'Master Bedroom' }],
     devices: [
       dev('f1', 'Living Room Lights', 'light', 'living', { on: true, brightness: 60 }),
@@ -121,6 +123,7 @@ export const STRUCTURES = {
   future_penang: {
     homeName: 'Penang condo',
     ecosystem: 'Samsung SmartThings',
+    subscription: { method: 'Direct Debit', bank: 'Maybank', phone: '0174441234' },
     rooms: [{ id: 'living', name: 'Living Room' }, { id: 'bedroom', name: 'Bedroom' }],
     devices: [
       dev('p1', 'Living Room TV', 'tv', 'living'),
@@ -133,6 +136,7 @@ export const STRUCTURES = {
   future_office: {
     homeName: 'Office',
     ecosystem: 'Apple Home',
+    subscription: { method: 'Direct Debit', bank: 'CIMB Bank', phone: '0165550199' },
     rooms: [{ id: 'work', name: 'Workspace' }, { id: 'meeting', name: 'Meeting Room' }],
     devices: [
       dev('o1', 'Desk Lights', 'light', 'work', { on: true, brightness: 90, color: '#ffffff' }),
