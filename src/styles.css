@@ -462,3 +462,13 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
   .price-change.same .pc-head .msr, .price-change.same .pc-prices b { color: #81c995; }
   .price-change.same .pc-delta { background: #81c995; color: #0d3a1f; }
 }
+.price-change.new { background: #e8f0fe; border-color: #aecbfa; color: #174ea6; }
+.price-change.new .pc-head .msr { color: #1a73e8; }
+.price-change.new .pc-prices b { color: #1967d2; }
+.price-change.new .pc-delta { background: #1a73e8; color: #fff; }
+@media (prefers-color-scheme: dark) {
+  .price-change.new { background: #1c2b4a; border-color: #2f4f8a; color: #d2e3fc; }
+  .price-change.new .pc-head .msr, .price-change.new .pc-prices b { color: #8ab4f8; }
+  .price-change.new .pc-delta { background: #8ab4f8; color: #1c2b4a; }
+}
+.pair .price-change { margin: 4px 0; }

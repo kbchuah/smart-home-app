@@ -76,6 +76,20 @@ function PriceSame({ price, used, included, done = false }) {
   );
 }
 
+// Highlighted price for a brand-new subscription (first pairing).
+function PriceNew({ price, included, label = 'Your monthly subscription', badge = 'New subscription' }) {
+  return (
+    <div className="price-change new" role="status">
+      <div className="pc-head">
+        <span><Icon name="workspace_premium" fill /> {label}</span>
+        <span className="pc-delta">{badge}</span>
+      </div>
+      <div className="pc-prices"><span className="pc-new"><b>{rm(price)}</b><small>/month</small></span></div>
+      <small className="pc-sub">Includes up to {included} devices · Billed monthly · Cancel anytime</small>
+    </div>
+  );
+}
+
 function Actions({ onBack, backLabel = 'Back', children }) {
   return (
     <div className="form-actions">
@@ -425,6 +439,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
         <h1>Camera is online</h1>
         <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
+        <PriceNew price={quote.total} included={quote.included} />
         <div className="summary-box">
           <div><span>Home</span><b>{homeName.trim()}</b></div>
           <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter} after pairing</b></div>
@@ -534,6 +549,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
     body = (
       <div className="auth-card left">
         <h1>Confirm and subscribe</h1>
+        <PriceNew price={quote.total} included={quote.included} label="You'll be charged" badge={method === 'ctb' ? 'On your telco bill' : 'Direct Debit'} />
         <div className="summary-box">
           <div><span>Home</span><b>{homeName.trim()}</b></div>
           <div><span>Device</span><b>{device.model}</b></div>
@@ -626,6 +642,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo ok"><Icon name="celebration" fill /></span>
         <h1>You're all set!</h1>
         <p className="muted">Your <b>{plan.name}</b> subscription is <b className="ok-text">active</b>.</p>
+        <PriceNew price={quote.total} included={quote.included} label="Subscription active" badge="Active" />
         <div className="summary-box">
           <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
           <div><span>Plan</span><b>{plan.name}</b></div>
