@@ -85,7 +85,7 @@ export const DEFAULT_STATE = {
 };
 
 // Routines that only use type targets, so they work in any home.
-const GENERIC_ROUTINES = [
+export const GENERIC_ROUTINES = [
   { id: 'r_morning', name: 'Good morning', icon: 'wb_sunny', actions: [
     { target: 'type:light', set: { on: true, brightness: 80 } },
     { target: 'type:thermostat', set: { on: true, target: 22 } },

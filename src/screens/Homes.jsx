@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { loadHome } from '../store.js';
 
-export default function Homes({ user, onOpen, onLogout }) {
+export default function Homes({ user, onOpen, onLogout, onAddDevice }) {
   const [toast, setToast] = useState(null);
   const structures = (user?.structures ?? []).map((id) => {
     const h = loadHome(id);
@@ -35,7 +35,7 @@ export default function Homes({ user, onOpen, onLogout }) {
           <span className="empty-art"><Icon name="add_home" /></span>
           <h2>No homes or devices yet</h2>
           <p className="muted">Add your first device to get started. We'll help you set up your home along the way.</p>
-          <button className="btn primary cta" onClick={() => setToast('Add device flow coming soon')}>
+          <button className="btn primary cta" onClick={onAddDevice}>
             <Icon name="add" /> Add device
           </button>
         </div>

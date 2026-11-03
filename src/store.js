@@ -2,6 +2,13 @@ import { useCallback, useEffect, useReducer } from 'react';
 import { STRUCTURES, DEVICE_TYPES, matchesTarget, uid } from './data.js';
 
 const keyFor = (id) => `hearth-home-v3-${id}`;
+const CREATED = {}; // homes created during this session (e.g. by a new user)
+const defaultsFor = (id) => STRUCTURES[id] ?? CREATED[id];
+
+export function createHome(id, state) {
+  CREATED[id] = state;
+  try { localStorage.setItem(keyFor(id), JSON.stringify(state)); } catch { /* ignore */ }
+}
 
 // Read a home's saved state (or its defaults). Also used for the homes list.
 export function loadHome(id) {
@@ -9,7 +16,7 @@ export function loadHome(id) {
     const raw = localStorage.getItem(keyFor(id));
     if (raw) return JSON.parse(raw);
   } catch { /* storage unavailable */ }
-  return structuredClone(STRUCTURES[id]);
+  return structuredClone(defaultsFor(id));
 }
 
 function reducer(state, a) {
@@ -35,7 +42,7 @@ function reducer(state, a) {
     case 'removeDevice':
       return { ...state, devices: state.devices.filter((d) => d.id !== a.id) };
     case 'addRoom':
-      return { ...state, rooms: [...state.rooms, { id: uid('room'), name: a.name }] };
+      return { ...state, rooms: [...state.rooms, { id: a.id ?? uid('room'), name: a.name }] };
     case 'renameRoom':
       return { ...state, rooms: state.rooms.map((r) => (r.id === a.id ? { ...r, name: a.name } : r)) };
     case 'removeRoom': {
@@ -61,7 +68,7 @@ export function useHome(id) {
     try { localStorage.setItem(keyFor(id), JSON.stringify(state)); } catch { /* ignore */ }
   }, [id, state]);
   const dispatch = useCallback(
-    (a) => rawDispatch(a.type === 'reset' ? { ...a, defaults: STRUCTURES[id] } : a),
+    (a) => rawDispatch(a.type === 'reset' ? { ...a, defaults: defaultsFor(id) } : a),
     [id],
   );
   return [state, dispatch];

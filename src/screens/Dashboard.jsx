@@ -5,6 +5,8 @@ import Icon from '../components/Icon.jsx';
 import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
+import PairDevice from './PairDevice.jsx';
+import { uid } from '../data.js';
 import RoomManager from '../components/RoomManager.jsx';
 import Modal from '../components/Modal.jsx';
 
@@ -18,7 +20,8 @@ export default function Dashboard({ structureId, user, onBack }) {
   const { rooms, devices, routines } = state;
   const [filter, setFilter] = useState('all');
   const [openId, setOpenId] = useState(null);
-  const [form, setForm] = useState(null); // { device? } | null
+  const [form, setForm] = useState(null); // { device } | null — edit an existing device
+  const [pairing, setPairing] = useState(null); // { roomId? } | null — pair a new device
   const [showRooms, setShowRooms] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -62,6 +65,20 @@ export default function Dashboard({ structureId, user, onBack }) {
     dispatch({ type: 'runRoutine', id: r.id });
     setToast(`“${r.name}” routine ran`);
   };
+
+  if (pairing) {
+    return (
+      <PairDevice home={state} presetRoomId={pairing.roomId} onCancel={() => setPairing(null)}
+        onDone={({ room, device }) => {
+          let roomId = room.id;
+          if (!roomId) { roomId = uid('room'); dispatch({ type: 'addRoom', id: roomId, name: room.name }); }
+          dispatch({ type: 'addDevice', device: { ...device, roomId } });
+          setPairing(null);
+          setFilter('all');
+          setToast(`${device.name} added`);
+        }} />
+    );
+  }
 
   return (
     <div className="app">
@@ -124,7 +141,7 @@ export default function Dashboard({ structureId, user, onBack }) {
           <section key={room.id} className="room">
             <div className="room-head">
               <h3 className="section-title">{room.name} <small>{list.length}</small></h3>
-              {list.length > 0 && (
+              {list.some((d) => d.type !== 'lock' && d.type !== 'camera') && (
                 <button className="btn subtle" onClick={() => dispatch({ type: 'roomPower', roomId: room.id, on: !anyOn })}>
                   <Icon name="power_settings_new" /> {anyOn ? 'Turn off all' : 'Turn on all'}
                 </button>
@@ -135,7 +152,7 @@ export default function Dashboard({ structureId, user, onBack }) {
                 {list.map((d) => <DeviceTile key={d.id} device={d} onToggle={toggle} onOpen={setOpenId} />)}
               </div>
             ) : (
-              <button className="empty" onClick={() => setForm({ roomId: room.id })}>
+              <button className="empty" onClick={() => setPairing({ roomId: room.id })}>
                 <Icon name="add_circle" /> Add a device to {room.name}
               </button>
             )}
@@ -143,7 +160,7 @@ export default function Dashboard({ structureId, user, onBack }) {
         );
       })}
 
-      <button className="fab" onClick={() => setForm({ roomId: filter !== 'all' ? filter : undefined })}>
+      <button className="fab" onClick={() => setPairing({ roomId: filter !== 'all' ? filter : undefined })}>
         <Icon name="add" /> Add device
       </button>
 

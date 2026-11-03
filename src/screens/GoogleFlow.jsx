@@ -1,21 +1,10 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import GoogleG from '../components/GoogleG.jsx';
+import Stepper from '../components/Stepper.jsx';
 import { DEMO_USERS } from '../plans.js';
 
 const SIGNUP_STEPS = ['Account', 'Permissions', 'Profile', 'Plan', 'Done'];
-
-function Stepper({ step }) {
-  return (
-    <ol className="stepper-bar" aria-label="Sign-up progress">
-      {SIGNUP_STEPS.map((s, i) => (
-        <li key={s} className={i < step ? 'done' : i === step ? 'current' : ''}>
-          <span>{i < step ? <Icon name="check" /> : i + 1}</span>{s}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function MockGoogleFrame({ children }) {
   return (
@@ -140,7 +129,7 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
   return (
     <div className="auth">
       <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel"><Icon name="close" /></button>
-      {isSignup && step >= 0 && <Stepper step={step} />}
+      {isSignup && step >= 0 && <Stepper steps={SIGNUP_STEPS} step={step} label="Sign-up progress" />}
       {body}
     </div>
   );
