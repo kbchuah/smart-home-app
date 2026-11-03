@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
+import { APP_VERSION, APP_BUILD } from '../version.js';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
 import { clearAllTacLocks, useAnyTacLock } from '../tacLock.js';
 import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES } from '../mockBackend.js';
@@ -24,7 +25,8 @@ export default function DemoPanel() {
       <Icon name="science" fill /> Demo{active > 0 && <span className="demo-badge">{active}</span>}
     </button>
     {open && (
-      <Modal title="Demo simulator" onClose={() => setOpen(false)}>
+      <Modal title="Demo simulator" onClose={() => setOpen(false)}
+        actions={<span className="version-pill" title={`Built ${APP_BUILD}`}>{APP_VERSION}</span>}>
         <div className="segmented demo-tabs">
           <button className={tab === 'simulate' ? 'active' : ''} onClick={() => setTab('simulate')}><Icon name="tune" /> Simulate</button>
           <button className={tab === 'guide' ? 'active' : ''} onClick={() => setTab('guide')}><Icon name="menu_book" /> What does what</button>

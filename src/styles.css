@@ -419,3 +419,5 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .option.tried.sel { opacity: .8; }
 .tried-tag { flex: none; display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: var(--surface-2); color: var(--muted); }
 .tried-tag .msr { font-size: 14px; }
+.version-label { opacity: .7; margin-top: -8px !important; }
+.version-pill { align-self: center; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); margin-right: 4px; }

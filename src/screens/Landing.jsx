@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
+import { APP_VERSION, APP_BUILD } from '../version.js';
 
 const FEATURES = [
   ['auto_awesome', 'Just ask', 'Say “dim the living room and lock the front door” and your AI assistant does it.'],
@@ -64,6 +65,7 @@ export default function Landing({ plan, onProceed }) {
           Agree and continue <Icon name="arrow_forward" />
         </button>
         <p className="fineprint">Demo only. No payment is taken and no data is collected.</p>
+        <p className="fineprint version-label" title={APP_BUILD}>{APP_VERSION} · built {APP_BUILD}</p>
       </section>
     </div>
   );
