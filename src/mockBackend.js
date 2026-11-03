@@ -35,6 +35,26 @@ export async function checkCompatibility({ serial, qr, override = 'auto' }) {
   return { ok: false, reason: "We couldn't find a compatible camera with that serial number. Check the number and try again." };
 }
 
+// ---- Wi-Fi: camera joins the network and must come online before we bill ----
+export const WIFI_NETWORKS = [
+  { ssid: 'unifi-home-5G', icon: 'wifi', hint: 'Passes', result: 'ok' },
+  { ssid: 'unifi-home-2.4G', icon: 'wifi', hint: 'Passes', result: 'ok' },
+  { ssid: 'TIME-Fibre-8821', icon: 'wifi_2_bar', hint: 'Connects, but no internet', result: 'no_internet' },
+  { ssid: 'Neighbour_Guest', icon: 'wifi_1_bar', hint: 'Signal too weak', result: 'weak_signal' },
+];
+export const WIFI_FAILURES = {
+  wrong_password: { title: 'Wrong Wi-Fi password', message: "The camera couldn't join the network with that password. Check the password and try again.", actions: ['password', 'network'] },
+  weak_signal: { title: 'Wi-Fi signal too weak', message: 'The camera is too far from your router. Move it closer, or choose another network.', actions: ['retry', 'network'] },
+  no_internet: { title: 'Camera is offline', message: "The camera joined the network but can't reach the internet. Check your router, then try again.", actions: ['retry', 'network'] },
+};
+// Demo rule: passwords shorter than 8 characters are "wrong".
+export async function connectWifi({ ssid, password, override = 'auto' }) {
+  await wait(1500);
+  const net = WIFI_NETWORKS.find((n) => n.ssid === ssid);
+  const code = override !== 'auto' ? override : password.length < 8 ? 'wrong_password' : net?.result ?? 'ok';
+  return code === 'ok' ? { ok: true } : { ok: false, code, ...WIFI_FAILURES[code] };
+}
+
 // ---- Pricing business rule ----
 // Base price covers up to PLAN.devices devices per home; each extra device adds EXTRA_DEVICE_PRICE.
 export const EXTRA_DEVICE_PRICE = 15;

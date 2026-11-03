@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
-import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES } from '../mockBackend.js';
+import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES } from '../mockBackend.js';
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
 const ELIG_TEXT = { ok: 'Passes', spend_limit: 'Spend limit reached', inactive: 'Account inactive', timeout_once: 'Timeout on 1st try, then passes' };
@@ -55,6 +55,16 @@ export default function DemoPanel() {
               <tr><td>NC-IW-11002</td><td>Registered to another account</td></tr>
               <tr><td>Anything else</td><td>Not found</td></tr>
             </tbody></table>
+            <h4>Wi-Fi networks (password: 8+ characters, shorter = wrong password)</h4>
+            <table><tbody>
+              {WIFI_NETWORKS.map((n) => <tr key={n.ssid}><td>{n.ssid}</td><td>{n.hint}</td></tr>)}
+            </tbody></table>
+            <h4>Wi-Fi failures: what the user sees</h4>
+            <table className="fail-table"><thead><tr><th>Failure</th><th>Message</th><th>Options</th></tr></thead><tbody>
+              {Object.entries(WIFI_FAILURES).map(([k, f]) => <tr key={k}><td><b>{f.title}</b></td><td>{f.message}</td>
+                <td>{f.actions.map((a) => ({ password: 'Re-enter password', network: 'Choose another network', retry: 'Try again' }[a])).join(' · ')}</td></tr>)}
+            </tbody></table>
+            <p className="note"><Icon name="info" /> Wi-Fi is checked before pricing and payment, so customers are only billed for a camera that's online.</p>
             <h4>Mobile numbers (TAC: any 6 digits)</h4>
             <table><tbody>
               {Object.entries(TELCO_CUSTOMERS).map(([n, c]) => <tr key={n}><td>{fmtPhone(n)}</td><td>Telco customer · Charge to Bill: {ELIG_TEXT[c.eligibility]}</td></tr>)}

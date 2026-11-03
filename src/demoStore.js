@@ -1,7 +1,7 @@
 // Demo simulator settings: force outcomes of the mocked backend checks.
 import { useSyncExternalStore } from 'react';
 
-export const DEMO_DEFAULTS = { scan: 'auto', compat: 'auto', eligibility: 'auto' };
+export const DEMO_DEFAULTS = { scan: 'auto', compat: 'auto', wifi: 'auto', eligibility: 'auto' };
 let settings = { ...DEMO_DEFAULTS };
 const listeners = new Set();
 
@@ -19,6 +19,13 @@ export const DEMO_CONTROLS = [
     ['pass', 'Pass'],
     ['incompatible', 'Fail: device not compatible'],
     ['registered', 'Fail: registered to another account'],
+  ] },
+  { key: 'wifi', label: 'Wi-Fi connection', options: [
+    ['auto', 'Use the network / password I pick'],
+    ['ok', 'Pass'],
+    ['wrong_password', 'Fail: wrong password'],
+    ['weak_signal', 'Fail: signal too weak'],
+    ['no_internet', 'Fail: camera offline (no internet)'],
   ] },
   { key: 'eligibility', label: 'Billing eligibility check', options: [
     ['auto', 'Use the number / payment option I pick'],

@@ -384,3 +384,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .demo-guide td:first-child { white-space: nowrap; }
 .fail-table td:first-child { white-space: normal !important; min-width: 90px; }
 .pair { padding-bottom: 80px; }
+.demo-fab { top: 12px; right: 12px; bottom: auto; padding: 8px 14px; }
+.stepper-bar li { white-space: nowrap; }
+.summary-box div.sb-title > span { flex: none; }
+.pair { padding-bottom: 32px; }

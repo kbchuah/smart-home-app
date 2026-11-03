@@ -22,3 +22,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - First-pairing flow v2: home (default “My home”, Google) → mock QR/serial → compatibility → price rule → agree → TAC → payment → eligibility checks with retry → processing → success (room “My room”)
 - Eligibility-failure routing approved: spend limit / inactive / card declined / expired → payment method (failed option disabled); timeout → retry on confirm. Never back to TAC or scan.
 - Demo simulator panel (force scan / compatibility / billing outcomes) + “What does what” reference
+- First pairing: Wi-Fi connect before pricing/billing (wrong password / weak signal / offline → retry or choose network); room & name after activation (defaults: “My room”, model name)

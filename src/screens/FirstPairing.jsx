@@ -5,17 +5,18 @@ import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo } from '../demoStore.js';
 import { ECOSYSTEMS } from './PairDevice.jsx';
 import {
-  QR_CODES, DD_OPTIONS, checkCompatibility, quotePrice, lookupCustomer, checkEligibility, wait,
+  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, quotePrice, lookupCustomer, checkEligibility, wait,
 } from '../mockBackend.js';
 
 // First device pairing into a NEW home (structure), all mocked:
 // create home → scan QR (or key in serial) → compatibility check → price quote → agree
 // → TAC → Charge to Bill | Direct Debit → confirm → eligibility check → processing → success
 
-const STEPS = ['Home', 'Device', 'Price', 'Verify', 'Payment', 'Done'];
-const STEP_OF = { home: 0, scan: 1, serial: 1, scanFail: 1, compatFail: 1, price: 2, phone: 3, tac: 3,
-  payment: 4, confirm: 4, eligFail: 4, processing: 5, success: 5 };
+const STEPS = ['Home', 'Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Room', 'Done'];
+const STEP_OF = { home: 0, scan: 1, serial: 1, scanFail: 1, compatFail: 1, wifi: 2, wifiFail: 2, price: 3, phone: 4, tac: 4,
+  payment: 5, confirm: 5, eligFail: 5, processing: 5, roomName: 6, success: 7 };
 const DEFAULT_ROOM = 'My room';
+const ROOM_SUGGESTIONS = ['Living Room', 'Front Door', 'Porch', 'Garage', 'Backyard', 'Kitchen', 'Bedroom', 'Hallway'];
 
 const digits = (v) => v.replace(/\D/g, '');
 const fmtPhone = (n) => (n.length > 3 ? `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n).trim();
@@ -61,8 +62,17 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
   const [blocked, setBlocked] = useState({}); // method -> reason it failed eligibility
   const [attempts, setAttempts] = useState(0);
   const [eligError, setEligError] = useState(null);
+  // wi-fi
+  const [ssid, setSsid] = useState(null);
+  const [wifiPw, setWifiPw] = useState('');
+  const [wifiError, setWifiError] = useState(null);
   // processing
   const [doneTasks, setDoneTasks] = useState(0);
+  // room & name (after activation)
+  const [room, setRoom] = useState(DEFAULT_ROOM);
+  const [customRoom, setCustomRoom] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [nameEdited, setNameEdited] = useState(false);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -76,7 +86,6 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
   const methodLabel = method === 'ctb' ? 'Charge to Bill' : ddOption ? `Direct Debit · ${ddOption.label}` : '';
   const tasks = [
     `Creating ${homeName.trim()} (${ecosystem})`,
-    `Adding room “${DEFAULT_ROOM}”`,
     `Registering ${device?.model ?? 'camera'}`,
     `Activating ${plan.name} subscription`,
   ];
@@ -84,15 +93,24 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
   // Processing: tick tasks one by one, then show success.
   useEffect(() => {
     if (view !== 'processing') return;
-    if (doneTasks >= tasks.length) { const t = setTimeout(() => setView('success'), 500); return () => clearTimeout(t); }
+    if (doneTasks >= tasks.length) { const t = setTimeout(() => { setDeviceName(device.model); setView('roomName'); }, 500); return () => clearTimeout(t); }
     const t = setTimeout(() => setDoneTasks((n) => n + 1), 800);
     return () => clearTimeout(t);
-  }, [view, doneTasks, tasks.length]);
+  }, [view, doneTasks, tasks.length, device]);
 
   const verifyDevice = (input) => run('Checking device compatibility…', async () => {
     const r = await checkCompatibility({ ...input, override: demo.compat });
     if (!r.ok) { setCompatError(r.reason); setView('compatFail'); return; }
     setDevice(r.device);
+    setView('wifi');
+  });
+
+  // Camera must be online before we quote and bill.
+  const joinWifi = () => run(`Connecting camera to ${ssid}…`, async () => {
+    const r = await connectWifi({ ssid, password: wifiPw, override: demo.wifi });
+    if (!r.ok) { setWifiError(r); setView('wifiFail'); return; }
+    setBusy('Camera is online. Checking for updates…');
+    await wait(1000);
     setBusy(`Checking devices on ${homeName.trim()}…`);
     setQuote(await quotePrice({ structureDeviceCount: 0 })); // new home: backend returns 0 devices
     setView('price');
@@ -180,12 +198,50 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
         <button className="btn outline wide" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number</button>
       </div>
     );
+  } else if (view === 'wifi') {
+    body = (
+      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ssid) joinWifi(); }}>
+        <span className="auth-logo"><Icon name="wifi" /></span>
+        <h1>Connect camera to Wi-Fi</h1>
+        <p className="muted">Your <b>{device.model}</b> needs Wi-Fi to work. Choose your home network.</p>
+        <div className="options">
+          {WIFI_NETWORKS.map((n) => (
+            <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''}`} onClick={() => setSsid(n.ssid)}>
+              <Icon name={n.icon} />
+              <span className="option-body"><b>{n.ssid}</b><small>Demo: {n.hint}</small></span>
+              <Icon name="lock" className="muted" />
+            </button>
+          ))}
+        </div>
+        {ssid && (
+          <label className="field"><span>Password for {ssid}</span>
+            <input type="password" autoFocus value={wifiPw} onChange={(e) => setWifiPw(e.target.value)} />
+            <small className="field-hint"><Icon name="science" /> Demo: 8+ characters connects; shorter is a wrong password. Not saved.</small></label>
+        )}
+        <Actions onBack={() => setView('scan')}><button className="btn primary" disabled={!ssid || !wifiPw}>Connect</button></Actions>
+      </form>
+    );
+  } else if (view === 'wifiFail') {
+    const act = { password: ['Re-enter password', 'key', () => { setWifiPw(''); setView('wifi'); }],
+      network: ['Choose another network', 'wifi_find', () => { setSsid(null); setWifiPw(''); setView('wifi'); }],
+      retry: ['Try again', 'refresh', joinWifi] };
+    body = (
+      <div className="auth-card">
+        <span className="auth-logo err"><Icon name="wifi_off" /></span>
+        <h1>{wifiError.title}</h1>
+        <p className="muted">{wifiError.message}</p>
+        {wifiError.actions.map((a, i) => (
+          <button key={a} className={`btn wide ${i === 0 ? 'primary' : 'outline'}`} onClick={act[a][2]}><Icon name={act[a][1]} /> {act[a][0]}</button>
+        ))}
+        <p className="note"><Icon name="info" /> You haven't been charged. Billing only starts once your camera is online.</p>
+      </div>
+    );
   } else if (view === 'price') {
     body = (
       <div className="auth-card left">
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
-        <h1>Camera is compatible</h1>
-        <p className="muted"><b>{device.model}</b> · SN {device.serial}</p>
+        <h1>Camera is online</h1>
+        <p className="muted"><b>{device.model}</b> · SN {device.serial} · connected to {ssid}</p>
         <div className="summary-box">
           <div><span>Home</span><b>{homeName.trim()}</b></div>
           <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter} after pairing</b></div>
@@ -198,7 +254,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
           <span>I agree to subscribe to <b>{plan.name}</b> for <b>{homeName.trim()}</b> at <b>{rm(quote.total)}/month</b>, starting when this device is paired. I can cancel anytime.</span>
         </label>
-        <Actions onBack={() => setView('scan')}><button className="btn primary" disabled={!agreed} onClick={() => setView('phone')}>Proceed <Icon name="arrow_forward" /></button></Actions>
+        <Actions onBack={() => setView('wifi')}><button className="btn primary" disabled={!agreed} onClick={() => setView('phone')}>Proceed <Icon name="arrow_forward" /></button></Actions>
       </div>
     );
   } else if (view === 'phone') {
@@ -312,7 +368,37 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
         </ul>
       </div>
     );
+  } else if (view === 'roomName') {
+    const pick = (r) => { setRoom(r); setCustomRoom(''); if (!nameEdited) setDeviceName(r === DEFAULT_ROOM ? device.model : `${r} camera`); };
+    const finalRoom = customRoom.trim() || room;
+    body = (
+      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (deviceName.trim() && finalRoom) setView('success'); }}>
+        <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
+        <h1>Subscription active. Where is your camera?</h1>
+        <p className="muted">Choose a room and name for your camera, or keep the defaults. You can change these later.</p>
+        <div className="field-label">Room</div>
+        <div className="chips">
+          {[DEFAULT_ROOM, ...ROOM_SUGGESTIONS].map((r) => (
+            <button type="button" key={r} className={!customRoom.trim() && room === r ? 'sel' : ''} onClick={() => pick(r)}>{r}</button>
+          ))}
+        </div>
+        <label className="field"><span>Or add a custom room</span>
+          <input value={customRoom} placeholder="e.g. Car porch" onChange={(e) => {
+            setCustomRoom(e.target.value);
+            if (!nameEdited) setDeviceName(e.target.value.trim() ? `${e.target.value.trim()} camera` : device.model);
+          }} /></label>
+        <label className="field"><span>Camera name</span>
+          <input value={deviceName} onChange={(e) => { setDeviceName(e.target.value); setNameEdited(true); }} />
+          <small className="field-hint"><Icon name="info" /> Shown on your home screen and used for voice commands.</small></label>
+        <div className="form-actions">
+          <button type="button" className="btn" onClick={() => { setRoom(DEFAULT_ROOM); setCustomRoom(''); setDeviceName(device.model); setView('success'); }}>Use defaults</button>
+          <span className="spacer" />
+          <button className="btn primary" disabled={!deviceName.trim() || !finalRoom}>Save</button>
+        </div>
+      </form>
+    );
   } else {
+    const roomName = customRoom.trim() || room;
     const subscription = {
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
       detail: method === 'ctb' ? customer.account : ddOption.label,
@@ -335,18 +421,20 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
           <div className="sb-title"><Icon name="home" /> Home</div>
           <div><span>Name</span><b>{homeName.trim()}</b></div>
           <div><span>Powered by</span><b>{ecosystem}</b></div>
-          <div><span>Room</span><b>{DEFAULT_ROOM}</b></div>
+          <div><span>Room</span><b>{roomName}</b></div>
         </div>
         <div className="summary-box">
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
-          <div><span>Device</span><b>{device.model}</b></div>
+          <div><span>Name</span><b>{deviceName.trim()}</b></div>
+          <div><span>Model</span><b>{device.model}</b></div>
+          <div><span>Wi-Fi</span><b>{ssid}</b></div>
           <div><span>Serial number</span><b>{device.serial}</b></div>
           <div><span>Devices on home</span><b>{quote.devicesAfter} of {quote.included}</b></div>
         </div>
         <button className="btn primary wide" onClick={() => onDone({
           home: { homeName: homeName.trim(), ecosystem },
-          room: { name: DEFAULT_ROOM },
-          device: { type: 'camera', name: device.model, model: device.model, serial: device.serial },
+          room: { name: roomName },
+          device: { type: 'camera', name: deviceName.trim(), model: device.model, serial: device.serial },
           subscription,
         })}>OK</button>
       </div>
@@ -355,7 +443,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
 
   return (
     <div className="auth pair">
-      {!['processing', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel setup"><Icon name="close" /></button>}
+      {!['processing', 'roomName', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={onCancel} aria-label="Cancel setup"><Icon name="close" /></button>}
       <Stepper steps={STEPS} step={STEP_OF[view]} label="Setup progress" />
       {body}
       <DemoPanel />
