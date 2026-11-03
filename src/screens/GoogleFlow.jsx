@@ -110,10 +110,11 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
           <div><span>Plan</span><b>{plan.name}</b></div>
           <div><span>Devices</span><b>Up to {plan.devices}</b></div>
           <div><span>Billing</span><b>Monthly</b></div>
-          <div className="total"><span>Due today</span><b>MYR {plan.price}.00</b></div>
+          <div><span>Price</span><b>MYR {plan.price}/month</b></div>
+          <div className="total"><span>Due today</span><b>MYR 0.00</b></div>
         </div>
-        <div className="pay-method"><Icon name="credit_card" /> Demo card •••• 4242 <span className="demo-pill">Mock</span></div>
-        <button className="btn primary wide" onClick={() => next(1200)}>Subscribe · MYR {plan.price}/month</button>
+        <p className="note"><Icon name="info" /> No payment needed now. Set up your home first — you'll add a payment method later.</p>
+        <button className="btn primary wide" onClick={() => next(1000)}>Confirm plan &amp; continue</button>
       </div>
     );
   } else {
@@ -121,7 +122,7 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
       <div className="auth-card">
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
         <h1>You're all set, {name.trim()}!</h1>
-        <p className="muted">Your <b>{plan.name}</b> plan is active. Let's set up your home.</p>
+        <p className="muted">Your <b>{plan.name}</b> plan is selected. Let's set up your home.</p>
         <button className="btn primary wide" onClick={() => onDone({ ...account, name: name.trim(), initials: name.trim()[0].toUpperCase(), plan: plan.name })}>
           Go to my home <Icon name="arrow_forward" />
         </button>

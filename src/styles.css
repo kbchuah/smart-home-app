@@ -272,3 +272,10 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .structure-body { flex: 1; }
 .structure-body b { display: block; font-size: 17px; font-weight: 500; }
 .structure-body small { color: var(--muted); }
+.note { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; color: var(--muted); margin: 4px 0 8px !important; }
+.note .msr { font-size: 18px; color: var(--primary); }
+@media (max-width: 560px) {
+  .stepper-bar { flex-wrap: nowrap; }
+  .stepper-bar li:not(.current) { font-size: 0; gap: 0; }
+  .stepper-bar li + li::before { width: 12px; }
+}
