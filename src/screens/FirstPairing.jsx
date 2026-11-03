@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
+import { PriceChange, PriceSame, PriceNew } from '../components/PriceCards.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo, markTried, useTried } from '../demoStore.js';
@@ -43,51 +44,6 @@ const rm = (n) => `MYR ${n.toFixed(2)}`;
 
 function Spinner({ label }) {
   return <div className="spinner-wrap"><div className="spinner" /><p>{label}</p></div>;
-}
-
-// Highlighted monthly price change (existing homes, 5th device onwards).
-function PriceChange({ from, to, done = false }) {
-  return (
-    <div className="price-change" role="status">
-      <div className="pc-head">
-        <span><Icon name="trending_up" /> {done ? 'Your monthly price is now' : 'Your monthly price will increase'}</span>
-        <span className="pc-delta">+{rm(to - from)}</span>
-      </div>
-      <div className="pc-prices">
-        <s>{rm(from)}</s>
-        <Icon name="arrow_forward" />
-        <span className="pc-new"><b>{rm(to)}</b><small>/month</small></span>
-      </div>
-    </div>
-  );
-}
-
-// Highlighted "no change" when the new device is included in the plan.
-function PriceSame({ price, used, included, done = false }) {
-  return (
-    <div className="price-change same" role="status">
-      <div className="pc-head">
-        <span><Icon name="check_circle" fill /> {done ? 'Your monthly price stays the same' : 'No change to your monthly price'}</span>
-        <span className="pc-delta">Included</span>
-      </div>
-      <div className="pc-prices"><span className="pc-new"><b>{rm(price)}</b><small>/month</small></span></div>
-      <small className="pc-sub">{used} of {included} devices included in your plan</small>
-    </div>
-  );
-}
-
-// Highlighted price for a brand-new subscription (first pairing).
-function PriceNew({ price, included, label = 'Your monthly subscription', badge = 'New subscription' }) {
-  return (
-    <div className="price-change new" role="status">
-      <div className="pc-head">
-        <span><Icon name="workspace_premium" fill /> {label}</span>
-        <span className="pc-delta">{badge}</span>
-      </div>
-      <div className="pc-prices"><span className="pc-new"><b>{rm(price)}</b><small>/month</small></span></div>
-      <small className="pc-sub">Includes up to {included} devices · Billed monthly · Cancel anytime</small>
-    </div>
-  );
 }
 
 function Actions({ onBack, backLabel = 'Back', children }) {

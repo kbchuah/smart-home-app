@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import GoogleG from '../components/GoogleG.jsx';
 import Stepper from '../components/Stepper.jsx';
+import { PriceNew } from '../components/PriceCards.jsx';
 import { DEMO_USERS } from '../plans.js';
 
 const SIGNUP_STEPS = ['Account', 'Permissions', 'Profile', 'Plan', 'Done'];
@@ -102,14 +103,15 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
     body = (
       <div className="auth-card left">
         <h1>Confirm your plan</h1>
+        <PriceNew price={plan.price} included={plan.devices} label={`${plan.name} plan`} badge="MYR 0.00 today"
+          sub="Nothing to pay today. Billing starts when you pair your first device." />
         <div className="summary-box">
           <div><span>Plan</span><b>{plan.name}</b></div>
           <div><span>Devices</span><b>Up to {plan.devices}</b></div>
           <div><span>Billing</span><b>Monthly</b></div>
-          <div><span>Price</span><b>MYR {plan.price}/month</b></div>
           <div className="total"><span>Due today</span><b>MYR 0.00</b></div>
         </div>
-        <p className="note"><Icon name="info" /> No payment needed now. Set up your home first — you'll add a payment method later.</p>
+        <p className="note"><Icon name="info" /><span>You'll choose how to pay (Charge to Bill or Direct Debit) when you add your first device.</span></p>
         <button className="btn primary wide" onClick={() => next(1000)}>Confirm plan &amp; continue</button>
       </div>
     );
