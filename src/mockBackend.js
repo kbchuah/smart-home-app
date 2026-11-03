@@ -106,7 +106,8 @@ export const TELCO_CUSTOMERS = {
   '0121111111': { name: 'Aisyah', account: 'BA-1001-0001', plan: 'Postpaid 68', status: 'spend_limit', eligibility: 'spend_limit' },
   '0122222222': { name: 'Raj', account: 'BA-1002-0002', plan: 'Postpaid 48', status: 'inactive', eligibility: 'inactive' },
   '0123333333': { name: 'Mei Ling', account: 'BA-1003-0003', plan: 'Postpaid 128', status: 'ok', eligibility: 'timeout_once' },
-  '0124444444': { name: 'Farid', account: 'BA-1004-0004', plan: 'Postpaid 58', status: 'ok', eligibility: 'spend_limit' },
+  '0124444444': { name: 'Farid', account: 'BA-1004-0004', plan: 'Postpaid 58', status: 'ok', eligibility: 'spend_limit',
+    demoNote: 'Account changes before Confirm (rare): fine after TAC, so Charge to Bill is offered; by Confirm the spend limit is reached (e.g. another charge posted) → back to payment method, Direct Debit only' },
 };
 export const TELCO_PRECHECK = {
   spend_limit: { title: 'Spend limit reached', message: 'Your telco account has reached its spend limit.' },

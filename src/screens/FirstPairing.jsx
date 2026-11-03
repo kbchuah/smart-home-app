@@ -313,7 +313,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
             <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789" onChange={(e) => setPhone(digits(e.target.value).slice(0, 11))} /></div></label>
         <div className="demo-hint"><Icon name="science" /><span>
           Demo numbers:{' '}
-          {[['0123456789', 'telco, Charge to Bill OK'], ['0121111111', 'telco, spend limit (found after TAC)'], ['0122222222', 'telco, inactive (found after TAC)'], ['0124444444', 'telco, spend limit at Confirm'], ['0123333333', 'telco, timeout once at Confirm']].map(([n, l]) => (
+          {[['0123456789', 'telco, Charge to Bill OK'], ['0121111111', 'telco, spend limit (found after TAC)'], ['0122222222', 'telco, inactive (found after TAC)'], ['0124444444', 'telco, account changes before Confirm (rare)'], ['0123333333', 'telco, timeout once at Confirm']].map(([n, l]) => (
             <span key={n} className="demo-num"><button type="button" onClick={() => setPhone(n)}>{fmtPhone(n)}</button> {l}</span>
           ))}
           <span className="demo-num">Any other number: not a telco customer → Direct Debit</span>

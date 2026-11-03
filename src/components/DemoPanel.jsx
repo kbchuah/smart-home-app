@@ -7,7 +7,7 @@ import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FA
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
 const ELIG_TEXT = { ok: 'passes', spend_limit: 'spend limit reached', inactive: 'account inactive', timeout_once: 'timeout on 1st try, then passes' };
-const telcoText = (c) => (c.status !== 'ok'
+const telcoText = (c) => c.demoNote ?? (c.status !== 'ok'
   ? `After TAC: ${ELIG_TEXT[c.status]} → Charge to Bill not offered, Direct Debit only`
   : `After TAC: Charge to Bill offered · At Confirm: ${ELIG_TEXT[c.eligibility]}`);
 const BACK_TO = { payment: 'Payment method screen (failed option disabled)', confirm: 'Stays on confirm screen: “Try again”' };
