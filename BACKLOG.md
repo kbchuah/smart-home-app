@@ -44,4 +44,3 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Cancel Premium per home (what you lose / keep, ends at billing period, undo), free tier (Premium features locked, devices kept, add devices free), upgrade back via TAC + payment
 - Unpair device with fee impact (drop applies from next renewal, current price kept until then; no change within 4 included, free/ending homes, last-device note); demo skip to renewal
 - Renewal dates: Charge to Bill on the telco bill cycle day, Direct Debit on the subscription anniversary, clamped to month end; demo homes have fixed anchors
-- Pro-rated first bill for Charge to Bill (sign-up to first bill cycle date: price × days ÷ days in period); shown on payment option, confirm, success and subscription details

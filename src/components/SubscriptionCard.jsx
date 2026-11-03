@@ -3,7 +3,6 @@ import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { rm } from './PriceCards.jsx';
 import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice, renewalRule } from '../mockBackend.js';
-import ProrateBox from './ProrateBox.jsx';
 import { PLAN } from '../plans.js';
 
 const fmtPhone = (n) => (n && n.length > 3 ? `+60 ${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n);
@@ -69,7 +68,6 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
           <div className="total"><span>{pendingDrop ? 'Charged now' : 'Monthly charge'}</span><b>{rm(billed)}</b></div>
           {pendingDrop && <div className="next-row"><span>From {fmtDate(endsOn)}</span><b>{rm(next)}</b></div>}
         </div>
-        {status === 'active' && sub.firstBill && !sub.lastRenewal && new Date() < new Date(sub.firstBill.until) && <ProrateBox firstBill={sub.firstBill} price={billed} />}
         {pendingDrop && <p className="note"><Icon name="trending_down" /><span>You unpaired devices, so your price drops to {rm(next)} at your next renewal. You keep paying {rm(billed)} until then.</span></p>}
         <div className="summary-box">
           <div><span>Payment method</span><b>{sub.method}</b></div>

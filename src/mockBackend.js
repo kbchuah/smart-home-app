@@ -222,22 +222,3 @@ export const billedPrice = (home) => home.subscription?.price ?? premiumPrice(ho
 export const nextPrice = (home) => premiumPrice(home.devices.length);
 export async function unpairDevice() { await wait(1300); return { ok: true }; }
 export const addMonth = (d) => { const x = new Date(d); x.setMonth(x.getMonth() + 1); return x.toISOString(); };
-
-// ---- Pro-rated first bill (Charge to Bill) ----
-// The first bill covers only the days from sign-up to the first bill cycle date:
-// price × days ÷ days in that billing period. Starting on the cycle day = full month, no pro-rating.
-const DAY = 86400000;
-const dateOnly = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-export function prorateFirstBill({ price, start = new Date(), cycleDay }) {
-  const s = dateOnly(start);
-  const until = nextOnDay(new Date(s.getTime() - DAY), cycleDay); // first cycle date on or after start
-  const next = until.getTime() === s.getTime() ? null : until;
-  if (!next) return null; // started on the cycle day: a normal full month
-  const prev = new Date(next); prev.setDate(1); prev.setMonth(prev.getMonth() - 1);
-  const periodStart = new Date(prev.getFullYear(), prev.getMonth(), Math.min(cycleDay, new Date(prev.getFullYear(), prev.getMonth() + 1, 0).getDate()));
-  const days = Math.round((next - s) / DAY);
-  const periodDays = Math.round((next - periodStart) / DAY);
-  const amount = Math.round(price * days / periodDays * 100) / 100;
-  const lastDay = new Date(next.getTime() - DAY);
-  return { amount, days, periodDays, from: s.toISOString(), to: lastDay.toISOString(), until: next.toISOString() };
-}

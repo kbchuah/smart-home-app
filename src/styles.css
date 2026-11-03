@@ -600,13 +600,3 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 }
 .summary-box .rule-row { margin-top: -6px; }
 .summary-box .rule-row span { font-size: 12px; color: var(--muted); }
-/* Pro-rated first bill */
-.prorate { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--border); background: var(--surface); }
-.prorate .pr-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 14px; }
-.prorate .pr-row span { display: flex; align-items: center; gap: 6px; }
-.prorate .pr-row .msr { font-size: 18px; color: var(--primary); }
-.prorate .pr-row b { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.prorate small { font-size: 12px; color: var(--muted); }
-.prorate .then { border-top: 1px solid var(--border); padding-top: 6px; margin-top: 4px; color: var(--muted); }
-.prorate .then b { color: var(--text); }
-.sheet .prorate { margin-bottom: 12px; }

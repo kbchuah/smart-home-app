@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
 import { PriceChange, PriceSame, PriceNew, PriceFree } from '../components/PriceCards.jsx';
-import ProrateBox from '../components/ProrateBox.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
-  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice, prorateFirstBill,
+  PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice,
 } from '../mockBackend.js';
 
 // Device pairing, all mocked. Two modes:
@@ -139,8 +138,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const run = async (label, fn) => { setBusy(label); try { await fn(); } finally { setBusy(null); } };
 
   const ddOption = DD_OPTIONS.find((o) => o.id === method);
-  // Charge to Bill: the first bill is pro-rated up to the telco bill cycle date.
-  const firstBill = method === 'ctb' && customer && quote ? prorateFirstBill({ price: quote.total, cycleDay: customer.billCycleDay }) : null;
   const methodLabel = method === 'ctb' ? 'Charge to Bill' : ddOption ? `Direct Debit · ${ddOption.label}` : '';
   const priceUp = isExisting && !isFreeHome && Boolean(quote) && quote.total > quote.currentTotal;
   const tasks = isUpgrade
@@ -452,7 +449,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           {quote.extraDevices > 0 && <div><span>{quote.extraDevices} extra device(s) × {rm(quote.extraEach)}</span><b>{rm(quote.extraDevices * quote.extraEach)}</b></div>}
           <div className="total"><span>Monthly price</span><b>{rm(quote.total)}</b></div>
         </div>
-        <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices per home. Each extra device is {rm(quote.extraEach)}/month. With Charge to Bill, your first bill is pro-rated to your telco bill cycle.</p>
+        <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices per home. Each extra device is {rm(quote.extraEach)}/month.</p>
         <label className="consent">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
           <span>I agree to subscribe to <b>{plan.name}</b> for <b>{homeName.trim()}</b> at <b>{rm(quote.total)}/month</b>, starting when this device is paired. I can cancel anytime.</span>
@@ -538,7 +535,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         )}
         {customer && (<>
           <div className="field-label">Charge to Bill</div>
-          <div className="options">{opt('ctb', 'receipt_long', 'Charge to Bill', `Billing account ${customer.account} · ${customer.plan} · first bill pro-rated to your bill cycle (day ${customer.billCycleDay})`)}</div>
+          <div className="options">{opt('ctb', 'receipt_long', 'Charge to Bill', `Billing account ${customer.account} · ${customer.plan}`)}</div>
         </>)}
         {(!customer || blocked.ctb) && (<>
           <div className="field-label">Direct Debit</div>
@@ -563,7 +560,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           {method === 'ctb' && <div><span>Billing account</span><b>{customer.account}</b></div>}
           <div className="total"><span>Monthly price</span><b>{rm(quote.total)}</b></div>
         </div>
-        <ProrateBox firstBill={firstBill} price={quote.total} />
         <Actions onBack={() => setView('payment')}><button className="btn primary" onClick={confirmPayment}>Confirm &amp; subscribe</button></Actions>
       </div>
     );
@@ -611,7 +607,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
       detail: method === 'ctb' ? customer.account : ddOption.label,
       price: quote.total, phone, status: 'active', startedOn: new Date().toISOString(), billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
-      firstBill,
     };
     body = (
       <div className="auth-card left">
@@ -624,7 +619,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <div><span>{method === 'ctb' ? 'Billing account' : 'Paid from'}</span><b>{subscription.detail}</b></div>
           <div><span>Devices on home</span><b>{quote.currentDevices}</b></div>
         </div>
-        <ProrateBox firstBill={firstBill} price={quote.total} />
         <button className="btn primary wide" onClick={() => onDone({ subscription })}>OK</button>
       </div>
     );
@@ -670,7 +664,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       status: 'active',
       startedOn: new Date().toISOString(),
       billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
-      firstBill,
     };
     body = (
       <div className="auth-card left">
@@ -685,7 +678,6 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <div><span>Payment</span><b>{subscription.method}</b></div>
           <div><span>{method === 'ctb' ? 'Billing account' : 'Paid from'}</span><b>{subscription.detail}</b></div>
         </div>
-        <ProrateBox firstBill={firstBill} price={quote.total} />
         <div className="summary-box">
           <div className="sb-title"><Icon name="home" /> Home</div>
           <div><span>Name</span><b>{homeName.trim()}</b></div>
