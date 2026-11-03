@@ -133,6 +133,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
 
   // Camera must be online before we quote and bill.
   const joinWifi = () => run(`Connecting camera to ${ssid}…`, async () => {
+    markTried(`wifi:${ssid}`);
     const r = await connectWifi({ ssid, password: wifiPw, override: demo.wifi });
     if (!r.ok) { setWifiError(r); setView('wifiFail'); return; }
     setBusy('Camera is online. Checking for updates…');
@@ -208,9 +209,10 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         <div className="field-label">Demo: choose a QR code to scan</div>
         <div className="options">
           {QR_CODES.map((q) => (
-            <button key={q.id} className={`option compact ${selectedQr?.id === q.id ? 'sel' : ''}`} onClick={() => setSelectedQr(q)}>
+            <button key={q.id} className={`option compact ${selectedQr?.id === q.id ? 'sel' : ''} ${isTried(`qr:${q.id}`) ? 'tried' : ''}`} onClick={() => setSelectedQr(q)}>
               <Icon name="qr_code" />
               <span className="option-body"><b>{q.label}</b><small>{q.hint}</small></span>
+              {isTried(`qr:${q.id}`) && <span className="tried-tag"><Icon name="check" /> Tried</span>}
               {q.brand && <span className={`brand-tag ${q.brand === 'Nest' ? 'nest' : 'tp'}`}>{q.brand === 'Nest' ? 'Nest' : '3P'}</span>}
             </button>
           ))}
@@ -218,6 +220,7 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         <button className="btn subtle" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number instead</button>
         <Actions onBack={onCancel} backLabel="Cancel">
           <button className="btn primary" disabled={!selectedQr} onClick={() => {
+            markTried(`qr:${selectedQr.id}`);
             if (selectedQr.unreadable || demo.scan === 'unreadable') run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
             else run('Reading QR code…', async () => { await wait(800); await verifyDevice({ qr: selectedQr }); });
           }}><Icon name="qr_code_scanner" /> Scan</button>
@@ -254,10 +257,10 @@ export default function FirstPairing({ plan, account = 'guest', existingHomeName
         <p className="muted">Your <b>{device.model}</b> needs Wi-Fi to work. Choose your home network.</p>
         <div className="options">
           {WIFI_NETWORKS.map((n) => (
-            <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''}`} onClick={() => { setSsid(n.ssid); setWifiPw(DEMO_WIFI_PW); }}>
+            <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''} ${isTried(`wifi:${n.ssid}`) ? 'tried' : ''}`} onClick={() => { setSsid(n.ssid); setWifiPw(DEMO_WIFI_PW); }}>
               <Icon name={n.icon} />
               <span className="option-body"><b>{n.ssid}</b><small>Demo: {n.hint}</small></span>
-              <Icon name="lock" className="muted" />
+              {isTried(`wifi:${n.ssid}`) ? <span className="tried-tag"><Icon name="check" /> Tried</span> : <Icon name="lock" className="muted" />}
             </button>
           ))}
         </div>
