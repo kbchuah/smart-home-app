@@ -5,19 +5,22 @@ export const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ---- QR codes the user can "scan" ----
 // result: 'unreadable' fails at scan; others go to the compatibility check.
+// brand: 'Nest' (Google's own) or '3P' (third-party, Google Home enabled / Matter). Brand names for 3P are fictional.
 export const QR_CODES = [
-  { id: 'qr1', label: 'Nest Cam (indoor, wired)', hint: 'Passes', serial: 'NC-IW-48213', model: 'Nest Cam (indoor, wired)', compatible: true },
-  { id: 'qr2', label: 'Nest Cam (battery)', hint: 'Passes', serial: 'NC-BT-90377', model: 'Nest Cam (battery)', compatible: true },
-  { id: 'qr3', label: 'Generic IP camera', hint: 'Fails compatibility', serial: 'IPC-7781-X', model: 'XView IP Camera 2K',
-    compatible: false, reason: "This camera isn't compatible with Google Home Premium." },
-  { id: 'qr4', label: 'Nest Cam (registered elsewhere)', hint: 'Fails compatibility', serial: 'NC-IW-11002', model: 'Nest Cam (indoor, wired)',
+  { id: 'qr1', brand: 'Nest', label: 'Nest Cam (indoor, wired)', hint: 'Passes', serial: 'NC-IW-48213', model: 'Nest Cam (indoor, wired)', compatible: true },
+  { id: 'qr2', brand: 'Nest', label: 'Nest Cam (battery)', hint: 'Passes', serial: 'NC-BT-90377', model: 'Nest Cam (battery)', compatible: true },
+  { id: 'qr6', brand: '3P', label: 'Aero Cam 2K', hint: 'Passes · Works with Google Home', serial: '3P-AERO-20415', model: 'Aero Cam 2K', compatible: true },
+  { id: 'qr7', brand: '3P', label: 'Kova Outdoor Cam', hint: 'Passes · Matter-certified', serial: '3P-KOVA-77120', model: 'Kova Outdoor Cam', compatible: true },
+  { id: 'qr3', brand: '3P', label: 'XView IP Camera', hint: 'Fails compatibility · not Google Home enabled', serial: 'IPC-7781-X', model: 'XView IP Camera 2K',
+    compatible: false, reason: "This camera isn't Google Home enabled, so it can't be added to Google Home Premium. Look for “Works with Google Home” or Matter on the box." },
+  { id: 'qr4', brand: 'Nest', label: 'Nest Cam (registered elsewhere)', hint: 'Fails compatibility · already registered', serial: 'NC-IW-11002', model: 'Nest Cam (indoor, wired)',
     compatible: false, reason: 'This camera is already registered to another account. Ask the owner to remove it first.' },
   { id: 'qr5', label: 'Damaged QR sticker', hint: 'Fails scan', unreadable: true },
 ];
 
 // Serial numbers accepted in "Key in serial number". Anything else is unknown.
 const COMPAT_REASONS = {
-  incompatible: "This camera isn't compatible with Google Home Premium.",
+  incompatible: "This camera isn't Google Home enabled, so it can't be added to Google Home Premium.",
   registered: 'This camera is already registered to another account. Ask the owner to remove it first.',
 };
 export async function checkCompatibility({ serial, qr, override = 'auto' }) {
@@ -25,13 +28,14 @@ export async function checkCompatibility({ serial, qr, override = 'auto' }) {
   if (override !== 'auto') {
     if (override !== 'pass') return { ok: false, reason: COMPAT_REASONS[override] };
     const src = qr && !qr.unreadable ? qr : null;
-    return { ok: true, device: { serial: src?.serial ?? (serial?.trim().toUpperCase() || 'NC-IW-00001'), model: src?.model ?? 'Nest Cam' } };
+    return { ok: true, device: { serial: src?.serial ?? (serial?.trim().toUpperCase() || 'NC-IW-00001'), model: src?.model ?? 'Nest Cam', brand: src?.brand ?? 'Nest' } };
   }
-  if (qr) return qr.compatible ? { ok: true, device: { serial: qr.serial, model: qr.model } } : { ok: false, reason: qr.reason };
+  if (qr) return qr.compatible ? { ok: true, device: { serial: qr.serial, model: qr.model, brand: qr.brand } } : { ok: false, reason: qr.reason };
   const s = serial.trim().toUpperCase();
   const known = QR_CODES.find((q) => q.serial === s);
-  if (known) return known.compatible ? { ok: true, device: { serial: known.serial, model: known.model } } : { ok: false, reason: known.reason };
-  if (/^NC-[A-Z]{2}-\d{5}$/.test(s)) return { ok: true, device: { serial: s, model: 'Nest Cam' } };
+  if (known) return known.compatible ? { ok: true, device: { serial: known.serial, model: known.model, brand: known.brand } } : { ok: false, reason: known.reason };
+  if (/^NC-[A-Z]{2}-\d{5}$/.test(s)) return { ok: true, device: { serial: s, model: 'Nest Cam', brand: 'Nest' } };
+  if (/^3P-[A-Z]{3,5}-\d{5}$/.test(s)) return { ok: true, device: { serial: s, model: 'Google Home enabled camera', brand: '3P' } };
   return { ok: false, reason: "We couldn't find a compatible camera with that serial number. Check the number and try again." };
 }
 

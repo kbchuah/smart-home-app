@@ -145,6 +145,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
             <button key={q.id} className={`option compact ${selectedQr?.id === q.id ? 'sel' : ''}`} onClick={() => setSelectedQr(q)}>
               <Icon name="qr_code" />
               <span className="option-body"><b>{q.label}</b><small>{q.hint}</small></span>
+              {q.brand && <span className={`brand-tag ${q.brand === 'Nest' ? 'nest' : 'tp'}`}>{q.brand === 'Nest' ? 'Nest' : '3P'}</span>}
             </button>
           ))}
         </div>
@@ -161,10 +162,10 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
     body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (serial.trim()) verifyDevice({ serial }); }}>
         <h1>Key in serial number</h1>
-        <p className="muted">The serial number is printed under the QR code, starting with “NC-”.</p>
+        <p className="muted">The serial number is printed under the QR code on your camera.</p>
         <label className="field"><span>Serial number</span>
           <input autoFocus value={serial} placeholder="NC-IW-12345" onChange={(e) => setSerial(e.target.value.toUpperCase())} />
-          <small className="field-hint"><Icon name="science" /> Demo: any NC-XX-12345 passes, e.g. NC-IW-48213. Anything else fails.</small></label>
+          <small className="field-hint"><Icon name="science" /> Demo: Nest NC-XX-12345 (e.g. NC-IW-48213) or 3P 3P-XXXX-12345 (e.g. 3P-AERO-20415) passes. Anything else fails.</small></label>
         <Actions onBack={() => setView('scan')}><button className="btn primary" disabled={!serial.trim()}>Check device</button></Actions>
       </form>
     );
@@ -222,7 +223,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
       <div className="auth-card left">
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
         <h1>Camera is online</h1>
-        <p className="muted"><b>{device.model}</b> · SN {device.serial} · connected to {ssid}</p>
+        <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
         <div className="summary-box">
           <div><span>Home</span><b>{homeName.trim()}</b></div>
           <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter} after pairing</b></div>
@@ -408,6 +409,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName.trim()}</b></div>
           <div><span>Model</span><b>{device.model}</b></div>
+          <div><span>Type</span><b>{device.brand === '3P' ? 'Third-party · Works with Google Home' : 'Google Nest'}</b></div>
           <div><span>Wi-Fi</span><b>{ssid}</b></div>
           <div><span>Serial number</span><b>{device.serial}</b></div>
           <div><span>Devices on home</span><b>{quote.devicesAfter} of {quote.included}</b></div>
@@ -416,7 +418,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
         <button className="btn primary wide" onClick={() => onDone({
           home: { homeName: homeName.trim(), ecosystem },
           room: { name: roomName },
-          device: { type: 'camera', name: deviceName.trim(), model: device.model, serial: device.serial },
+          device: { type: 'camera', name: deviceName.trim(), model: device.model, serial: device.serial, brand: device.brand },
           subscription,
         })}>OK</button>
       </div>

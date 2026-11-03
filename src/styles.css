@@ -395,3 +395,9 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 /* Demo button scrolls with the flow and sits beside the close button, clear of the stepper */
 .pair .demo-fab { position: absolute; top: 14px; right: 16px; }
 .pair { padding-top: 72px; }
+.brand-tag { flex: none; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; letter-spacing: .02em; }
+.brand-tag.nest { background: var(--primary-soft); color: var(--primary); }
+.brand-tag.tp { background: #e6f4ea; color: #137333; }
+@media (prefers-color-scheme: dark) { .brand-tag.tp { background: #0d3a1f; color: #81c995; } }
+/* Leave room above mobile browser toolbars */
+.pair { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
