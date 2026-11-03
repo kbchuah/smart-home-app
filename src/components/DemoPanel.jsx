@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
+import { clearAllTacLocks, useAnyTacLock } from '../tacLock.js';
 import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES } from '../mockBackend.js';
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
@@ -13,6 +14,7 @@ const BACK_TO = { payment: 'Payment method screen (failed option disabled)', con
 
 export default function DemoPanel() {
   const demo = useDemo();
+  const tacLocked = useAnyTacLock();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('simulate');
   const active = Object.keys(DEMO_DEFAULTS).filter((k) => demo[k] !== DEMO_DEFAULTS[k]).length;
@@ -40,6 +42,11 @@ export default function DemoPanel() {
               </label>
             ))}
             <p className="note"><Icon name="info" /> A forced billing result applies to whichever payment method you choose.</p>
+            <div className={`alert ${tacLocked ? 'warn' : ''} demo-lock`}>
+              <Icon name={tacLocked ? 'lock_clock' : 'lock_open'} />
+              <span>{tacLocked ? 'TAC is locked on this account (30 min). Clear it to keep testing.' : 'No TAC lock active.'}</span>
+              <button className="btn subtle" disabled={!tacLocked} onClick={clearAllTacLocks}>Clear TAC lock</button>
+            </div>
             <div className="form-actions">
               <button className="btn" onClick={resetDemo} disabled={!active}><Icon name="restart_alt" /> Reset all to Auto</button>
               <span className="spacer" />
@@ -73,7 +80,7 @@ export default function DemoPanel() {
             <table><tbody>
               <tr><td>Any 6 digits</td><td>Passes</td></tr>
               <tr><td>000000</td><td>Incorrect TAC → stays on screen, shows tries left</td></tr>
-              <tr><td>{TAC_MAX_TRIES} incorrect tries</td><td>Locked for {TAC_LOCK_MINUTES} min → “Too many attempts”, back to home</td></tr>
+              <tr><td>{TAC_MAX_TRIES} incorrect tries</td><td>Account locked for {TAC_LOCK_MINUTES} min, for every mobile number, even after restarting or reloading → “Too many attempts”. Clear it in Simulate.</td></tr>
               <tr><td>999999 (or after 5 min)</td><td>TAC expired → must tap “Resend TAC”</td></tr>
             </tbody></table>
             <h4>Mobile numbers</h4>

@@ -25,3 +25,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - First pairing: Wi-Fi connect before pricing/billing (wrong password / weak signal / offline → retry or choose network); room & name after activation (defaults: “My room”, model name)
 - Pilot: Google Home only — create-home screen removed; first home auto-created as “My Home” (then “My Home 2”, “My Home 3”… if taken), renamable in Home settings (⚙)
 - TAC failures (incorrect with tries left, expired → resend, 3 wrong → locked 30 min) and telco account check right after TAC (spend limit / inactive → Charge to Bill not offered); Confirm-time check kept as backup
+- TAC lock is account-wide (all mobile numbers) for 30 min, persists across restarting the flow and page reloads; shown from the first pairing step; demo “Clear TAC lock”

@@ -51,7 +51,7 @@ export default function App() {
       return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddHome={() => setScreen('firstPair')} />;
     case 'firstPair':
       // New home: billing is per home, so its first pairing includes the subscription.
-      return <FirstPairing plan={plan} existingHomeNames={(user?.structures ?? []).map((id) => loadHome(id).homeName)} onCancel={() => setScreen('homes')} onDone={firstDevicePaired} />;
+      return <FirstPairing plan={plan} account={user?.email} existingHomeNames={(user?.structures ?? []).map((id) => loadHome(id).homeName)} onCancel={() => setScreen('homes')} onDone={firstDevicePaired} />;
     case 'dashboard':
       return <Dashboard key={structureId} structureId={structureId} user={user} plan={plan} onBack={() => setScreen('homes')} />;
     default:

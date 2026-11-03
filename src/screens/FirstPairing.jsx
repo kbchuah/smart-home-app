@@ -3,6 +3,7 @@ import Icon from '../components/Icon.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo } from '../demoStore.js';
+import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
 } from '../mockBackend.js';
@@ -47,9 +48,10 @@ export function uniqueHomeName(taken, base = PILOT_HOME_NAME) {
   return `${base} ${i}`;
 }
 
-export default function FirstPairing({ plan, existingHomeNames = [], onCancel, onDone }) {
+export default function FirstPairing({ plan, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
   const demo = useDemo();
   const [view, setView] = useState('scan');
+  const tacLockedMins = useTacLock(account);
   const [busy, setBusy] = useState(null);
 
   // home
@@ -137,7 +139,7 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
   const submitTac = () => run('Verifying TAC…', async () => {
     const v = await verifyTac({ tac, sentAt: tacSentAt, wrongSoFar: tacWrong, override: demo.tac });
     if (!v.ok) {
-      if (v.code === 'locked') { setView('tacLocked'); return; }
+      if (v.code === 'locked') { lockTac(account, TAC_LOCK_MINUTES); setView('tacLocked'); return; }
       if (v.code === 'expired') { setTacError({ code: 'expired', text: 'This TAC has expired. Tap “Resend TAC” to get a new one.' }); return; }
       setTacWrong((n) => n + 1); setTac('');
       setTacError({ code: 'wrong', text: `Incorrect TAC. ${v.left} ${v.left === 1 ? 'try' : 'tries'} left.` });
@@ -168,8 +170,22 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
     setView('eligFail');
   });
 
+  const LOCKED_BODY = (
+    <div className="auth-card">
+      <span className="auth-logo err"><Icon name="lock_clock" /></span>
+      <h1>Too many attempts</h1>
+      <p className="muted">For your security, TAC verification on your account is locked. You can't request a TAC for any mobile number for the next <b>{tacLockedMins} minute{tacLockedMins === 1 ? '' : 's'}</b>.</p>
+      <p className="note"><Icon name="info" /><span>You haven't been charged. When the lock ends, start again from <b>Add device</b>.</span></p>
+      <button className="btn primary wide" onClick={onCancel}>Back to home</button>
+    </div>
+  );
+
+  // Locked accounts can't finish billing, so block every step up to payment.
+  const PRE_PAYMENT = ['scan', 'serial', 'scanFail', 'compatFail', 'wifi', 'wifiFail', 'price', 'phone', 'tac', 'tacLocked'];
   let body;
-  if (busy) {
+  if (tacLockedMins > 0 && PRE_PAYMENT.includes(view)) {
+    body = LOCKED_BODY;
+  } else if (busy) {
     body = <div className="auth-card"><Spinner label={busy} /></div>;
   } else if (view === 'scan') {
     body = (
@@ -278,6 +294,16 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
         <Actions onBack={() => setView('wifi')}><button className="btn primary" disabled={!agreed} onClick={() => setView('phone')}>Proceed <Icon name="arrow_forward" /></button></Actions>
       </div>
     );
+  } else if (view === 'tacLocked') {
+    // Lock has ended: let them verify again.
+    body = (
+      <div className="auth-card">
+        <span className="auth-logo ok"><Icon name="lock_open" /></span>
+        <h1>TAC is unlocked</h1>
+        <p className="muted">You can verify your mobile number again.</p>
+        <button className="btn primary wide" onClick={() => { setPhone(''); setView('phone'); }}>Continue</button>
+      </div>
+    );
   } else if (view === 'phone') {
     const ok = /^01\d{8,9}$/.test(phone);
     body = (
@@ -315,16 +341,6 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
         <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={sendTac}>{resendIn > 0 ? `Resend TAC in ${resendIn}s` : 'Resend TAC'}</button>
         <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!ok || expired}>Verify</button></Actions>
       </form>
-    );
-  } else if (view === 'tacLocked') {
-    body = (
-      <div className="auth-card">
-        <span className="auth-logo err"><Icon name="lock_clock" /></span>
-        <h1>Too many attempts</h1>
-        <p className="muted">For your security, TAC verification for <b>+60 {fmtPhone(phone)}</b> is locked for {TAC_LOCK_MINUTES} minutes. Please try again later.</p>
-        <p className="note"><Icon name="info" /><span>You haven't been charged. When the lock ends, start again from <b>Add device</b>.</span></p>
-        <button className="btn primary wide" onClick={onCancel}>Back to home</button>
-      </div>
     );
   } else if (view === 'payment') {
     const opt = (id, icon, title, sub) => {

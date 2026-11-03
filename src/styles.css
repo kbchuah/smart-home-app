@@ -411,3 +411,6 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .alert.warn { background: #fef7e0; color: #5f4300; }
 .alert.warn .msr { color: #e37400; }
 @media (prefers-color-scheme: dark) { .alert.warn { background: #3d3214; color: #fde293; } .alert.warn .msr { color: #fdd663; } }
+.demo-lock { align-items: center; background: var(--surface-2); }
+.demo-lock span { flex: 1; }
+.demo-lock .btn { padding: 6px 10px; }
