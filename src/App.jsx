@@ -9,6 +9,7 @@ import { createHome, loadHome } from './store.js';
 import { DEVICE_TYPES, GENERIC_ROUTINES, uid } from './data.js';
 import { PLAN as plan } from './plans.js';
 import { loadSession, saveSession } from './session.js';
+import { clearTried } from './demoStore.js';
 
 // Where a signed-in user lands: their only home, or the homes list.
 const landingFor = (u) => (u?.structures?.length === 1 ? { screen: 'dashboard', id: u.structures[0] } : { screen: 'homes', id: null });
@@ -41,7 +42,7 @@ export default function App() {
     setStructureId(id);
     setScreen('dashboard');
   };
-  const logout = () => { setUser(null); setScreen('landing'); };
+  const logout = () => { clearTried(); setUser(null); setScreen('landing'); };
 
   switch (screen) {
     case 'landing':

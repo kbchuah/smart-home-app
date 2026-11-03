@@ -58,11 +58,16 @@ export const DEMO_CONTROLS = [
   ] },
 ];
 
-// Demo inputs already tried in this page session (in memory only: a page refresh clears it).
-const tried = new Set();
+// Demo inputs already tried. Kept in this browser until Log out or "Reset all demo data"
+// (both clear the hearth-tried key), so a refresh doesn't lose them.
+const TRIED_KEY = 'hearth-tried';
+const tried = new Set((() => { try { return JSON.parse(localStorage.getItem(TRIED_KEY)) ?? []; } catch { return []; } })());
 const triedListeners = new Set();
 let triedVersion = 0;
-export const markTried = (key) => { if (!tried.has(key)) { tried.add(key); triedVersion += 1; triedListeners.forEach((l) => l()); } };
+const saveTried = () => { try { localStorage.setItem(TRIED_KEY, JSON.stringify([...tried])); } catch { /* ignore */ } };
+const notifyTried = () => { triedVersion += 1; triedListeners.forEach((l) => l()); };
+export const markTried = (key) => { if (!tried.has(key)) { tried.add(key); saveTried(); notifyTried(); } };
+export const clearTried = () => { tried.clear(); try { localStorage.removeItem(TRIED_KEY); } catch { /* ignore */ } notifyTried(); };
 export const useTried = () => {
   useSyncExternalStore((l) => { triedListeners.add(l); return () => triedListeners.delete(l); }, () => triedVersion);
   return (key) => tried.has(key);
