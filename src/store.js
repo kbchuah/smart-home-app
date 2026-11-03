@@ -1,14 +1,15 @@
-import { useEffect, useReducer } from 'react';
-import { DEFAULT_STATE, DEVICE_TYPES, matchesTarget, uid } from './data.js';
+import { useCallback, useEffect, useReducer } from 'react';
+import { STRUCTURES, DEVICE_TYPES, matchesTarget, uid } from './data.js';
 
-const KEY = 'hearth-home-v2';
+const keyFor = (id) => `hearth-home-v3-${id}`;
 
-function load() {
+// Read a home's saved state (or its defaults). Also used for the homes list.
+export function loadHome(id) {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(keyFor(id));
     if (raw) return JSON.parse(raw);
   } catch { /* storage unavailable */ }
-  return structuredClone(DEFAULT_STATE);
+  return structuredClone(STRUCTURES[id]);
 }
 
 function reducer(state, a) {
@@ -48,16 +49,20 @@ function reducer(state, a) {
       };
     }
     case 'reset':
-      return structuredClone(DEFAULT_STATE);
+      return structuredClone(a.defaults);
     default:
       return state;
   }
 }
 
-export function useHome() {
-  const [state, dispatch] = useReducer(reducer, undefined, load);
+export function useHome(id) {
+  const [state, rawDispatch] = useReducer(reducer, id, loadHome);
   useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
-  }, [state]);
+    try { localStorage.setItem(keyFor(id), JSON.stringify(state)); } catch { /* ignore */ }
+  }, [id, state]);
+  const dispatch = useCallback(
+    (a) => rawDispatch(a.type === 'reset' ? { ...a, defaults: STRUCTURES[id] } : a),
+    [id],
+  );
   return [state, dispatch];
 }

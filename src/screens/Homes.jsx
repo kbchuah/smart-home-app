@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import Icon from '../components/Icon.jsx';
-import { useHome } from '../store.js';
+import { loadHome } from '../store.js';
 
 export default function Homes({ user, onOpen, onLogout }) {
-  const [home] = useHome();
   const [toast, setToast] = useState(null);
-  const structures = user?.isNew ? [] : [{ id: 'kb', name: home.homeName, rooms: home.rooms.length, devices: home.devices.length, ecosystem: 'Google Home Premium' }];
+  const structures = (user?.structures ?? []).map((id) => {
+    const h = loadHome(id);
+    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem };
+  });
 
   useEffect(() => {
     if (!toast) return;
@@ -40,7 +42,7 @@ export default function Homes({ user, onOpen, onLogout }) {
       ) : (
         <div className="structures">
           {structures.map((s) => (
-            <button key={s.id} className="structure" onClick={onOpen}>
+            <button key={s.id} className="structure" onClick={() => onOpen(s.id)}>
               <span className="structure-icon"><Icon name="home" fill /></span>
               <span className="structure-body">
                 <b>{s.name}</b>

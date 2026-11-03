@@ -13,8 +13,8 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
 
-export default function Dashboard({ user, onBack }) {
-  const [state, dispatch] = useHome();
+export default function Dashboard({ structureId, user, onBack }) {
+  const [state, dispatch] = useHome(structureId);
   const { rooms, devices, routines } = state;
   const [filter, setFilter] = useState('all');
   const [openId, setOpenId] = useState(null);
@@ -71,6 +71,7 @@ export default function Dashboard({ user, onBack }) {
             <Icon name="arrow_back" /> <Icon name="home" fill /> {state.homeName}
           </button>
           <h1>{greeting()}</h1>
+          {state.ecosystem && <span className="ecosystem"><Icon name="hub" /> Powered by {state.ecosystem}</span>}
         </div>
         <div className="top-actions">
           <button className="icon-btn" onClick={() => setShowRooms(true)} aria-label="Manage rooms" title="Manage rooms"><Icon name="settings" /></button>
@@ -89,11 +90,13 @@ export default function Dashboard({ user, onBack }) {
             <span><b>{summary.thermo.current.toFixed(1)}°</b> indoors</span>
           </button>
         )}
-        <button className={`chip-card ${summary.unlocked ? 'warn' : ''}`}
-          onClick={() => { const l = devices.find((d) => d.type === 'lock'); if (l) setOpenId(l.id); }}>
-          <Icon name={summary.unlocked ? 'lock_open' : 'lock'} fill />
-          <span>{summary.unlocked ? <><b>{summary.unlocked}</b> unlocked</> : 'All locked'}</span>
-        </button>
+        {devices.some((d) => d.type === 'lock') && (
+          <button className={`chip-card ${summary.unlocked ? 'warn' : ''}`}
+            onClick={() => { const l = devices.find((d) => d.type === 'lock'); if (l) setOpenId(l.id); }}>
+            <Icon name={summary.unlocked ? 'lock_open' : 'lock'} fill />
+            <span>{summary.unlocked ? <><b>{summary.unlocked}</b> unlocked</> : 'All locked'}</span>
+          </button>
+        )}
       </section>
 
       <section>

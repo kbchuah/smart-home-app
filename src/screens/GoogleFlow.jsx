@@ -33,7 +33,8 @@ function Spinner({ label }) {
 
 export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
   const isSignup = mode === 'signup';
-  const account = isSignup ? { ...DEMO_USERS.fresh, isNew: true } : { ...DEMO_USERS.existing, isNew: false };
+  const choices = isSignup ? [DEMO_USERS.fresh] : [DEMO_USERS.existing, DEMO_USERS.future];
+  const [account, setAccount] = useState({ ...choices[0], isNew: isSignup });
   // signup steps: 0 account, 1 permissions, 2 profile, 3 plan, 4 done. login: 0 account, 1 signing in
   const [step, setStep] = useState(-1); // -1 = intro
   const [busy, setBusy] = useState(false);
@@ -64,10 +65,12 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
       <MockGoogleFrame>
         <h2>Choose an account</h2>
         <p className="muted">to continue to Hearth</p>
-        <button className="account" onClick={() => next()}>
-          <span className="avatar">{account.initials}</span>
-          <span><b>{account.name}</b><small>{account.email}</small></span>
-        </button>
+        {choices.map((c) => (
+          <button key={c.email} className="account" onClick={() => { setAccount({ ...c, isNew: isSignup }); setName(c.name); next(); }}>
+            <span className="avatar">{c.initials}</span>
+            <span><b>{c.name}</b><small>{c.email}</small></span>
+          </button>
+        ))}
         <button className="account other" onClick={() => next()}>
           <span className="avatar ghost"><Icon name="person" /></span><span>Use another account</span>
         </button>

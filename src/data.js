@@ -22,6 +22,7 @@ const dev = (id, name, type, roomId, extra = {}) => ({
 
 export const DEFAULT_STATE = {
   homeName: 'KB home',
+  ecosystem: 'Google Home Premium',
   rooms: [
     { id: 'living', name: 'Living Room' },
     { id: 'kitchen', name: 'Kitchen' },
@@ -81,6 +82,67 @@ export const DEFAULT_STATE = {
       ],
     },
   ],
+};
+
+// Routines that only use type targets, so they work in any home.
+const GENERIC_ROUTINES = [
+  { id: 'r_morning', name: 'Good morning', icon: 'wb_sunny', actions: [
+    { target: 'type:light', set: { on: true, brightness: 80 } },
+    { target: 'type:thermostat', set: { on: true, target: 22 } },
+  ] },
+  { id: 'r_leaving', name: 'Leaving', icon: 'directions_walk', actions: [
+    { target: 'all', set: { on: false } },
+    { target: 'type:lock', set: { on: true } },
+    { target: 'type:camera', set: { on: true } },
+  ] },
+  { id: 'r_night', name: 'Good night', icon: 'bedtime', actions: [
+    { target: 'type:light', set: { on: false } },
+    { target: 'type:tv', set: { on: false } },
+    { target: 'type:lock', set: { on: true } },
+  ] },
+];
+
+// Every demo home (structure), keyed by id. Each keeps its own saved state.
+export const STRUCTURES = {
+  kb: DEFAULT_STATE,
+  future_kl: {
+    homeName: 'Future home, KL',
+    ecosystem: 'Google Home Premium',
+    rooms: [{ id: 'living', name: 'Living Room' }, { id: 'kitchen', name: 'Kitchen' }, { id: 'master', name: 'Master Bedroom' }],
+    devices: [
+      dev('f1', 'Living Room Lights', 'light', 'living', { on: true, brightness: 60 }),
+      dev('f2', 'Smart Display', 'speaker', 'living'),
+      dev('f3', 'Kitchen Lights', 'light', 'kitchen', { color: '#ffffff' }),
+      dev('f4', 'Air Conditioner', 'thermostat', 'master', { mode: 'cool', target: 24, current: 27 }),
+      dev('f5', 'Front Door', 'lock', 'living'),
+    ],
+    routines: GENERIC_ROUTINES,
+  },
+  future_penang: {
+    homeName: 'Penang condo',
+    ecosystem: 'Samsung SmartThings',
+    rooms: [{ id: 'living', name: 'Living Room' }, { id: 'bedroom', name: 'Bedroom' }],
+    devices: [
+      dev('p1', 'Living Room TV', 'tv', 'living'),
+      dev('p2', 'Ceiling Fan', 'fan', 'living', { on: true, speed: 1 }),
+      dev('p3', 'Bedroom Lamp', 'light', 'bedroom', { color: '#ff8a65' }),
+      dev('p4', 'Aircond', 'thermostat', 'bedroom', { on: false, mode: 'cool', target: 25, current: 29 }),
+    ],
+    routines: GENERIC_ROUTINES,
+  },
+  future_office: {
+    homeName: 'Office',
+    ecosystem: 'Apple Home',
+    rooms: [{ id: 'work', name: 'Workspace' }, { id: 'meeting', name: 'Meeting Room' }],
+    devices: [
+      dev('o1', 'Desk Lights', 'light', 'work', { on: true, brightness: 90, color: '#ffffff' }),
+      dev('o2', 'Coffee Machine', 'plug', 'work'),
+      dev('o3', 'Meeting Room Screen', 'tv', 'meeting', { input: 'HDMI 2' }),
+      dev('o4', 'Entrance Camera', 'camera', 'work'),
+      dev('o5', 'Office Door', 'lock', 'work', { on: false }),
+    ],
+    routines: GENERIC_ROUTINES,
+  },
 };
 
 // Does a routine action target apply to this device?

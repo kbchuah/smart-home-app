@@ -10,6 +10,7 @@ import { PLAN as plan } from './plans.js';
 export default function App() {
   const [screen, setScreen] = useState('landing');
   const [user, setUser] = useState(null); // demo: always starts logged out
+  const [structureId, setStructureId] = useState(null);
 
   const signedIn = (u) => { setUser(u); setScreen('homes'); };
   const logout = () => { setUser(null); setScreen('landing'); };
@@ -25,9 +26,9 @@ export default function App() {
     case 'login':
       return <GoogleFlow mode={screen} plan={plan} onCancel={() => setScreen('auth')} onDone={signedIn} />;
     case 'homes':
-      return <Homes user={user} onOpen={() => setScreen('dashboard')} onLogout={logout} />;
+      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} />;
     case 'dashboard':
-      return <Dashboard user={user} onBack={() => setScreen('homes')} />;
+      return <Dashboard key={structureId} structureId={structureId} user={user} onBack={() => setScreen('homes')} />;
     default:
       return null;
   }
