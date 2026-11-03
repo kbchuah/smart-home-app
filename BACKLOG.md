@@ -11,10 +11,10 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 | 3 | Rooms synced from the home's ecosystem | For homes powered by Google Home / SmartThings / Apple Home, rooms should come from that system ("Synced from …"), and local room editing turned off. Check each system's developer API for write access. | Idea |
 | 4 | Enable more device types in pairing | Speaker, smart display, light, plug, aircond, lock, doorbell are currently "Coming soon". Only Camera works. | Later |
 | 5 | AI features from the marketing page | AI assistant (plain-language control), suggested routines, smart camera alerts, energy insights. Marketing copy only so far. | Later |
-| 7 | Own-device message | Scanning a camera already in the customer's *own* home should say “This camera is already in My Home” (not “registered to another account”). | Later |
-| 8 | Backend errors before payment | Simulate the compatibility / price-quote services being unreachable, with retry. | Later |
-| 9 | Success follow-ups | “We've sent a confirmation by SMS and email”, plus a place to view / cancel the subscription later. | Later |
-| 10 | Legal links on price agreement | Terms of service and privacy policy links on the agreement checkbox. | Later |
+| 6 | Own-device message | Scanning a camera already in the customer's *own* home should say “This camera is already in My Home” (not “registered to another account”). | Later |
+| 7 | Backend errors before payment | Simulate the compatibility / price-quote services being unreachable, with retry. | Later |
+| 8 | Success follow-ups | “We've sent a confirmation by SMS and email”, plus a place to view / cancel the subscription later. | Later |
+| 9 | Legal links on price agreement | Terms of service and privacy policy links on the agreement checkbox. | Later |
 
 ## Done
 
