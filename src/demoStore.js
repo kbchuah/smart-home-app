@@ -1,7 +1,7 @@
 // Demo simulator settings: force outcomes of the mocked backend checks.
 import { useSyncExternalStore } from 'react';
 
-export const DEMO_DEFAULTS = { scan: 'auto', compat: 'auto', wifi: 'auto', eligibility: 'auto' };
+export const DEMO_DEFAULTS = { scan: 'auto', compat: 'auto', wifi: 'auto', tac: 'auto', telco: 'auto', eligibility: 'auto' };
 let settings = { ...DEMO_DEFAULTS };
 const listeners = new Set();
 
@@ -27,7 +27,20 @@ export const DEMO_CONTROLS = [
     ['weak_signal', 'Fail: signal too weak'],
     ['no_internet', 'Fail: camera offline (no internet)'],
   ] },
-  { key: 'eligibility', label: 'Billing eligibility check', options: [
+  { key: 'tac', label: 'TAC verification', options: [
+    ['auto', 'Use the TAC I type'],
+    ['ok', 'Pass'],
+    ['wrong', 'Fail: incorrect TAC'],
+    ['expired', 'Fail: TAC expired'],
+    ['locked', 'Fail: too many attempts (locked)'],
+  ] },
+  { key: 'telco', label: 'Telco account check (after TAC)', options: [
+    ['auto', 'Use the mobile number I type'],
+    ['ok', 'Pass: Charge to Bill offered'],
+    ['spend_limit', 'Fail: spend limit reached'],
+    ['inactive', 'Fail: account inactive'],
+  ] },
+  { key: 'eligibility', label: 'Billing eligibility check (at Confirm)', options: [
     ['auto', 'Use the number / payment option I pick'],
     ['ok', 'Pass'],
     ['spend_limit', 'Fail: telco spend limit reached'],

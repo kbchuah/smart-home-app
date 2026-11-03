@@ -401,3 +401,13 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 @media (prefers-color-scheme: dark) { .brand-tag.tp { background: #0d3a1f; color: #81c995; } }
 /* Leave room above mobile browser toolbars */
 .pair { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+/* ---------- TAC errors / alerts ---------- */
+.tac-input.invalid { border-color: var(--danger) !important; box-shadow: 0 0 0 1px var(--danger) !important; }
+.field-error { display: flex; align-items: center; gap: 6px; color: var(--danger); font-size: 13px; font-weight: 500; }
+.field-error .msr { font-size: 16px; }
+.alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; font-size: 14px; line-height: 1.45; }
+.alert .msr { font-size: 20px; flex: none; }
+.alert.warn { background: #fef7e0; color: #5f4300; }
+.alert.warn .msr { color: #e37400; }
+@media (prefers-color-scheme: dark) { .alert.warn { background: #3d3214; color: #fde293; } .alert.warn .msr { color: #fdd663; } }

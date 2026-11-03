@@ -2,10 +2,13 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
-import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES } from '../mockBackend.js';
+import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES } from '../mockBackend.js';
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
-const ELIG_TEXT = { ok: 'Passes', spend_limit: 'Spend limit reached', inactive: 'Account inactive', timeout_once: 'Timeout on 1st try, then passes' };
+const ELIG_TEXT = { ok: 'passes', spend_limit: 'spend limit reached', inactive: 'account inactive', timeout_once: 'timeout on 1st try, then passes' };
+const telcoText = (c) => (c.status !== 'ok'
+  ? `After TAC: ${ELIG_TEXT[c.status]} → Charge to Bill not offered, Direct Debit only`
+  : `After TAC: Charge to Bill offered · At Confirm: ${ELIG_TEXT[c.eligibility]}`);
 const BACK_TO = { payment: 'Payment method screen (failed option disabled)', confirm: 'Stays on confirm screen: “Try again”' };
 
 export default function DemoPanel() {
@@ -66,11 +69,19 @@ export default function DemoPanel() {
                 <td>{f.actions.map((a) => ({ password: 'Re-enter password', network: 'Choose another network', retry: 'Try again' }[a])).join(' · ')}</td></tr>)}
             </tbody></table>
             <p className="note"><Icon name="info" /> Wi-Fi is checked before pricing and payment, so customers are only billed for a camera that's online.</p>
-            <h4>Mobile numbers (TAC: any 6 digits)</h4>
+            <h4>TAC</h4>
             <table><tbody>
-              {Object.entries(TELCO_CUSTOMERS).map(([n, c]) => <tr key={n}><td>{fmtPhone(n)}</td><td>Telco customer · Charge to Bill: {ELIG_TEXT[c.eligibility]}</td></tr>)}
+              <tr><td>Any 6 digits</td><td>Passes</td></tr>
+              <tr><td>000000</td><td>Incorrect TAC → stays on screen, shows tries left</td></tr>
+              <tr><td>{TAC_MAX_TRIES} incorrect tries</td><td>Locked for {TAC_LOCK_MINUTES} min → “Too many attempts”, back to home</td></tr>
+              <tr><td>999999 (or after 5 min)</td><td>TAC expired → must tap “Resend TAC”</td></tr>
+            </tbody></table>
+            <h4>Mobile numbers</h4>
+            <table><tbody>
+              {Object.entries(TELCO_CUSTOMERS).map(([n, c]) => <tr key={n}><td>{fmtPhone(n)}</td><td>Telco customer · {telcoText(c)}</td></tr>)}
               <tr><td>Any other number</td><td>Not a telco customer → Direct Debit only</td></tr>
             </tbody></table>
+            <p className="note"><Icon name="info" /> The telco account is checked right after TAC, so a blocked account never sees Charge to Bill as an option. The check at Confirm is a backup in case the account changes in between.</p>
             <h4>Direct Debit options</h4>
             <table><tbody>
               {DD_OPTIONS.map((o) => <tr key={o.id}><td>{o.label}</td><td>{o.hint}</td></tr>)}

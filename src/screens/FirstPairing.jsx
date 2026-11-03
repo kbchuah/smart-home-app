@@ -4,7 +4,7 @@ import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo } from '../demoStore.js';
 import {
-  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, quotePrice, lookupCustomer, checkEligibility, wait,
+  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
 } from '../mockBackend.js';
 
 // First device pairing into a NEW home (structure), all mocked:
@@ -15,7 +15,7 @@ import {
 const PILOT_HOME_NAME = 'My Home';
 const PILOT_ECOSYSTEM = 'Google Home Premium';
 const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Room', 'Done'];
-const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3,
+const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3, tacLocked: 3,
   payment: 4, confirm: 4, eligFail: 4, processing: 4, roomName: 5, success: 6 };
 const DEFAULT_ROOM = 'My room';
 const ROOM_SUGGESTIONS = ['Living Room', 'Front Door', 'Porch', 'Garage', 'Backyard', 'Kitchen', 'Bedroom', 'Hallway'];
@@ -68,6 +68,10 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
   const [tac, setTac] = useState('');
   const [resendIn, setResendIn] = useState(0);
   const [customer, setCustomer] = useState(null);
+  const [tacSentAt, setTacSentAt] = useState(0);
+  const [tacWrong, setTacWrong] = useState(0); // wrong tries on the current TAC
+  const [tacError, setTacError] = useState(null); // { code, text }
+  const [ctbNotice, setCtbNotice] = useState(null); // telco pre-check failure: Charge to Bill not offered
   // payment
   const [method, setMethod] = useState(null); // 'ctb' | DD option id
   const [blocked, setBlocked] = useState({}); // method -> reason it failed eligibility
@@ -125,6 +129,32 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
     setBusy(`Checking devices on ${homeName.trim()}…`);
     setQuote(await quotePrice({ structureDeviceCount: 0 })); // new home: backend returns 0 devices
     setView('price');
+  });
+
+  const sendTac = () => { setTac(''); setTacWrong(0); setTacError(null); setTacSentAt(Date.now()); setResendIn(30); };
+
+  // TAC → telco lookup → Charge to Bill pre-check (account status) before showing payment options.
+  const submitTac = () => run('Verifying TAC…', async () => {
+    const v = await verifyTac({ tac, sentAt: tacSentAt, wrongSoFar: tacWrong, override: demo.tac });
+    if (!v.ok) {
+      if (v.code === 'locked') { setView('tacLocked'); return; }
+      if (v.code === 'expired') { setTacError({ code: 'expired', text: 'This TAC has expired. Tap “Resend TAC” to get a new one.' }); return; }
+      setTacWrong((n) => n + 1); setTac('');
+      setTacError({ code: 'wrong', text: `Incorrect TAC. ${v.left} ${v.left === 1 ? 'try' : 'tries'} left.` });
+      return;
+    }
+    setBusy('Checking your telco account…');
+    const c = await lookupCustomer(phone);
+    let notice = null;
+    if (c) {
+      setBusy('Checking Charge to Bill eligibility…');
+      const pre = await checkTelcoAccount({ customer: c, override: demo.telco });
+      if (!pre.ok) notice = pre;
+    }
+    setCustomer(c); setCtbNotice(notice); setAttempts(0);
+    setBlocked(notice ? { ctb: notice.title } : {});
+    setMethod(c && !notice ? 'ctb' : null);
+    setView('payment');
   });
 
   const confirmPayment = () => run('Checking billing eligibility…', async () => {
@@ -251,7 +281,7 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
   } else if (view === 'phone') {
     const ok = /^01\d{8,9}$/.test(phone);
     body = (
-      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) run('Sending TAC…', async () => { await wait(900); setTac(''); setResendIn(30); setView('tac'); }); }}>
+      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) run('Sending TAC…', async () => { await wait(900); sendTac(); setView('tac'); }); }}>
         <span className="auth-logo"><Icon name="sms" /></span>
         <h1>Verify your mobile number</h1>
         <p className="muted">We'll send a TAC to check if you're an existing telco customer, so we can offer the best way to pay.</p>
@@ -260,7 +290,7 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
             <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789" onChange={(e) => setPhone(digits(e.target.value).slice(0, 11))} /></div></label>
         <div className="demo-hint"><Icon name="science" /><span>
           Demo numbers:{' '}
-          {[['0123456789', 'telco, eligible'], ['0121111111', 'telco, spend limit'], ['0122222222', 'telco, inactive'], ['0123333333', 'telco, timeout once']].map(([n, l]) => (
+          {[['0123456789', 'telco, Charge to Bill OK'], ['0121111111', 'telco, spend limit (found after TAC)'], ['0122222222', 'telco, inactive (found after TAC)'], ['0124444444', 'telco, spend limit at Confirm'], ['0123333333', 'telco, timeout once at Confirm']].map(([n, l]) => (
             <span key={n} className="demo-num"><button type="button" onClick={() => setPhone(n)}>{fmtPhone(n)}</button> {l}</span>
           ))}
           <span className="demo-num">Any other number: not a telco customer → Direct Debit</span>
@@ -270,23 +300,31 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
     );
   } else if (view === 'tac') {
     const ok = /^\d{6}$/.test(tac);
+    const expired = tacError?.code === 'expired';
     body = (
-      <form className="auth-card left" onSubmit={(e) => {
-        e.preventDefault();
-        if (ok) run('Verifying TAC and checking your telco account…', async () => {
-          const c = await lookupCustomer(phone);
-          setCustomer(c); setBlocked({}); setMethod(c ? 'ctb' : null); setAttempts(0);
-          setView('payment');
-        });
-      }}>
+      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok && !expired) submitTac(); }}>
         <h1>Enter TAC</h1>
-        <p className="muted">We sent a 6-digit TAC to <b>+60 {fmtPhone(phone)}</b>.</p>
+        <p className="muted">We sent a 6-digit TAC to <b>+60 {fmtPhone(phone)}</b>. It's valid for 5 minutes.</p>
         <label className="field"><span>TAC</span>
-          <input autoFocus className="tac-input" inputMode="numeric" maxLength={6} value={tac} placeholder="••••••" onChange={(e) => setTac(digits(e.target.value))} />
-          <small className="field-hint"><Icon name="science" /> Demo: any 6 digits work.</small></label>
-        <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={() => setResendIn(30)}>{resendIn > 0 ? `Resend TAC in ${resendIn}s` : 'Resend TAC'}</button>
-        <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!ok}>Verify</button></Actions>
+          <input autoFocus className={`tac-input ${tacError ? 'invalid' : ''}`} inputMode="numeric" maxLength={6} value={tac} placeholder="••••••"
+            disabled={expired} onChange={(e) => { setTac(digits(e.target.value)); if (tacError?.code === 'wrong') setTacError(null); }} />
+          {tacError
+            ? <small className="field-error"><Icon name="error" /> {tacError.text}</small>
+            : <small className="field-hint"><Icon name="science" /> Demo: any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
+        </label>
+        <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={sendTac}>{resendIn > 0 ? `Resend TAC in ${resendIn}s` : 'Resend TAC'}</button>
+        <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!ok || expired}>Verify</button></Actions>
       </form>
+    );
+  } else if (view === 'tacLocked') {
+    body = (
+      <div className="auth-card">
+        <span className="auth-logo err"><Icon name="lock_clock" /></span>
+        <h1>Too many attempts</h1>
+        <p className="muted">For your security, TAC verification for <b>+60 {fmtPhone(phone)}</b> is locked for {TAC_LOCK_MINUTES} minutes. Please try again later.</p>
+        <p className="note"><Icon name="info" /><span>You haven't been charged. When the lock ends, start again from <b>Add device</b>.</span></p>
+        <button className="btn primary wide" onClick={onCancel}>Back to home</button>
+      </div>
     );
   } else if (view === 'payment') {
     const opt = (id, icon, title, sub) => {
@@ -302,11 +340,16 @@ export default function FirstPairing({ plan, existingHomeNames = [], onCancel, o
     body = (
       <div className="auth-card left">
         <h1>{customer ? `Welcome back, ${customer.name.split(' ')[0]}` : 'Set up Direct Debit'}</h1>
-        <p className="muted">{customer
-          ? <>You're an existing telco customer. You can add this subscription to your monthly bill.</>
-          : <>We couldn't find a telco account for <b>+60 {fmtPhone(phone)}</b>. Your subscription will be paid by Direct Debit.</>}</p>
+        {customer && ctbNotice ? (
+          <div className="alert warn"><Icon name="warning" fill />
+            <span><b>Charge to Bill isn't available: {ctbNotice.title.toLowerCase()}.</b> {ctbNotice.message} Please pay by Direct Debit.</span></div>
+        ) : (
+          <p className="muted">{customer
+            ? <>You're an existing telco customer. You can add this subscription to your monthly bill.</>
+            : <>We couldn't find a telco account for <b>+60 {fmtPhone(phone)}</b>. Your subscription will be paid by Direct Debit.</>}</p>
+        )}
         {customer && (<>
-          <div className="field-label">Recommended</div>
+          <div className="field-label">{ctbNotice ? 'Charge to Bill' : 'Recommended'}</div>
           <div className="options">{opt('ctb', 'receipt_long', 'Charge to Bill', `Billing account ${customer.account} · ${customer.plan}`)}</div>
         </>)}
         <div className="field-label">Direct Debit</div>

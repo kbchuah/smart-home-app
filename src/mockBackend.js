@@ -80,14 +80,43 @@ export async function quotePrice({ structureDeviceCount }) {
   };
 }
 
+// ---- TAC verification ----
+// Demo rules: any 6 digits pass, except 000000 (wrong) and 999999 (expired).
+// A TAC also expires 5 minutes after it was sent. 3 wrong tries lock TAC for 30 minutes.
+export const TAC_MAX_TRIES = 3;
+export const TAC_VALID_MS = 5 * 60 * 1000;
+export const TAC_LOCK_MINUTES = 30;
+export async function verifyTac({ tac, sentAt, wrongSoFar, override = 'auto' }) {
+  await wait(1000);
+  const code = override !== 'auto' ? override
+    : Date.now() - sentAt > TAC_VALID_MS || tac === '999999' ? 'expired'
+    : tac === '000000' ? 'wrong' : 'ok';
+  if (code === 'ok') return { ok: true };
+  if (code === 'locked') return { ok: false, code: 'locked' };
+  if (code === 'expired') return { ok: false, code: 'expired' };
+  const left = TAC_MAX_TRIES - (wrongSoFar + 1);
+  return left > 0 ? { ok: false, code: 'wrong', left } : { ok: false, code: 'locked' };
+}
+
 // ---- Telco customer lookup (after TAC) ----
-// eligibility: outcome of the Charge to Bill eligibility check.
+// status: Charge to Bill pre-check right after TAC (decides whether Charge to Bill is offered).
+// eligibility: final billing check at Confirm (backup; the account can change in between).
 export const TELCO_CUSTOMERS = {
-  '0123456789': { name: 'KB Chuah', account: 'BA-2209-4821', plan: 'Postpaid 98', eligibility: 'ok' },
-  '0121111111': { name: 'Aisyah', account: 'BA-1001-0001', plan: 'Postpaid 68', eligibility: 'spend_limit' },
-  '0122222222': { name: 'Raj', account: 'BA-1002-0002', plan: 'Postpaid 48', eligibility: 'inactive' },
-  '0123333333': { name: 'Mei Ling', account: 'BA-1003-0003', plan: 'Postpaid 128', eligibility: 'timeout_once' },
+  '0123456789': { name: 'KB Chuah', account: 'BA-2209-4821', plan: 'Postpaid 98', status: 'ok', eligibility: 'ok' },
+  '0121111111': { name: 'Aisyah', account: 'BA-1001-0001', plan: 'Postpaid 68', status: 'spend_limit', eligibility: 'spend_limit' },
+  '0122222222': { name: 'Raj', account: 'BA-1002-0002', plan: 'Postpaid 48', status: 'inactive', eligibility: 'inactive' },
+  '0123333333': { name: 'Mei Ling', account: 'BA-1003-0003', plan: 'Postpaid 128', status: 'ok', eligibility: 'timeout_once' },
+  '0124444444': { name: 'Farid', account: 'BA-1004-0004', plan: 'Postpaid 58', status: 'ok', eligibility: 'spend_limit' },
 };
+export const TELCO_PRECHECK = {
+  spend_limit: { title: 'Spend limit reached', message: 'Your telco account has reached its spend limit.' },
+  inactive: { title: 'Account inactive', message: 'Your telco billing account is inactive. Contact your telco to reactivate it.' },
+};
+export async function checkTelcoAccount({ customer, override = 'auto' }) {
+  await wait(1000);
+  const code = override !== 'auto' ? override : customer.status;
+  return code === 'ok' ? { ok: true } : { ok: false, code, ...TELCO_PRECHECK[code] };
+}
 export async function lookupCustomer(phone) {
   await wait(1400);
   return TELCO_CUSTOMERS[phone] ?? null;
