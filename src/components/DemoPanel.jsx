@@ -4,6 +4,7 @@ import Modal from './Modal.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
 import { clearAllTacLocks, useAnyTacLock } from '../tacLock.js';
+import { confirmResetAll } from '../resetAll.js';
 import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES, PROCESSING_FAILURES } from '../mockBackend.js';
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
@@ -49,6 +50,7 @@ export default function DemoPanel() {
               <span>{tacLocked ? 'TAC is locked on this account (30 min). Clear it to keep testing.' : 'No TAC lock active.'}</span>
               <button className="btn subtle" disabled={!tacLocked} onClick={clearAllTacLocks}>Clear TAC lock</button>
             </div>
+            <button className="btn danger reset-all" onClick={confirmResetAll}><Icon name="delete_sweep" /> Reset all demo data</button>
             <div className="form-actions">
               <button className="btn" onClick={resetDemo} disabled={!active}><Icon name="restart_alt" /> Reset all to Auto</button>
               <span className="spacer" />

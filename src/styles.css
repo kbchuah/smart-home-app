@@ -425,3 +425,5 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .alert.ok-alert .msr { color: #1e8e3e; }
 @media (prefers-color-scheme: dark) { .alert.ok-alert { background: #0d3a1f; color: #ceead6; } .alert.ok-alert .msr { color: #81c995; } }
 .leave-text { margin: 8px 0 20px; line-height: 1.5; }
+.reset-all { align-self: flex-start; }
+.reset-link { align-self: center; font-size: 13px; color: var(--muted); margin-top: -4px; }

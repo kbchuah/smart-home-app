@@ -36,3 +36,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Adding devices to an existing home uses the new flow (scan → compatibility → Wi-Fi → price); 5th+ device shows current → new price with agreement
 - “Leave setup?” confirmation when exiting the pairing flow mid-way
 - Existing-home add device: Room step (pick existing room with device counts, or create a new one; duplicate names reuse the existing room)
+- “Reset all demo data” on the marketing page and in the Demo simulator (clears all saved homes and TAC locks, signs out)
