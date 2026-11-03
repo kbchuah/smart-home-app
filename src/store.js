@@ -43,6 +43,8 @@ function reducer(state, a) {
       return { ...state, devices: state.devices.filter((d) => d.id !== a.id) };
     case 'addRoom':
       return { ...state, rooms: [...state.rooms, { id: a.id ?? uid('room'), name: a.name }] };
+    case 'renameHome':
+      return { ...state, homeName: a.name };
     case 'renameRoom':
       return { ...state, rooms: state.rooms.map((r) => (r.id === a.id ? { ...r, name: a.name } : r)) };
     case 'removeRoom': {

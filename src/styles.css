@@ -388,3 +388,10 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .stepper-bar li { white-space: nowrap; }
 .summary-box div.sb-title > span { flex: none; }
 .pair { padding-bottom: 32px; }
+.home-tag { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin: -4px 0 4px !important; }
+.home-tag .msr { font-size: 16px; color: var(--primary); }
+.home-name-field { margin: 12px 0 16px; }
+.note .msr[style] { vertical-align: -3px; }
+/* Demo button scrolls with the flow and sits beside the close button, clear of the stepper */
+.pair .demo-fab { position: absolute; top: 14px; right: 16px; }
+.pair { padding-top: 72px; }

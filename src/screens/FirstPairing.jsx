@@ -3,7 +3,6 @@ import Icon from '../components/Icon.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo } from '../demoStore.js';
-import { ECOSYSTEMS } from './PairDevice.jsx';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, quotePrice, lookupCustomer, checkEligibility, wait,
 } from '../mockBackend.js';
@@ -12,9 +11,12 @@ import {
 // create home → scan QR (or key in serial) → compatibility check → price quote → agree
 // → TAC → Charge to Bill | Direct Debit → confirm → eligibility check → processing → success
 
-const STEPS = ['Home', 'Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Room', 'Done'];
-const STEP_OF = { home: 0, scan: 1, serial: 1, scanFail: 1, compatFail: 1, wifi: 2, wifiFail: 2, price: 3, phone: 4, tac: 4,
-  payment: 5, confirm: 5, eligFail: 5, processing: 5, roomName: 6, success: 7 };
+// Pilot: the first home is always "My Home" on Google Home Premium (renamable later in Home settings).
+const PILOT_HOME_NAME = 'My Home';
+const PILOT_ECOSYSTEM = 'Google Home Premium';
+const STEPS = ['Device', 'Wi-Fi', 'Price', 'Verify', 'Payment', 'Room', 'Done'];
+const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, price: 2, phone: 3, tac: 3,
+  payment: 4, confirm: 4, eligFail: 4, processing: 4, roomName: 5, success: 6 };
 const DEFAULT_ROOM = 'My room';
 const ROOM_SUGGESTIONS = ['Living Room', 'Front Door', 'Porch', 'Garage', 'Backyard', 'Kitchen', 'Bedroom', 'Hallway'];
 
@@ -38,12 +40,12 @@ function Actions({ onBack, backLabel = 'Back', children }) {
 
 export default function FirstPairing({ plan, onCancel, onDone }) {
   const demo = useDemo();
-  const [view, setView] = useState('home');
+  const [view, setView] = useState('scan');
   const [busy, setBusy] = useState(null);
 
   // home
-  const [homeName, setHomeName] = useState('My home');
-  const [ecosystem, setEcosystem] = useState(ECOSYSTEMS[0].id); // defaults to Google Home Premium
+  const homeName = PILOT_HOME_NAME;
+  const ecosystem = PILOT_ECOSYSTEM;
   // device
   const [selectedQr, setSelectedQr] = useState(null);
   const [serial, setSerial] = useState('');
@@ -130,33 +132,12 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
   let body;
   if (busy) {
     body = <div className="auth-card"><Spinner label={busy} /></div>;
-  } else if (view === 'home') {
-    body = (
-      <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (homeName.trim()) setView('scan'); }}>
-        <span className="auth-logo"><Icon name="add_home" /></span>
-        <h1>Create your home</h1>
-        <p className="muted">Your first device will be added to this home. You can rename it later.</p>
-        <label className="field"><span>Home name</span>
-          <input value={homeName} onChange={(e) => setHomeName(e.target.value)} /></label>
-        <div className="field-label">Smart home system</div>
-        <div className="options">
-          {ECOSYSTEMS.map((eco) => (
-            <button type="button" key={eco.id} className={`option compact ${ecosystem === eco.id ? 'sel' : ''}`} onClick={() => setEcosystem(eco.id)}>
-              <span className="option-icon"><Icon name={eco.icon} fill={ecosystem === eco.id} /></span>
-              <span className="option-body"><b>{eco.id}</b>{eco.id === ECOSYSTEMS[0].id && <small>Default</small>}</span>
-              <Icon name={ecosystem === eco.id ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
-            </button>
-          ))}
-        </div>
-        <small className="field-hint"><Icon name="info" /> Homes must be located in Malaysia.</small>
-        <Actions onBack={onCancel} backLabel="Cancel"><button className="btn primary" disabled={!homeName.trim()}>Next</button></Actions>
-      </form>
-    );
   } else if (view === 'scan') {
     body = (
       <div className="auth-card left">
         <h1>Scan your camera's QR code</h1>
         <p className="muted">Find the QR code on the back or bottom of your camera.</p>
+        <p className="home-tag"><Icon name="home" fill /> Adding to <b>{homeName}</b> · {ecosystem}</p>
         <div className="viewfinder small"><span className="vf-corner" /><Icon name="qr_code_2" /><span className="vf-line" /></div>
         <div className="field-label">Demo: choose a QR code to scan</div>
         <div className="options">
@@ -168,7 +149,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
           ))}
         </div>
         <button className="btn subtle" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number instead</button>
-        <Actions onBack={() => setView('home')}>
+        <Actions onBack={onCancel} backLabel="Cancel">
           <button className="btn primary" disabled={!selectedQr} onClick={() => {
             if (selectedQr.unreadable || demo.scan === 'unreadable') run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
             else run('Reading QR code…', async () => { await wait(800); await verifyDevice({ qr: selectedQr }); });
@@ -431,6 +412,7 @@ export default function FirstPairing({ plan, onCancel, onDone }) {
           <div><span>Serial number</span><b>{device.serial}</b></div>
           <div><span>Devices on home</span><b>{quote.devicesAfter} of {quote.included}</b></div>
         </div>
+        <p className="note"><Icon name="edit" /><span>Want a different name for {homeName} or {roomName}? Change them anytime in <b>Home settings</b> (the ⚙ icon in your home).</span></p>
         <button className="btn primary wide" onClick={() => onDone({
           home: { homeName: homeName.trim(), ecosystem },
           room: { name: roomName },

@@ -91,7 +91,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
           {state.ecosystem && <span className="ecosystem"><Icon name="hub" /> Powered by {state.ecosystem}</span>}
         </div>
         <div className="top-actions">
-          <button className="icon-btn" onClick={() => setShowRooms(true)} aria-label="Manage rooms" title="Manage rooms"><Icon name="settings" /></button>
+          <button className="icon-btn" onClick={() => setShowRooms(true)} aria-label="Home settings" title="Home settings"><Icon name="settings" /></button>
           <div className="avatar" aria-hidden>{user?.initials ?? 'H'}</div>
         </div>
       </header>
@@ -200,7 +200,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         />
       )}
 
-      {showRooms && <RoomManager rooms={rooms} devices={devices} dispatch={dispatch} onClose={() => setShowRooms(false)} />}
+      {showRooms && <RoomManager homeName={state.homeName} rooms={rooms} devices={devices} dispatch={dispatch} onClose={() => setShowRooms(false)} />}
 
       {toast && <div className="toast" role="status"><Icon name="check_circle" fill /> {toast}</div>}
     </div>

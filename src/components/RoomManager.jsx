@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from './Modal.jsx';
 import Icon from './Icon.jsx';
 
-export default function RoomManager({ rooms, devices, dispatch, onClose }) {
+export default function RoomManager({ homeName, rooms, devices, dispatch, onClose }) {
   const [newName, setNewName] = useState('');
   const add = (e) => {
     e.preventDefault();
@@ -11,7 +11,10 @@ export default function RoomManager({ rooms, devices, dispatch, onClose }) {
     setNewName('');
   };
   return (
-    <Modal title="Rooms" onClose={onClose}>
+    <Modal title="Home settings" onClose={onClose}>
+      <label className="field home-name-field"><span>Home name</span>
+        <input value={homeName} onChange={(e) => dispatch({ type: 'renameHome', name: e.target.value })} /></label>
+      <div className="field-label">Rooms</div>
       <ul className="room-list">
         {rooms.map((r) => {
           const count = devices.filter((d) => d.roomId === r.id).length;
