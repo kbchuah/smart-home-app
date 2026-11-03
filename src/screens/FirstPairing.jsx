@@ -45,6 +45,23 @@ function Spinner({ label }) {
   return <div className="spinner-wrap"><div className="spinner" /><p>{label}</p></div>;
 }
 
+// Highlighted monthly price change (existing homes, 5th device onwards).
+function PriceChange({ from, to, done = false }) {
+  return (
+    <div className="price-change" role="status">
+      <div className="pc-head">
+        <span><Icon name="trending_up" /> {done ? 'Your monthly price is now' : 'Your monthly price will increase'}</span>
+        <span className="pc-delta">+{rm(to - from)}</span>
+      </div>
+      <div className="pc-prices">
+        <s>{rm(from)}</s>
+        <Icon name="arrow_forward" />
+        <span className="pc-new"><b>{rm(to)}</b><small>/month</small></span>
+      </div>
+    </div>
+  );
+}
+
 function Actions({ onBack, backLabel = 'Back', children }) {
   return (
     <div className="form-actions">
@@ -365,13 +382,14 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
         <h1>Camera is online</h1>
         <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
+        {priceUp && <PriceChange from={quote.currentTotal} to={quote.total} />}
         <div className="summary-box">
           <div><span>Home</span><b>{homeName}</b></div>
           <div><span>Room</span><b>{roomLabel}{roomPick.id || matchRoom(newRoom) ? '' : ' (new)'}</b></div>
           <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter}</b></div>
           <div><span>Included in {plan.name}</span><b>Up to {quote.included}</b></div>
           {priceUp
-            ? <div className="total"><span>Monthly price</span><b>{rm(quote.currentTotal)} → {rm(quote.total)}</b></div>
+            ? <div className="total"><span>Monthly price</span><b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b></div>
             : <div className="total"><span>Monthly price</span><b>{rm(quote.total)} (no change)</b></div>}
           <div><span>Billed via</span><b>{home.subscription?.method ?? 'Current method'}</b></div>
         </div>
@@ -559,6 +577,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <span className="auth-logo ok"><Icon name="celebration" fill /></span>
         <h1>Camera added!</h1>
         <p className="muted"><b>{deviceName}</b> is now in <b>{roomLabel}</b> in <b>{homeName}</b>.</p>
+        {priceUp && <PriceChange from={quote.currentTotal} to={quote.total} done />}
         <div className="summary-box">
           <div className="sb-title"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName}</b></div>
@@ -570,7 +589,7 @@ export default function FirstPairing({ plan, home = null, defaultRoom = DEFAULT_
         <div className="summary-box">
           <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
           <div><span>Devices on home</span><b>{quote.devicesAfter} (up to {quote.included} included)</b></div>
-          <div><span>Monthly price</span><b>{priceUp ? `${rm(quote.currentTotal)} → ${rm(quote.total)}` : `${rm(quote.total)} (no change)`}</b></div>
+          <div><span>Monthly price</span>{priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} (no change)</b>}</div>
           <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>
         </div>
         <p className="note"><Icon name="edit" /><span>To rename the camera or move it to another room, open it and tap <b>Edit</b> (✏️).</span></p>
