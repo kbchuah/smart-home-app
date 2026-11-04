@@ -3,6 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
 import { confirmResetAll } from '../resetAll.js';
 import TierCompare from '../components/TierCompare.jsx';
+import ShopDevices from '../components/ShopDevices.jsx';
 import { premiumPrice } from '../mockBackend.js';
 
 const FEATURES = [
@@ -50,6 +51,8 @@ export default function Landing({ plan, onProceed }) {
           <PriceExamples plan={plan} />
         </div>
       </section>
+
+      <section className="shop-section"><ShopDevices variant="card" /></section>
 
       <section className="compare-section">
         <TierCompare premiumOnly title="What's included" note="Billed per home." />

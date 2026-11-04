@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ShopDevices from '../components/ShopDevices.jsx';
 import Icon from '../components/Icon.jsx';
 import { loadHome } from '../store.js';
 import { billedPrice, subStatus } from '../mockBackend.js';
@@ -42,6 +43,7 @@ export default function Homes({ user, onOpen, onLogout, onAddHome }) {
           <button className="btn primary cta" onClick={onAddHome}>
             <Icon name="add" /> Add device
           </button>
+          <ShopDevices />
         </div>
       ) : (
         <div className="structures">

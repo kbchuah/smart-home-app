@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ShopDevices from '../components/ShopDevices.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
 import { PriceChange, PriceSame, PriceNew, PriceFree } from '../components/PriceCards.jsx';
@@ -298,6 +299,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           ))}
         </div>
         <button className="btn subtle" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number instead</button>
+        <ShopDevices />
         <Actions onBack={requestLeave} backLabel="Cancel">
           <button className="btn primary" disabled={!selectedQr} onClick={() => {
             markTried(`qr:${selectedQr.id}`);
@@ -327,6 +329,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <p className="muted">{scan ? 'The code may be damaged or too far away. Try scanning again, or key in the serial number.' : compatError.reason}</p>
         <button className="btn primary wide" onClick={() => { setSelectedQr(null); setView('scan'); }}><Icon name="qr_code_scanner" /> Scan again</button>
         <button className="btn outline wide" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number</button>
+        {!scan && !compatError?.title?.includes('registered') && <ShopDevices text="Shop compatible cameras at Maxis store" />}
       </div>
     );
   } else if (view === 'wifi') {

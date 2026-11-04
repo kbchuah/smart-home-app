@@ -1,3 +1,6 @@
+// Online store for buying compatible devices (upsell links).
+export const STORE_URL = 'https://store.maxis.com.my';
+
 export const PLAN = {
   id: 'premium', name: 'Premium Home', price: 80, devices: 5, extraDevicePrice: 10, // MYR/month per device beyond `devices`
   tagline: 'Smart home control with Gemini built in.',
