@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHome } from '../store.js';
 import { DEVICE_TYPES } from '../data.js';
+import { roomStyle } from '../roomStyle.js';
 import Icon from '../components/Icon.jsx';
 import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
@@ -198,7 +199,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         return (
           <section key={room.id} className="room">
             <div className="room-head">
-              <h3 className="section-title">{room.name} <small>{list.length}</small></h3>
+              <h3 className={`section-title room-title tone-${roomStyle(room.name, rooms.indexOf(room)).tone}`}><span className="room-ic"><Icon name={roomStyle(room.name, rooms.indexOf(room)).icon} fill /></span>{room.name} <small>{list.length}</small></h3>
               {list.some((d) => d.type !== 'lock' && d.type !== 'camera') && (
                 <button className="btn subtle" onClick={() => dispatch({ type: 'roomPower', roomId: room.id, on: !anyOn })}>
                   <Icon name="power_settings_new" /> {anyOn ? 'Turn off all' : 'Turn on all'}

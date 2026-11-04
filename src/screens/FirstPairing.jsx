@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ShopDevices from '../components/ShopDevices.jsx';
+import { roomStyle } from '../roomStyle.js';
 import DemoReveal, { DemoOnly } from '../components/DemoReveal.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
@@ -393,22 +394,23 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     const dup = creating && newRoom.trim() && matchRoom(newRoom);
     body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (chosenRoomName) setView('price'); }}>
-        <span className="auth-logo tone-logo tone-sage"><Icon name="meeting_room" /></span>
+        <span className="auth-logo tone-logo tone-honey"><Icon name="meeting_room" /></span>
         <h1>Which room is this camera in?</h1>
         <p className="muted">Choose a room in <b>{homeName}</b>, or create a new one.</p>
         <div className="options">
-          {homeRooms.map((r) => {
+          {homeRooms.map((r, i) => {
             const count = home.devices.filter((d) => d.roomId === r.id).length;
+            const rs = roomStyle(r.name, i);
             return (
-              <button type="button" key={r.id} className={`option compact tone-sage ${roomPick.id === r.id ? 'sel' : ''}`} onClick={() => setRoomPick({ id: r.id })}>
-                <span className="option-icon"><Icon name="meeting_room" fill={roomPick.id === r.id} /></span>
+              <button type="button" key={r.id} className={`option compact tone-${rs.tone} ${roomPick.id === r.id ? 'sel' : ''}`} onClick={() => setRoomPick({ id: r.id })}>
+                <span className="option-icon"><Icon name={rs.icon} fill /></span>
                 <span className="option-body"><b>{r.name}</b><small>{count} device{count === 1 ? '' : 's'}</small></span>
                 <Icon name={roomPick.id === r.id ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
               </button>
             );
           })}
           <button type="button" className={`option compact ${creating ? 'sel' : ''}`} onClick={() => setRoomPick({ id: null })}>
-            <span className="option-icon"><Icon name="add" /></span>
+            <span className="option-icon tone-blue"><Icon name="add" /></span>
             <span className="option-body"><b>Create a new room</b><small>e.g. Car porch, Study</small></span>
             <Icon name={creating ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
           </button>

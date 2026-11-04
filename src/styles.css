@@ -13,6 +13,8 @@
   --plum: #7a4f7c; --plum-soft: #f0e4ef;     /* Gemini / AI */
   --sage: #3d7a5e; --sage-soft: #e2eee7;     /* success */
   --honey-line: #e8d3a6;
+  /* success: a brighter leaf green, clearly different from the forest base */
+  --success: #1f8a52; --success-ink: #176b40; --success-soft: #ddf3e4; --success-line: #a9dcbc; --on-success: #ffffff;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -28,6 +30,7 @@
     --plum: #d2aed3; --plum-soft: #36283a;
     --sage: #9fcbb2; --sage-soft: #22312a;
     --honey-line: #5a4a2c;
+    --success: #5fd394; --success-ink: #7fe0ab; --success-soft: #1b3a2a; --success-line: #2f6847; --on-success: #0f2a1b;
     color-scheme: dark;
   }
 }
@@ -192,7 +195,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .reset { margin-top: 16px; }
 
 .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); background: #303134; color: #e8eaed; padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; gap: 8px; z-index: 30; animation: rise .2s; box-shadow: 0 4px 16px rgba(0,0,0,.25); white-space: nowrap; }
-.toast .msr { color: #9fcbb2; }
+.toast .msr { color: #5fd394; }
 
 /* ---------- Onboarding: landing, auth, mock sign-in, homes ---------- */
 .muted { color: var(--muted); }
@@ -240,8 +243,8 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .auth-card p { margin: 0 0 8px; line-height: 1.5; }
 .auth-logo { width: 64px; height: 64px; border-radius: 20px; background: var(--primary-soft); display: grid; place-items: center; }
 .auth-logo .msr { font-size: 34px; color: var(--primary); }
-.auth-logo.ok { background: var(--sage-soft); }
-.auth-logo.ok .msr { color: var(--sage); }
+.auth-logo.ok { background: var(--success); box-shadow: 0 0 0 6px var(--success-soft); }
+.auth-logo.ok .msr { color: var(--on-success); }
 
 .gframe { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0 28px 28px; display: flex; flex-direction: column; gap: 6px; }
 .gframe-head { display: flex; align-items: center; gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--border); margin: 0 -28px 0; padding-left: 20px; font-size: 14px; color: var(--muted); }
@@ -265,7 +268,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .stepper-bar span .msr { font-size: 16px; }
 .stepper-bar li.current { color: var(--text); font-weight: 500; }
 .stepper-bar li.current span { background: var(--tone, var(--primary)); color: var(--bg); }
-.stepper-bar li.done span { background: var(--sage-soft); color: var(--sage); }
+.stepper-bar li.done span { background: var(--success-soft); color: var(--success); }
 
 .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 0; }
 .spinner-wrap p { color: var(--muted); }
@@ -380,11 +383,11 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .task-list li { display: flex; align-items: center; gap: 12px; color: var(--muted); }
 .task-list li.active { color: var(--text); font-weight: 500; }
 .task-list li.done { color: var(--text); }
-.task-list li.done .msr { color: var(--sage); }
+.task-list li.done .msr { color: var(--success); }
 .mini-spinner { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--surface-2); border-top-color: var(--primary); animation: spin .8s linear infinite; flex: none; margin: 1px; }
 .sb-title { font-weight: 500; justify-content: flex-start !important; gap: 6px; align-items: center; }
 .sb-title .msr { font-size: 18px; color: var(--tone, var(--primary)); }
-.ok-text { color: var(--sage); }
+.ok-text { color: var(--success-ink); }
 .summary-box div { gap: 12px; align-items: baseline; }
 .summary-box div > span { flex: 1 1 auto; min-width: 0; }
 .summary-box div > b { flex: 0 1 auto; text-align: right; }
@@ -443,8 +446,8 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .tried-tag .msr { font-size: 14px; }
 .version-label { opacity: .7; margin-top: -8px !important; }
 .version-pill { align-self: center; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); margin-right: 4px; }
-.alert.ok-alert { background: var(--sage-soft); color: var(--text); text-align: left; }
-.alert.ok-alert .msr { color: var(--sage); }
+.alert.ok-alert { background: var(--success-soft); color: var(--text); text-align: left; border: 1px solid var(--success-line); }
+.alert.ok-alert .msr { color: var(--success); }
 .leave-text { margin: 8px 0 20px; line-height: 1.5; }
 .reset-all { align-self: flex-start; }
 .reset-link { align-self: center; font-size: 13px; color: var(--muted); margin-top: -4px; }
@@ -467,16 +470,11 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .pc-new { white-space: nowrap; }
 .pc-new small { margin-left: 2px !important; }
 .pc-prices b { font-size: 24px; }
-.price-change.same { background: var(--sage-soft); border-color: #bcd6c6; color: var(--sage); }
-.price-change.same .pc-head .msr { color: var(--sage); }
-.price-change.same .pc-prices b { color: var(--sage); }
-.price-change.same .pc-delta { background: var(--sage); color: #fff; }
+.price-change.same { background: var(--success-soft); border-color: var(--success-line); color: var(--text); }
+.price-change.same .pc-head .msr { color: var(--success); }
+.price-change.same .pc-prices b { color: var(--success-ink); }
+.price-change.same .pc-delta { background: var(--success); color: var(--on-success); }
 .pc-sub { display: block; margin-top: 4px; font-size: 12px; opacity: .85; }
-@media (prefers-color-scheme: dark) {
-  .price-change.same { background: #232925; border-color: #3a4a42; color: #cfe3d7; }
-  .price-change.same .pc-head .msr, .price-change.same .pc-prices b { color: #9fcbb2; }
-  .price-change.same .pc-delta { background: #9fcbb2; color: #232925; }
-}
 /* new subscription = Premium, so honey */
 .price-change.new { background: var(--honey-soft); border-color: var(--honey-line); color: var(--text); }
 .price-change.new .pc-head .msr { color: var(--honey); }
@@ -583,19 +581,14 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .pf-body small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
 
 /* ---------- Unpair ---------- */
-.price-change.down { background: var(--sage-soft); border-color: #bcd6c6; color: var(--sage); }
-.price-change.down .pc-head .msr, .price-change.down .pc-prices b { color: var(--sage); }
-.price-change.down .pc-delta { background: var(--sage); color: #fff; }
+.price-change.down { background: var(--success-soft); border-color: var(--success-line); color: var(--text); }
+.price-change.down .pc-head .msr, .price-change.down .pc-prices b { color: var(--success-ink); }
+.price-change.down .pc-delta { background: var(--success); color: var(--on-success); }
+.sub-next { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--success-ink); }
+.next-row { color: var(--success-ink); }
 .btn.danger-solid { background: var(--danger); color: #fff; }
 .unpair-btn { margin-top: 16px; color: var(--danger); align-self: center; }
-.sub-next { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--sage); }
 .sub-next .msr { font-size: 16px; }
-.next-row { color: var(--sage); }
-@media (prefers-color-scheme: dark) {
-  .price-change.down { background: #232925; border-color: #3a4a42; color: #cfe3d7; }
-  .price-change.down .pc-head .msr, .price-change.down .pc-prices b, .sub-next, .next-row { color: #9fcbb2; }
-  .price-change.down .pc-delta { background: #9fcbb2; color: #232925; }
-}
 .summary-box .rule-row { margin-top: -6px; }
 .summary-box .rule-row span { font-size: 12px; color: var(--muted); }
 .segmented.verify-by { margin: 4px 0 14px; }
@@ -655,3 +648,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .auth-logo.premium { background: var(--honey-soft); } .auth-logo.premium .msr { color: var(--honey); }
 
 .auth-logo.tone-logo { background: var(--tone-soft); } .auth-logo.tone-logo .msr { color: var(--tone); }
+
+.room-title { display: flex; align-items: center; gap: 8px; }
+.room-title .room-ic { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: var(--tone-soft); color: var(--tone); }
+.room-title .room-ic .msr { font-size: 17px; }
