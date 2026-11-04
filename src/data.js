@@ -151,6 +151,22 @@ export const STRUCTURES = {
     ],
     routines: GENERIC_ROUTINES,
   },
+  // Demo: exactly at the 5 included devices, so adding one more shows the fee going up (MYR 80 → 90).
+  aina_home: {
+    homeName: 'Aina\'s home',
+    wifi: 'maxis-home-5G',
+    ecosystem: 'Google Home Premium',
+    subscription: { method: 'Charge to Bill', billingAccount: 'BA-5521-0088', billCycleDay: 12, startedOn: '2026-07-12', phone: '0123456789' },
+    rooms: [{ id: 'living', name: 'Living Room' }, { id: 'entry', name: 'Entryway' }, { id: 'bedroom', name: 'Bedroom' }],
+    devices: [
+      dev('a1', 'Living Room Cam', 'camera', 'living'),
+      dev('a2', 'Front Door Cam', 'camera', 'entry'),
+      dev('a3', 'Porch Cam', 'camera', 'entry'),
+      dev('a4', 'Baby Room Cam', 'camera', 'bedroom'),
+      dev('a5', 'Backyard Cam', 'camera', 'living'),
+    ],
+    routines: GENERIC_ROUTINES,
+  },
 };
 
 // Does a routine action target apply to this device?

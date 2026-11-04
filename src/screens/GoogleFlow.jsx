@@ -23,7 +23,7 @@ function Spinner({ label }) {
 
 export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
   const isSignup = mode === 'signup';
-  const choices = isSignup ? [DEMO_USERS.fresh] : [DEMO_USERS.existing, DEMO_USERS.future];
+  const choices = isSignup ? [DEMO_USERS.fresh] : [DEMO_USERS.existing, DEMO_USERS.future, DEMO_USERS.upsell];
   const [account, setAccount] = useState({ ...choices[0], isNew: isSignup });
   // signup steps: 0 account, 1 permissions, 2 profile, 3 plan, 4 done. login: 0 account, 1 signing in
   const [step, setStep] = useState(-1); // -1 = intro

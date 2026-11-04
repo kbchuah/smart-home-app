@@ -16,6 +16,7 @@ export const PLAN = {
 export const DEMO_USERS = {
   existing: { name: 'KB', email: 'kb.demo@gmail.com', initials: 'K', structures: ['kb'] },
   future: { name: 'Future', email: 'future@example.com', initials: 'F', structures: ['future_kl', 'future_penang', 'future_office'] },
+  upsell: { name: 'Aina', email: 'aina.demo@gmail.com', initials: 'A', structures: ['aina_home'] }, // 5 of 5 devices: add one to see the fee go up
   fresh: { name: 'New User', email: 'new.user.demo@gmail.com', initials: 'N', structures: [] },
 };
 
