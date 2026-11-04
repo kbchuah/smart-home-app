@@ -9,7 +9,7 @@ const HOME_TONES = ['sage', 'blue', 'honey', 'plum'];
 
 export default function Homes({ user, onOpen, onLogout, onAddHome }) {
   const [toast, setToast] = useState(null);
-  const structures = (user?.structures ?? []).map((id) => {
+  const structures = (user?.structures ?? []).filter((id) => loadHome(id)).map((id) => {
     const h = loadHome(id);
     return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? billedPrice(h) : null, status: subStatus(h.subscription) };
   });
