@@ -24,7 +24,7 @@ export default function Homes({ user, onOpen, onLogout, onAddHome }) {
     <div className="app">
       <header className="top">
         <div>
-          <p className="eyebrow"><Icon name="cottage" fill /> Hearth</p>
+          <p className="eyebrow"><Icon name="cottage" fill /> Sixam Home</p>
           <h1>Hi, {user?.name}</h1>
         </div>
         <div className="top-actions">

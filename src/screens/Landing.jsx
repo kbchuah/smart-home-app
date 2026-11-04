@@ -16,7 +16,7 @@ export default function Landing({ plan, onProceed }) {
   return (
     <div className="landing">
       <header className="brand-bar">
-        <span className="brand"><Icon name="cottage" fill /> Hearth</span>
+        <span className="brand"><Icon name="cottage" fill /> Sixam Home</span>
         <span className="demo-pill">Demo</span>
       </header>
 
@@ -70,7 +70,7 @@ export default function Landing({ plan, onProceed }) {
         <label className="consent">
           <input type="checkbox" checked={inMalaysia} onChange={(e) => setInMalaysia(e.target.checked)} />
           <span>
-            I confirm that I live in <b>Malaysia</b>. I understand that Hearth is <b>only available in Malaysia</b> and
+            I confirm that I live in <b>Malaysia</b>. I understand that Sixam Home is <b>only available in Malaysia</b> and
             can only be used with a home located in Malaysia.
           </span>
         </label>

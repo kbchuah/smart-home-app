@@ -54,7 +54,7 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
     body = (
       <MockGoogleFrame>
         <h2>Choose an account</h2>
-        <p className="muted">to continue to Hearth</p>
+        <p className="muted">to continue to Sixam Home</p>
         {choices.map((c) => (
           <button key={c.email} className="account" onClick={() => { setAccount({ ...c, isNew: isSignup }); setName(c.name); next(); }}>
             <span className="avatar">{c.initials}</span>
@@ -71,7 +71,7 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
   } else if (step === 1) {
     body = (
       <MockGoogleFrame>
-        <h2>Hearth wants to access your Google Account</h2>
+        <h2>Sixam Home wants to access your Google Account</h2>
         <p className="muted">{account.email}</p>
         <ul className="perm-list">
           <li><Icon name="badge" /> See your name and profile picture</li>
@@ -94,7 +94,7 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
         <label className="field">
           <span>Country</span>
           <input value="Malaysia" readOnly aria-readonly="true" />
-          <small className="field-hint"><Icon name="info" /> Hearth is only available in Malaysia.</small>
+          <small className="field-hint"><Icon name="info" /> Sixam Home is only available in Malaysia.</small>
         </label>
         <button className="btn primary wide" disabled={!name.trim()}>Continue</button>
       </form>

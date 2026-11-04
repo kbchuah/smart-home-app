@@ -199,7 +199,7 @@ export function processingFails({ mode, task, failedBefore }) {
   if (mode === 'sub_fail_always') return task === 'subscription';
   return false;
 }
-export const supportRef = () => `HRT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+export const supportRef = () => `SXH-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
 // ---- Subscription lifecycle (per home) ----
 // status: 'active' | 'cancelling' (Premium until renewsOn, then Free) | 'free'

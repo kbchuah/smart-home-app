@@ -5,7 +5,7 @@ import Icon from './Icon.jsx';
 export default class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }
   static getDerivedStateFromError(error) { return { error }; }
-  componentDidCatch(error, info) { console.error('Hearth crashed', error, info?.componentStack); }
+  componentDidCatch(error, info) { console.error('Sixam Home crashed', error, info?.componentStack); }
   reset = () => {
     try { Object.keys(localStorage).filter((k) => k.startsWith('hearth-')).forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ }
     window.location.reload();

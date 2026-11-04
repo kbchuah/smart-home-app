@@ -1,4 +1,4 @@
-# Hearth – Smart Home Demo
+# Sixam Home – Smart Home Demo
 
 A simulated smart-home dashboard built with React + Vite. No real devices are involved.
 
