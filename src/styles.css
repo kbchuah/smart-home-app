@@ -12,6 +12,7 @@
   --blue: #3f6487; --blue-soft: #e1eaf3;     /* info, Wi-Fi, verification */
   --plum: #7a4f7c; --plum-soft: #f0e4ef;     /* Gemini / AI */
   --sage: #3d7a5e; --sage-soft: #e2eee7;     /* success */
+  --honey-line: #e8d3a6;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -26,6 +27,7 @@
     --blue: #a3bfdc; --blue-soft: #243140;
     --plum: #d2aed3; --plum-soft: #36283a;
     --sage: #9fcbb2; --sage-soft: #22312a;
+    --honey-line: #5a4a2c;
     color-scheme: dark;
   }
 }
@@ -262,8 +264,8 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .stepper-bar span { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 500; background: var(--surface-2); }
 .stepper-bar span .msr { font-size: 16px; }
 .stepper-bar li.current { color: var(--text); font-weight: 500; }
-.stepper-bar li.current span { background: var(--primary); color: var(--bg); }
-.stepper-bar li.done span { background: var(--primary-soft); color: var(--primary); }
+.stepper-bar li.current span { background: var(--tone, var(--primary)); color: var(--bg); }
+.stepper-bar li.done span { background: var(--sage-soft); color: var(--sage); }
 
 .spinner-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 0; }
 .spinner-wrap p { color: var(--muted); }
@@ -325,9 +327,10 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .option.compact { padding: 12px 14px; }
 .option:hover { background: var(--surface-2); }
 .option.sel { border-color: var(--primary); background: var(--primary-soft); }
-.option-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; flex: none; }
-.option.sel .option-icon { background: var(--surface); }
-.option-icon .msr, .option-radio { color: var(--primary); }
+.option-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--tone-soft, var(--surface-2)); display: grid; place-items: center; flex: none; }
+.option.sel .option-icon { background: var(--tone-soft, var(--surface)); }
+.option-icon .msr { color: var(--tone, var(--primary)); }
+.option-radio { color: var(--primary); }
 .option-body { flex: 1; min-width: 0; }
 .option-body small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; line-height: 1.35; }
 .type-grid.big { grid-template-columns: repeat(2, 1fr); }
@@ -380,7 +383,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .task-list li.done .msr { color: var(--sage); }
 .mini-spinner { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--surface-2); border-top-color: var(--primary); animation: spin .8s linear infinite; flex: none; margin: 1px; }
 .sb-title { font-weight: 500; justify-content: flex-start !important; gap: 6px; align-items: center; }
-.sb-title .msr { font-size: 18px; color: var(--primary); }
+.sb-title .msr { font-size: 18px; color: var(--tone, var(--primary)); }
 .ok-text { color: var(--sage); }
 .summary-box div { gap: 12px; align-items: baseline; }
 .summary-box div > span { flex: 1 1 auto; min-width: 0; }
@@ -474,10 +477,11 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
   .price-change.same .pc-head .msr, .price-change.same .pc-prices b { color: #9fcbb2; }
   .price-change.same .pc-delta { background: #9fcbb2; color: #232925; }
 }
-.price-change.new { background: var(--forest-bg); border-color: var(--forest-line); color: var(--forest-ink); }
-.price-change.new .pc-head .msr { color: var(--primary); }
-.price-change.new .pc-prices b { color: var(--primary); }
-.price-change.new .pc-delta { background: var(--primary); color: var(--on-primary); }
+/* new subscription = Premium, so honey */
+.price-change.new { background: var(--honey-soft); border-color: var(--honey-line); color: var(--text); }
+.price-change.new .pc-head .msr { color: var(--honey); }
+.price-change.new .pc-prices b { color: var(--honey); }
+.price-change.new .pc-delta { background: var(--honey); color: var(--bg); }
 .pair .price-change { margin: 4px 0; }
 
 /* ---------- Subscription card inside a home ---------- */
@@ -649,3 +653,5 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .routine .msr { color: var(--tone, var(--primary)); }
 .structure-icon .msr { color: inherit; }
 .auth-logo.premium { background: var(--honey-soft); } .auth-logo.premium .msr { color: var(--honey); }
+
+.auth-logo.tone-logo { background: var(--tone-soft); } .auth-logo.tone-logo .msr { color: var(--tone); }

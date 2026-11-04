@@ -47,6 +47,8 @@ const DEMO_EMAILS = [
   { e: 'mei.fibre@example.com', icon: 'hourglass_empty', label: 'Fibre · timeout once at Confirm' },
   { e: 'someone@example.com', icon: 'mail_off', label: 'No fibre account → code not sent', other: true },
 ];
+// Demo test-data cards: colour by outcome (pass sage, blocked clay, timing honey, Direct Debit plum).
+const DEMO_TONE = { verified: 'sage', block: 'clay', person_off: 'clay', mail_off: 'clay', update: 'honey', hourglass_empty: 'honey', account_balance: 'plum' };
 const emailKey = (e) => (DEMO_EMAILS.some((d) => d.e === normEmail(e) && !d.other) ? `email:${normEmail(e)}` : 'email:other');
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const phoneKey = (n) => (DEMO_PHONES.some((d) => d.n === n && !d.other) ? `phone:${n}` : 'phone:other');
@@ -391,14 +393,14 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     const dup = creating && newRoom.trim() && matchRoom(newRoom);
     body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (chosenRoomName) setView('price'); }}>
-        <span className="auth-logo"><Icon name="meeting_room" /></span>
+        <span className="auth-logo tone-logo tone-sage"><Icon name="meeting_room" /></span>
         <h1>Which room is this camera in?</h1>
         <p className="muted">Choose a room in <b>{homeName}</b>, or create a new one.</p>
         <div className="options">
           {homeRooms.map((r) => {
             const count = home.devices.filter((d) => d.roomId === r.id).length;
             return (
-              <button type="button" key={r.id} className={`option compact ${roomPick.id === r.id ? 'sel' : ''}`} onClick={() => setRoomPick({ id: r.id })}>
+              <button type="button" key={r.id} className={`option compact tone-sage ${roomPick.id === r.id ? 'sel' : ''}`} onClick={() => setRoomPick({ id: r.id })}>
                 <span className="option-icon"><Icon name="meeting_room" fill={roomPick.id === r.id} /></span>
                 <span className="option-body"><b>{r.name}</b><small>{count} device{count === 1 ? '' : 's'}</small></span>
                 <Icon name={roomPick.id === r.id ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
@@ -528,7 +530,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             const triedIt = isTried(d.other ? 'phone:other' : `phone:${d.n}`);
             return (
               <button type="button" key={d.n} className={`option compact ${phone === d.n ? 'sel' : ''} ${triedIt ? 'tried' : ''}`} onClick={() => setPhone(d.n)}>
-                <span className="option-icon"><Icon name={d.icon} /></span>
+                <span className={`option-icon tone-${DEMO_TONE[d.icon] ?? 'blue'}`}><Icon name={d.icon} /></span>
                 <span className="option-body"><b>{d.other ? 'Any other number' : fmtPhone(d.n)}</b><small>{d.label}</small></span>
                 {triedIt && <span className="tried-tag"><Icon name="check" /> Tried</span>}
               </button>
@@ -561,7 +563,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
               const triedIt = isTried(d.other ? 'email:other' : `email:${d.e}`);
               return (
                 <button type="button" key={d.e} className={`option compact ${normEmail(email) === d.e ? 'sel' : ''} ${triedIt ? 'tried' : ''}`} onClick={() => { setEmail(d.e); setEmailError(null); }}>
-                  <span className="option-icon"><Icon name={d.icon} /></span>
+                  <span className={`option-icon tone-${DEMO_TONE[d.icon] ?? 'blue'}`}><Icon name={d.icon} /></span>
                   <span className="option-body"><b>{d.other ? 'Any other email' : d.e}</b><small>{d.label}</small></span>
                   {triedIt && <span className="tried-tag"><Icon name="check" /> Tried</span>}
                 </button>
@@ -596,7 +598,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     const opt = (id, icon, title, sub) => {
       const reason = blocked[id];
       return (
-        <button key={id} disabled={!!reason} className={`option compact ${method === id ? 'sel' : ''}`} onClick={() => { setMethod(id); setAttempts(0); }}>
+        <button key={id} disabled={!!reason} className={`option compact tone-${id === 'ctb' ? 'honey' : id.startsWith('card') ? 'blue' : 'plum'} ${method === id ? 'sel' : ''}`} onClick={() => { setMethod(id); setAttempts(0); }}>
           <span className="option-icon"><Icon name={icon} fill={method === id} /></span>
           <span className="option-body"><b>{title}</b><small>{reason ? `Unavailable: ${reason}` : sub}</small></span>
           <Icon name={method === id ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
@@ -714,7 +716,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <p className="muted"><b>{deviceName}</b> is now in <b>{roomLabel}</b> in <b>{homeName}</b>.</p>
         {isFreeHome ? <PriceFree done /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} done /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} done />}
         <div className="summary-box">
-          <div className="sb-title"><Icon name="videocam" /> Paired device</div>
+          <div className="sb-title tone-blue"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName}</b></div>
           <div><span>Type</span><b>{device.brand === '3P' ? '3P · Google Home enabled' : 'Google Nest'}</b></div>
           <div><span>Wi-Fi</span><b>{ssid}</b></div>
@@ -722,7 +724,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <div><span>Room</span><b>{roomLabel}</b></div>
         </div>
         <div className="summary-box">
-          <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
+          <div className="sb-title tone-honey"><Icon name="workspace_premium" /> Subscription</div>
           <div><span>Devices on home</span><b>{isFreeHome ? quote.devicesAfter : `${quote.devicesAfter} (up to ${quote.included} included)`}</b></div>
           <div><span>Monthly price</span>{priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} {isFreeHome ? '(free plan)' : '(no change)'}</b>}</div>
           {isFreeHome ? <div><span>Plan</span><b>Free</b></div> : <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>}
@@ -756,20 +758,20 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <p className="muted">Your <b>{plan.name}</b> subscription is <b className="ok-text">active</b>.</p>
         <PriceNew price={quote.total} included={quote.included} label="Subscription active" badge="Active" />
         <div className="summary-box">
-          <div className="sb-title"><Icon name="workspace_premium" /> Subscription</div>
+          <div className="sb-title tone-honey"><Icon name="workspace_premium" /> Subscription</div>
           <div><span>Plan</span><b>{plan.name}</b></div>
           <div><span>Price</span><b>{rm(quote.total)}/month</b></div>
           <div><span>Payment</span><b>{subscription.method}</b></div>
           <div><span>{method === 'ctb' ? 'Billing account' : 'Paid from'}</span><b>{subscription.detail}</b></div>
         </div>
         <div className="summary-box">
-          <div className="sb-title"><Icon name="home" /> Home</div>
+          <div className="sb-title tone-sage"><Icon name="home" /> Home</div>
           <div><span>Name</span><b>{homeName.trim()}</b></div>
           <div><span>Powered by</span><b>{ecosystem}</b></div>
           <div><span>Room</span><b>{roomName}</b></div>
         </div>
         <div className="summary-box">
-          <div className="sb-title"><Icon name="videocam" /> Paired device</div>
+          <div className="sb-title tone-blue"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName.trim()}</b></div>
           <div><span>Model</span><b>{device.model}</b></div>
           <div><span>Type</span><b>{device.brand === '3P' ? '3P · Google Home enabled' : 'Google Nest'}</b></div>
