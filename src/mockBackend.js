@@ -44,8 +44,8 @@ export async function checkCompatibility({ serial, qr, override = 'auto' }) {
 
 // ---- Wi-Fi: camera joins the network and must come online before we bill ----
 export const WIFI_NETWORKS = [
-  { ssid: 'unifi-home-5G', icon: 'wifi', hint: 'Passes', result: 'ok' },
-  { ssid: 'unifi-home-2.4G', icon: 'wifi', hint: 'Passes', result: 'ok' },
+  { ssid: 'maxis-home-5G', icon: 'wifi', hint: 'Passes', result: 'ok' },
+  { ssid: 'maxis-home-2.4G', icon: 'wifi', hint: 'Passes', result: 'ok' },
   { ssid: 'TIME-Fibre-8821', icon: 'wifi_2_bar', hint: 'Connects, but no internet', result: 'no_internet' },
   { ssid: 'Neighbour_Guest', icon: 'wifi_1_bar', hint: 'Signal too weak', result: 'weak_signal' },
 ];
