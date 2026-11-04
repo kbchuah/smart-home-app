@@ -10,7 +10,7 @@ export default function ShopDevices({ variant = 'link', text }) {
         <span className="shop-icon"><Icon name="storefront" fill /></span>
         <span className="shop-body">
           <b>Need a camera?</b>
-          <small>Shop Google Nest and other compatible cameras at the Maxis store.</small>
+          <small>Shop cameras that work with Google Home at the Maxis store.</small>
         </span>
         <span className="shop-go">Shop <Icon name="open_in_new" /></span>
       </a>
