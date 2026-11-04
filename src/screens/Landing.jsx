@@ -3,6 +3,7 @@ import Icon from '../components/Icon.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
 import { confirmResetAll } from '../resetAll.js';
 import TierCompare from '../components/TierCompare.jsx';
+import { premiumPrice } from '../mockBackend.js';
 
 const FEATURES = [
   ['history', '30 days of video history', 'See what happened while you were out. Event clips up to 5 minutes, kept for 30 days.'],
@@ -46,6 +47,7 @@ export default function Landing({ plan, onProceed }) {
           <span className="plan-price">MYR {plan.price}<small>/month</small></span>
           <span className="plan-extra"><Icon name="add_circle" /><span>{plan.devices} devices included · <b>+MYR {plan.extraDevicePrice}/month</b> for each additional device</span></span>
           <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
+          <PriceExamples plan={plan} />
         </div>
       </section>
 
@@ -75,6 +77,33 @@ export default function Landing({ plan, onProceed }) {
         <p className="fineprint version-label" title={APP_BUILD}>{APP_VERSION} · built {APP_BUILD}</p>
         <button className="btn subtle reset-link" onClick={confirmResetAll}><Icon name="delete_sweep" /> Reset all demo data</button>
       </section>
+    </div>
+  );
+}
+
+// Worked pricing examples, computed from the plan so they never go out of date.
+function PriceExamples({ plan }) {
+  const n = plan.devices;
+  const rows = [
+    [`1 to ${n} devices`, premiumPrice(n), 'Included in your plan'],
+    ...[1, 2, 3].map((k) => [`${n + k} devices`, premiumPrice(n + k), `${k} extra × MYR ${plan.extraDevicePrice}`]),
+    [`${n + 5} devices`, premiumPrice(n + 5), `5 extra × MYR ${plan.extraDevicePrice}`],
+  ];
+  return (
+    <div className="price-examples">
+      <div className="pe-title">How your price works</div>
+      <table>
+        <thead><tr><th>Devices in your home</th><th>Monthly price</th></tr></thead>
+        <tbody>
+          {rows.map(([d, price, how], i) => (
+            <tr key={d} className={i === 0 ? 'base' : ''}>
+              <td><b>{d}</b><small>{how}</small></td>
+              <td>MYR {price}{i > 0 && <small className="pe-diff">+MYR {price - plan.price}</small>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="pe-note">Price is per home. Adding a device takes effect from your next bill.</p>
     </div>
   );
 }

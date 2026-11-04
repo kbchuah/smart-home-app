@@ -604,3 +604,14 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--primary); cursor: pointer; text-decoration: underline; }
 .tc-cells.one { grid-template-columns: 1fr; }
 .tc-cols:has(> :only-child) { grid-template-columns: 1fr; }
+.price-examples { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.price-examples .pe-title { font-size: 13px; font-weight: 700; padding: 10px 12px 6px; }
+.price-examples table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.price-examples th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 6px 12px; border-bottom: 1px solid var(--border); }
+.price-examples th:last-child, .price-examples td:last-child { text-align: right; }
+.price-examples td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.price-examples td:last-child { font-weight: 700; white-space: nowrap; }
+.price-examples td small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+.price-examples tr.base td { background: var(--primary-soft); }
+.price-examples .pe-diff { color: #e37400 !important; }
+.price-examples .pe-note { font-size: 12px; color: var(--muted); margin: 0; padding: 8px 12px 10px; }
