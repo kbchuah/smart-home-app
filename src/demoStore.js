@@ -72,3 +72,15 @@ export const useTried = () => {
   useSyncExternalStore((l) => { triedListeners.add(l); return () => triedListeners.delete(l); }, () => triedVersion);
   return (key) => tried.has(key);
 };
+
+// Show or hide in-screen demo options (test data cards, "Demo:" hints, demo shortcut buttons).
+// Hidden by default so screens look like the real app; the choice is shared by every screen.
+const REVEAL_KEY = 'hearth-demo-reveal';
+let reveal = (() => { try { return localStorage.getItem(REVEAL_KEY) === '1'; } catch { return false; } })();
+const revealListeners = new Set();
+export const setDemoReveal = (on) => {
+  reveal = on;
+  try { on ? localStorage.setItem(REVEAL_KEY, '1') : localStorage.removeItem(REVEAL_KEY); } catch { /* storage unavailable */ }
+  revealListeners.forEach((l) => l());
+};
+export const useDemoReveal = () => useSyncExternalStore((l) => { revealListeners.add(l); return () => revealListeners.delete(l); }, () => reveal);

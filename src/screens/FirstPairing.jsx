@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import ShopDevices from '../components/ShopDevices.jsx';
+import DemoReveal, { DemoOnly } from '../components/DemoReveal.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
 import { PriceChange, PriceSame, PriceNew, PriceFree } from '../components/PriceCards.jsx';
 import Stepper from '../components/Stepper.jsx';
 import DemoPanel from '../components/DemoPanel.jsx';
-import { useDemo, markTried, useTried } from '../demoStore.js';
+import { useDemo, markTried, useTried, useDemoReveal } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
   QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, lookupFibreByEmail, maskEmail, normEmail, EMAIL_CODE_VALID_MS, TAC_VALID_MS, checkEligibility, wait,
@@ -85,6 +86,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const isFreeHome = isExisting && !isPremium(home.subscription);
   const homeWifi = home?.wifi ?? null; // existing homes: the network their devices use
   const demo = useDemo();
+  const showDemo = useDemoReveal(); // demo hints and Tried marks are hidden unless demo options are shown
   const isTried = useTried();
   const [view, setView] = useState(isUpgrade ? 'price' : 'scan');
   const tacLockedMins = useTacLock(account) * (isExisting ? 0 : 1); // TAC isn't used for existing homes
@@ -287,7 +289,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <p className="muted">Find the QR code on the back or bottom of your camera.</p>
         <p className="home-tag"><Icon name="home" fill /> Adding to <b>{homeName}</b> · {ecosystem}</p>
         <div className="viewfinder small"><span className="vf-corner" /><Icon name="qr_code_2" /><span className="vf-line" /></div>
-        <div className="field-label">Demo: choose a QR code to scan</div>
+        <DemoReveal label="Choose a QR code to scan">
         <div className="options">
           {QR_CODES.map((q) => (
             <button key={q.id} className={`option compact ${selectedQr?.id === q.id ? 'sel' : ''} ${isTried(`qr:${q.id}`) ? 'tried' : ''}`} onClick={() => setSelectedQr(q)}>
@@ -298,13 +300,16 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             </button>
           ))}
         </div>
+        </DemoReveal>
         <button className="btn subtle" onClick={() => { setSerial(''); setView('serial'); }}><Icon name="keyboard" /> Key in serial number instead</button>
         <ShopDevices />
         <Actions onBack={requestLeave} backLabel="Cancel">
-          <button className="btn primary" disabled={!selectedQr} onClick={() => {
-            markTried(`qr:${selectedQr.id}`);
-            if (selectedQr.unreadable || demo.scan === 'unreadable') run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
-            else run('Reading QR code…', async () => { await wait(800); await verifyDevice({ qr: selectedQr }); });
+          <button className="btn primary" onClick={() => {
+            const q = selectedQr ?? QR_CODES[0]; // demo options hidden: scan a camera that passes
+            setSelectedQr(q);
+            markTried(`qr:${q.id}`);
+            if (q.unreadable || demo.scan === 'unreadable') run('Scanning…', async () => { await wait(1000); setView('scanFail'); });
+            else run('Reading QR code…', async () => { await wait(800); await verifyDevice({ qr: q }); });
           }}><Icon name="qr_code_scanner" /> Scan</button>
         </Actions>
       </div>
@@ -316,7 +321,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <p className="muted">The serial number is printed under the QR code on your camera.</p>
         <label className="field"><span>Serial number</span>
           <input autoFocus value={serial} placeholder="NC-IW-12345" onChange={(e) => setSerial(e.target.value.toUpperCase())} />
-          <small className="field-hint"><Icon name="science" /> Demo: Nest NC-XX-12345 (e.g. NC-IW-48213) or 3P 3P-XXXX-12345 (e.g. 3P-AERO-20415) passes. Anything else fails.</small></label>
+          <DemoOnly><small className="field-hint"><Icon name="science" /> Demo: Nest NC-XX-12345 (e.g. NC-IW-48213) or 3P 3P-XXXX-12345 (e.g. 3P-AERO-20415) passes. Anything else fails.</small></DemoOnly></label>
         <Actions onBack={() => setView('scan')}><button className="btn primary" disabled={!serial.trim()}>Check device</button></Actions>
       </form>
     );
@@ -348,8 +353,8 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           {WIFI_NETWORKS.map((n) => (
             <button type="button" key={n.ssid} className={`option compact ${ssid === n.ssid ? 'sel' : ''} ${isTried(`wifi:${n.ssid}`) ? 'tried' : ''}`} onClick={() => { setSsid(n.ssid); setWifiPw(DEMO_WIFI_PW); }}>
               <Icon name={n.icon} />
-              <span className="option-body"><b>{n.ssid}</b><small>{homeWifi === n.ssid && <span className="net-tag">Home network</span>}Demo: {n.hint}</small></span>
-              {isTried(`wifi:${n.ssid}`) ? <span className="tried-tag"><Icon name="check" /> Tried</span> : <Icon name="lock" className="muted" />}
+              <span className="option-body"><b>{n.ssid}</b><small>{homeWifi === n.ssid && <span className="net-tag">Home network</span>}{showDemo ? `Demo: ${n.hint}` : 'Secured'}</small></span>
+              {showDemo && isTried(`wifi:${n.ssid}`) ? <span className="tried-tag"><Icon name="check" /> Tried</span> : <Icon name="lock" className="muted" />}
             </button>
           ))}
         </div>
@@ -360,8 +365,9 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         {ssid && (
           <label className="field"><span>Password for {ssid}</span>
             <input type="password" autoFocus value={wifiPw} onChange={(e) => setWifiPw(e.target.value)} />
-            <small className="field-hint"><Icon name="science" /> Demo: password pre-filled. 8+ characters connects; shorter is a wrong password. Not saved.</small></label>
+            <DemoOnly><small className="field-hint"><Icon name="science" /> Demo: password pre-filled. 8+ characters connects; shorter is a wrong password. Not saved.</small></DemoOnly></label>
         )}
+        <DemoReveal label="Wi-Fi test networks"><p className="demo-note">Each network above shows what it simulates. Force any Wi-Fi result in the Demo simulator.</p></DemoReveal>
         <Actions onBack={() => setView('scan')}><button className="btn primary" disabled={!ssid || !wifiPw}>Connect</button></Actions>
       </form>
     );
@@ -516,7 +522,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <div className="phone-input"><span>+60</span>
             <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789" onChange={(e) => setPhone(digits(e.target.value).slice(0, 11))} /></div>
           <small className="field-hint"><Icon name="info" /> Not with us? Use any Malaysian mobile number.</small></label>
-        <div className="field-label">Demo: tap a number to use it</div>
+        <DemoReveal label="Tap a test number to use it">
         <div className="options">
           {DEMO_PHONES.map((d) => {
             const triedIt = isTried(d.other ? 'phone:other' : `phone:${d.n}`);
@@ -529,6 +535,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             );
           })}
         </div>
+        </DemoReveal>
         <button type="button" className="btn subtle" onClick={() => { setVerifyBy('email'); setEmailError(null); }}><Icon name="router" /> Fibre plan but no mobile plan with us? Verify with your fibre account email</button>
         <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send TAC</button></Actions>
       </form>
@@ -548,7 +555,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
               ? <small className="field-error"><Icon name="error" /> {emailError}</small>
               : <small className="field-hint"><Icon name="info" /> It's the email on your fibre bill. We only send the code if it matches a fibre account.</small>}
           </label>
-          <div className="field-label">Demo: tap an email to use it</div>
+          <DemoReveal label="Tap a test email to use it">
           <div className="options">
             {DEMO_EMAILS.map((d) => {
               const triedIt = isTried(d.other ? 'email:other' : `email:${d.e}`);
@@ -561,6 +568,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
               );
             })}
           </div>
+          </DemoReveal>
           {emailError && <button type="button" className="btn subtle" onClick={() => setVerifyBy('mobile')}><Icon name="smartphone" /> Verify with any mobile number instead</button>}
           <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send code</button></Actions>
         </form>
@@ -578,7 +586,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             disabled={expired} onChange={(e) => { setTac(digits(e.target.value)); if (tacError?.code === 'wrong') setTacError(null); }} />
           {tacError
             ? <small className="field-error"><Icon name="error" /> {tacError.text}</small>
-            : <small className="field-hint"><Icon name="science" /> Demo: {codeWord} auto-filled from “{byEmail ? 'email' : 'SMS'}”. Any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
+            : showDemo && <small className="field-hint"><Icon name="science" /> Demo: {codeWord} auto-filled from “{byEmail ? 'email' : 'SMS'}”. Any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
         </label>
         <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={sendTac}>{resendIn > 0 ? `Resend ${codeWord} in ${resendIn}s` : `Resend ${codeWord}`}</button>
         <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!ok || expired}>Verify</button></Actions>
@@ -615,9 +623,9 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         {(!customer || blocked.ctb) && (<>
           <div className="field-label">Direct Debit</div>
           <div className="options">
-            {DD_OPTIONS.map((o) => opt(o.id, o.kind === 'card' ? 'credit_card' : 'account_balance', o.label, `Demo: ${o.hint}`))}
+            {DD_OPTIONS.map((o) => opt(o.id, o.kind === 'card' ? 'credit_card' : 'account_balance', o.label, showDemo ? `Demo: ${o.hint}` : o.kind === 'card' ? 'Debit or credit card' : 'Bank account via FPX'))}
           </div>
-          <small className="field-hint"><Icon name="science" /> Demo only. No real card or bank details are collected.</small>
+          <DemoOnly><small className="field-hint"><Icon name="science" /> Demo only. No real card or bank details are collected.</small></DemoOnly>
         </>)}
         <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!method || blocked[method]} onClick={() => setView('confirm')}>Continue</button></Actions>
       </div>

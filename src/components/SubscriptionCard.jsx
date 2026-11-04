@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
+import DemoReveal from './DemoReveal.jsx';
 import { rm } from './PriceCards.jsx';
 import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice, renewalRule, maskEmail } from '../mockBackend.js';
 import { PLAN } from '../plans.js';
@@ -79,12 +80,12 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
           <div className="form-actions sub-actions">
             <button className="btn danger" onClick={() => { close(); onCancel(billed, endsOn); }}>Cancel Premium</button>
           </div>
-          {pendingDrop && <button className="btn subtle demo-skip" onClick={() => { close(); onRenew(next); }}><Icon name="science" /> Demo: skip to renewal date</button>}
+          {pendingDrop && <DemoReveal label="Demo shortcut"><button className="btn subtle demo-skip" onClick={() => { close(); onRenew(next); }}><Icon name="fast_forward" /> Skip to renewal date</button></DemoReveal>}
         </>) : (<>
           <div className="form-actions sub-actions">
             <button className="btn primary" onClick={() => { close(); onUndo(); }}><Icon name="undo" /> Undo cancellation</button>
           </div>
-          <button className="btn subtle demo-skip" onClick={() => { close(); onEndPeriod(); }}><Icon name="science" /> Demo: end billing period now</button>
+          <DemoReveal label="Demo shortcut"><button className="btn subtle demo-skip" onClick={() => { close(); onEndPeriod(); }}><Icon name="fast_forward" /> End billing period now</button></DemoReveal>
         </>)}
       </Modal>
     )}
