@@ -1,8 +1,8 @@
 :root {
   /* Forest & Clay theme: deep forest green primary, warm clay accent, cream background. */
-  --bg: #f8f5f0; --surface: #ffffff; --surface-2: #efebe4; --text: #1c2622; --muted: #5c6864;
-  --primary: #2f5d50; --primary-soft: #dce8e3; --on-primary: #ffffff; --on-tile: #f3e9d6; --on-text: #4a3a1e;
-  --danger: #b3261e; --warn: #fce8e6; --border: #e2ddd4; --shadow: 0 1px 3px rgba(28,38,34,.08), 0 4px 16px rgba(28,38,34,.05);
+  --bg: #f6f6f5; --surface: #ffffff; --surface-2: #eeeeec; --text: #1c2622; --muted: #5c6864;
+  --primary: #2f5d50; --primary-soft: #dce8e3; --on-primary: #ffffff; --on-tile: #e8efec; --on-text: #1c2622;
+  --danger: #b3261e; --warn: #fce8e6; --border: #e0e0dd; --shadow: 0 1px 3px rgba(28,38,34,.08), 0 4px 16px rgba(28,38,34,.05);
   /* clay: price increases, warnings, "ending" states */
   --clay: #a5604f; --clay-strong: #8e4d3e; --clay-soft: #f5e3de; --clay-line: #e9c7bd; --clay-ink: #5e2f24; --on-clay: #ffffff;
   /* forest card: new subscription price, subscription card */
