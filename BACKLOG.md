@@ -20,6 +20,8 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 
 - **No pro-rating, in any scenario** (first bill, mid-cycle increases, unpairing). Our commercial terms with Google don't include pro-rating: Google charges us the full monthly amount for a device even if it's paired for only one day of the month (e.g. at month end). We charge customers the same way, full monthly amounts only. Pro-rating was built and then reverted.
 
+- **Email verification for fibre-only customers.** Customers with a fibre plan but no mobile plan verify with a 6-digit code sent to the email on their fibre account (Verify step toggle: Mobile number / Fibre email). The code is sent only if the email matches a fibre account. Charge to Bill puts the subscription on the fibre bill and renews on the fibre bill cycle day; spend limit / inactive fall back to Direct Debit. Email codes last 10 minutes (SMS TAC 5). Wrong tries and the 30-minute lock are shared across SMS and email.
+
 ## Done
 
 - Marketing page with single Premium Home plan (MYR 60/month), consent + Malaysia-only checkboxes
@@ -48,3 +50,4 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 - Cancel Premium per home (what you lose / keep, ends at billing period, undo), free tier (Premium features locked, devices kept, add devices free), upgrade back via TAC + payment
 - Unpair device with fee impact (drop applies from next renewal, current price kept until then; no change within 4 included, free/ending homes, last-device note); demo skip to renewal
 - Renewal dates: Charge to Bill on the telco bill cycle day, Direct Debit on the subscription anniversary, clamped to month end; demo homes have fixed anchors
+- Verify step: email code to the fibre account email for customers without a mobile plan; Charge to fibre bill (fibre bill cycle day); verified email shown on the subscription

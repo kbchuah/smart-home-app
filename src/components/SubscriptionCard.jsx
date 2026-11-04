@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { rm } from './PriceCards.jsx';
-import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice, renewalRule } from '../mockBackend.js';
+import { monthlyPrice, subStatus, renewsOn, fmtDate, billedPrice, nextPrice, renewalRule, maskEmail } from '../mockBackend.js';
 import { PLAN } from '../plans.js';
 
 const fmtPhone = (n) => (n && n.length > 3 ? `+60 ${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}` : n);
@@ -71,8 +71,9 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
         {pendingDrop && <p className="note"><Icon name="trending_down" /><span>You unpaired devices, so your price drops to {rm(next)} at your next renewal. You keep paying {rm(billed)} until then.</span></p>}
         <div className="summary-box">
           <div><span>Payment method</span><b>{sub.method}</b></div>
-          {detail && <div><span>{sub.method === 'Charge to Bill' ? 'Billing account' : 'Paid from'}</span><b>{detail}</b></div>}
+          {detail && <div><span>{sub.method === 'Charge to Bill' ? (sub.billedTo === 'fibre' ? 'Fibre account' : 'Billing account') : 'Paid from'}</span><b>{detail}</b></div>}
           {sub.phone && <div><span>Verified mobile</span><b>{fmtPhone(sub.phone)}</b></div>}
+          {sub.email && <div><span>Verified email</span><b>{maskEmail(sub.email)}</b></div>}
         </div>
         {status === 'active' ? (<>
           <div className="form-actions sub-actions">

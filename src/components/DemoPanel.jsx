@@ -5,7 +5,7 @@ import { APP_VERSION, APP_BUILD } from '../version.js';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
 import { clearAllTacLocks, useAnyTacLock } from '../tacLock.js';
 import { confirmResetAll } from '../resetAll.js';
-import { QR_CODES, TELCO_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES, PROCESSING_FAILURES } from '../mockBackend.js';
+import { QR_CODES, TELCO_CUSTOMERS, FIBRE_CUSTOMERS, DD_OPTIONS, FAILURES, WIFI_NETWORKS, WIFI_FAILURES, TAC_MAX_TRIES, TAC_LOCK_MINUTES, PROCESSING_FAILURES } from '../mockBackend.js';
 
 const fmtPhone = (n) => `${n.slice(0, 3)}-${n.slice(3, 6)} ${n.slice(6)}`;
 const ELIG_TEXT = { ok: 'passes', spend_limit: 'spend limit reached', inactive: 'account inactive', timeout_once: 'timeout on 1st try, then passes' };
@@ -84,13 +84,18 @@ export default function DemoPanel() {
             <table><tbody>
               <tr><td>Any 6 digits</td><td>Passes</td></tr>
               <tr><td>000000</td><td>Incorrect TAC → stays on screen, shows tries left</td></tr>
-              <tr><td>{TAC_MAX_TRIES} incorrect tries</td><td>Account locked for {TAC_LOCK_MINUTES} min, for every mobile number, even after restarting or reloading → “Too many attempts”. Clear it in Simulate.</td></tr>
-              <tr><td>999999 (or after 5 min)</td><td>TAC expired → must tap “Resend TAC”</td></tr>
+              <tr><td>{TAC_MAX_TRIES} incorrect tries</td><td>Account locked for {TAC_LOCK_MINUTES} min, for every mobile number and email (SMS and email tries count together), even after restarting or reloading → “Too many attempts”. Clear it in Simulate.</td></tr>
+              <tr><td>999999 (or after 5 min SMS / 10 min email)</td><td>TAC or code expired → must tap “Resend”</td></tr>
             </tbody></table>
             <h4>Mobile numbers</h4>
             <table><tbody>
               {Object.entries(TELCO_CUSTOMERS).map(([n, c]) => <tr key={n}><td>{fmtPhone(n)}</td><td>Telco customer · {telcoText(c)}</td></tr>)}
               <tr><td>Any other number</td><td>Not a telco customer → Direct Debit only</td></tr>
+            </tbody></table>
+            <h4>Fibre account emails (Verify → Fibre account email)</h4>
+            <table><tbody>
+              {Object.entries(FIBRE_CUSTOMERS).map(([e, c]) => <tr key={e}><td>{e}</td><td>Fibre customer · {telcoText(c).replace('TAC', 'code')} (fibre bill, cycle day {c.billCycleDay})</td></tr>)}
+              <tr><td>Any other email</td><td>No fibre account → code not sent; verify with a mobile number instead</td></tr>
             </tbody></table>
             <p className="note"><Icon name="info" /> The telco account is checked right after TAC, so a blocked account never sees Charge to Bill as an option. The check at Confirm is a backup in case the account changes in between.</p>
             <h4>Direct Debit options</h4>

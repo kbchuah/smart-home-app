@@ -35,13 +35,13 @@ export const DEMO_CONTROLS = [
     ['locked', 'Fail: too many attempts (locked)'],
   ] },
   { key: 'telco', label: 'Telco account check (after TAC)', options: [
-    ['auto', 'Use the mobile number I type'],
+    ['auto', 'Use the mobile number or fibre email I enter'],
     ['ok', 'Pass: Charge to Bill offered'],
     ['spend_limit', 'Fail: spend limit reached'],
     ['inactive', 'Fail: account inactive'],
   ] },
   { key: 'eligibility', label: 'Billing eligibility check (at Confirm)', options: [
-    ['auto', 'Use the number / payment option I pick'],
+    ['auto', 'Use the number, email or payment option I pick'],
     ['ok', 'Pass'],
     ['spend_limit', 'Fail: telco spend limit reached'],
     ['inactive', 'Fail: telco account inactive'],

@@ -96,10 +96,13 @@ export async function quotePrice({ structureDeviceCount }) {
 export const TAC_MAX_TRIES = 3;
 export const TAC_VALID_MS = 5 * 60 * 1000;
 export const TAC_LOCK_MINUTES = 30;
-export async function verifyTac({ tac, sentAt, wrongSoFar, override = 'auto' }) {
+// Email codes (fibre customers) last longer than SMS TACs: email can be slower to arrive.
+export const EMAIL_CODE_VALID_MS = 10 * 60 * 1000;
+// Wrong tries and the 30-minute lock are shared across SMS and email: one counter per account.
+export async function verifyTac({ tac, sentAt, wrongSoFar, validMs = TAC_VALID_MS, override = 'auto' }) {
   await wait(1000);
   const code = override !== 'auto' ? override
-    : Date.now() - sentAt > TAC_VALID_MS || tac === '999999' ? 'expired'
+    : Date.now() - sentAt > validMs || tac === '999999' ? 'expired'
     : tac === '000000' ? 'wrong' : 'ok';
   if (code === 'ok') return { ok: true };
   if (code === 'locked') return { ok: false, code: 'locked' };
@@ -130,8 +133,26 @@ export async function checkTelcoAccount({ customer, override = 'auto' }) {
 }
 export async function lookupCustomer(phone) {
   await wait(1400);
-  return TELCO_CUSTOMERS[phone] ?? null;
+  return TELCO_CUSTOMERS[phone] ? { ...TELCO_CUSTOMERS[phone], kind: 'mobile' } : null;
 }
+
+// ---- Fibre customers (no mobile plan): verified by a code sent to the email on the fibre account ----
+// The code is only sent if the email matches a fibre account, which proves the customer owns it.
+// Charge to Bill puts the subscription on the fibre bill and renews on the fibre bill cycle day.
+export const FIBRE_CUSTOMERS = {
+  'kb.fibre@example.com': { name: 'KB Chuah', account: 'FB-3301-2207', plan: 'Fibre 500Mbps', billCycleDay: 8, status: 'ok', eligibility: 'ok' },
+  'aisyah.fibre@example.com': { name: 'Aisyah', account: 'FB-1001-0101', plan: 'Fibre 300Mbps', billCycleDay: 5, status: 'spend_limit', eligibility: 'spend_limit' },
+  'raj.fibre@example.com': { name: 'Raj', account: 'FB-1002-0102', plan: 'Fibre 100Mbps', billCycleDay: 20, status: 'inactive', eligibility: 'inactive' },
+  'mei.fibre@example.com': { name: 'Mei Ling', account: 'FB-1003-0103', plan: 'Fibre 1Gbps', billCycleDay: 28, status: 'ok', eligibility: 'timeout_once' },
+};
+export const normEmail = (e) => e.trim().toLowerCase();
+export async function lookupFibreByEmail(email) {
+  await wait(1200);
+  const c = FIBRE_CUSTOMERS[normEmail(email)];
+  return c ? { ...c, kind: 'fibre' } : null;
+}
+// kb.fibre@example.com → kb•••@example.com
+export const maskEmail = (e) => { const [u, d] = normEmail(e).split('@'); return `${u.slice(0, 2)}•••@${d}`; };
 
 // ---- Direct Debit options (mock; no real card or bank details are collected) ----
 export const DD_OPTIONS = [
@@ -208,10 +229,10 @@ export function renewsOn(sub) {
   return nextOnDay(last && last > today ? last : today, anchorDay(sub));
 }
 export const renewalRule = (sub) => (sub?.method === 'Charge to Bill'
-  ? `With your telco bill, on day ${anchorDay(sub)} of each month`
+  ? `With your ${sub.billedTo === 'fibre' ? 'fibre' : 'telco'} bill, on day ${anchorDay(sub)} of each month`
   : `Every month on day ${anchorDay(sub)} (or the month's last day)`);
 const ordinal = (n) => `${n}${[, 'st', 'nd', 'rd'][(n % 100 >> 3) ^ 1 && n % 10] || 'th'}`;
-export const renewalRuleShort = (sub) => (sub?.method === 'Charge to Bill' ? `Telco bill cycle · ${ordinal(anchorDay(sub))}` : `Anniversary · ${ordinal(anchorDay(sub))}`);
+export const renewalRuleShort = (sub) => (sub?.method === 'Charge to Bill' ? `${sub.billedTo === 'fibre' ? 'Fibre' : 'Telco'} bill cycle · ${ordinal(anchorDay(sub))}` : `Anniversary · ${ordinal(anchorDay(sub))}`);
 export const fmtDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 export async function cancelPremium() { await wait(1400); return { ok: true }; }
 export async function resumePremium() { await wait(1000); return { ok: true }; }

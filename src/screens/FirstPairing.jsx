@@ -7,7 +7,7 @@ import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo, markTried, useTried } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
-  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, checkEligibility, wait,
+  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, lookupFibreByEmail, maskEmail, normEmail, EMAIL_CODE_VALID_MS, TAC_VALID_MS, checkEligibility, wait,
   PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice,
 } from '../mockBackend.js';
 
@@ -37,6 +37,16 @@ const DEMO_PHONES = [
   { n: '0123333333', icon: 'hourglass_empty', label: 'Telco · timeout once at Confirm' },
   { n: '0178881234', icon: 'account_balance', label: 'Not a telco customer → Direct Debit only', other: true },
 ];
+// Demo fibre account emails (customers with a fibre plan but no mobile plan with us).
+const DEMO_EMAILS = [
+  { e: 'kb.fibre@example.com', icon: 'verified', label: 'Fibre · Charge to Bill OK' },
+  { e: 'aisyah.fibre@example.com', icon: 'block', label: 'Fibre · spend limit (found after code)' },
+  { e: 'raj.fibre@example.com', icon: 'person_off', label: 'Fibre · account inactive (found after code)' },
+  { e: 'mei.fibre@example.com', icon: 'hourglass_empty', label: 'Fibre · timeout once at Confirm' },
+  { e: 'someone@example.com', icon: 'mail_off', label: 'No fibre account → code not sent', other: true },
+];
+const emailKey = (e) => (DEMO_EMAILS.some((d) => d.e === normEmail(e) && !d.other) ? `email:${normEmail(e)}` : 'email:other');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const phoneKey = (n) => (DEMO_PHONES.some((d) => d.n === n && !d.other) ? `phone:${n}` : 'phone:other');
 const DEMO_WIFI_PW = 'homewifi123'; // demo: pre-filled valid Wi-Fi password
 
@@ -95,7 +105,11 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   });
   const [agreed, setAgreed] = useState(false);
   // verify
+  const [verifyBy, setVerifyBy] = useState('mobile'); // 'mobile' (SMS TAC) | 'email' (code to fibre account email)
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState(null);
+  const [pendingFibre, setPendingFibre] = useState(null); // fibre account matched before sending the code
   const [tac, setTac] = useState('');
   const [resendIn, setResendIn] = useState(0);
   const [customer, setCustomer] = useState(null);
@@ -138,7 +152,9 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const run = async (label, fn) => { setBusy(label); try { await fn(); } finally { setBusy(null); } };
 
   const ddOption = DD_OPTIONS.find((o) => o.id === method);
-  const methodLabel = method === 'ctb' ? 'Charge to Bill' : ddOption ? `Direct Debit · ${ddOption.label}` : '';
+  // Saved on the subscription: how the customer was verified for this home (SMS TAC or fibre email code).
+  const verifiedWith = verifyBy === 'email' ? { email: normEmail(email), billedTo: method === 'ctb' ? 'fibre' : undefined } : { phone, billedTo: method === 'ctb' ? 'mobile' : undefined };
+  const methodLabel = method === 'ctb' ? (customer?.kind === 'fibre' ? 'Charge to Bill · fibre' : 'Charge to Bill') : ddOption ? `Direct Debit · ${ddOption.label}` : '';
   const priceUp = isExisting && !isFreeHome && Boolean(quote) && quote.total > quote.currentTotal;
   const tasks = isUpgrade
     ? [{ key: 'subscription', label: `Reactivating ${plan.name} for ${homeName}` }]
@@ -200,18 +216,29 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const randomTac = () => String(100000 + Math.floor(Math.random() * 899999));
   const sendTac = () => { setTac(randomTac()); setTacWrong(0); setTacError(null); setTacSentAt(Date.now()); setResendIn(30); };
 
+  const byEmail = verifyBy === 'email';
+  const codeWord = byEmail ? 'code' : 'TAC';
+  const sentTo = byEmail ? maskEmail(email) : `+60 ${fmtPhone(phone)}`;
+  // Email: the code is only sent if the email is on a fibre account (proves the customer owns it).
+  const sendEmailCode = () => run('Checking your email…', async () => {
+    markTried(emailKey(email));
+    const c = await lookupFibreByEmail(email);
+    if (!c) { setEmailError("We couldn't find a fibre account with this email. Check the email on your fibre bill, or verify with a mobile number instead."); return; }
+    setPendingFibre(c); setBusy('Sending code…'); await wait(800); sendTac(); setView('tac');
+  });
+
   // TAC → telco lookup → Charge to Bill pre-check (account status) before showing payment options.
   const submitTac = () => run('Verifying TAC…', async () => {
-    const v = await verifyTac({ tac, sentAt: tacSentAt, wrongSoFar: tacWrong, override: demo.tac });
+    const v = await verifyTac({ tac, sentAt: tacSentAt, wrongSoFar: tacWrong, validMs: byEmail ? EMAIL_CODE_VALID_MS : TAC_VALID_MS, override: demo.tac });
     if (!v.ok) {
       if (v.code === 'locked') { lockTac(account, TAC_LOCK_MINUTES); setView('tacLocked'); return; }
-      if (v.code === 'expired') { setTacError({ code: 'expired', text: 'This TAC has expired. Tap “Resend TAC” to get a new one.' }); return; }
+      if (v.code === 'expired') { setTacError({ code: 'expired', text: `This ${codeWord} has expired. Tap “Resend ${codeWord}” to get a new one.` }); return; }
       setTacWrong((n) => n + 1); setTac('');
-      setTacError({ code: 'wrong', text: `Incorrect TAC. ${v.left} ${v.left === 1 ? 'try' : 'tries'} left.` });
+      setTacError({ code: 'wrong', text: `Incorrect ${codeWord}. ${v.left} ${v.left === 1 ? 'try' : 'tries'} left.` });
       return;
     }
-    setBusy('Checking your telco account…');
-    const c = await lookupCustomer(phone);
+    setBusy(byEmail ? 'Checking your fibre account…' : 'Checking your telco account…');
+    const c = byEmail ? pendingFibre : await lookupCustomer(phone);
     let notice = null;
     if (c) {
       setBusy('Checking Charge to Bill eligibility…');
@@ -239,7 +266,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     <div className="auth-card">
       <span className="auth-logo err"><Icon name="lock_clock" /></span>
       <h1>Too many attempts</h1>
-      <p className="muted">For your security, TAC verification on your account is locked. You can't request a TAC for any mobile number for the next <b>{tacLockedMins} minute{tacLockedMins === 1 ? '' : 's'}</b>.</p>
+      <p className="muted">For your security, TAC verification on your account is locked. You can't request a TAC or email code for any mobile number or email for the next <b>{tacLockedMins} minute{tacLockedMins === 1 ? '' : 's'}</b>.</p>
       <p className="note"><Icon name="info" /><span>You haven't been charged. When the lock ends, start again from <b>Add device</b>.</span></p>
       <button className="btn primary wide" onClick={onCancel}>Back to home</button>
     </div>
@@ -463,15 +490,23 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       <div className="auth-card">
         <span className="auth-logo ok"><Icon name="lock_open" /></span>
         <h1>TAC is unlocked</h1>
-        <p className="muted">You can verify your mobile number again.</p>
-        <button className="btn primary wide" onClick={() => { setPhone(''); setView('phone'); }}>Continue</button>
+        <p className="muted">You can verify your mobile number or fibre account email again.</p>
+        <button className="btn primary wide" onClick={() => { setPhone(''); setEmail(''); setView('phone'); }}>Continue</button>
       </div>
     );
   } else if (view === 'phone') {
-    const ok = /^01\d{8,9}$/.test(phone);
-    body = (
+    const toggle = (
+      <div className="segmented verify-by">
+        <button type="button" className={!byEmail ? 'active' : ''} onClick={() => setVerifyBy('mobile')}><Icon name="smartphone" /> Mobile number</button>
+        <button type="button" className={byEmail ? 'active' : ''} onClick={() => { setVerifyBy('email'); setEmailError(null); }}><Icon name="mail" /> Fibre email</button>
+      </div>
+    );
+    if (!byEmail) {
+      const ok = /^01\d{8,9}$/.test(phone);
+      body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) run('Sending TAC…', async () => { markTried(phoneKey(phone)); await wait(900); sendTac(); setView('tac'); }); }}>
         <span className="auth-logo"><Icon name="sms" /></span>
+        {toggle}
         <h1>Verify your mobile number</h1>
         <p className="muted">We'll send a TAC to check if you're an existing telco customer, so we can offer the best way to pay.</p>
         <label className="field"><span>Mobile number</span>
@@ -490,24 +525,58 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             );
           })}
         </div>
+        <button type="button" className="btn subtle" onClick={() => { setVerifyBy('email'); setEmailError(null); }}><Icon name="router" /> No mobile plan with us? Verify with your fibre account email</button>
         <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send TAC</button></Actions>
       </form>
-    );
+      );
+    } else {
+      const ok = EMAIL_RE.test(email.trim());
+      body = (
+        <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) sendEmailCode(); }}>
+          <span className="auth-logo"><Icon name="mail" /></span>
+          {toggle}
+          <h1>Verify your fibre account email</h1>
+          <p className="muted">For customers with a fibre plan but no mobile plan with us. Enter the email on your fibre account and we'll send a 6-digit code to it.</p>
+          <label className="field"><span>Fibre account email</span>
+            <input autoFocus type="email" inputMode="email" autoComplete="email" className={emailError ? 'invalid' : ''} value={email} placeholder="name@example.com"
+              onChange={(e) => { setEmail(e.target.value); setEmailError(null); }} />
+            {emailError
+              ? <small className="field-error"><Icon name="error" /> {emailError}</small>
+              : <small className="field-hint"><Icon name="info" /> It's the email on your fibre bill. We only send the code if it matches a fibre account.</small>}
+          </label>
+          <div className="field-label">Demo: tap an email to use it</div>
+          <div className="options">
+            {DEMO_EMAILS.map((d) => {
+              const triedIt = isTried(d.other ? 'email:other' : `email:${d.e}`);
+              return (
+                <button type="button" key={d.e} className={`option compact ${normEmail(email) === d.e ? 'sel' : ''} ${triedIt ? 'tried' : ''}`} onClick={() => { setEmail(d.e); setEmailError(null); }}>
+                  <span className="option-icon"><Icon name={d.icon} /></span>
+                  <span className="option-body"><b>{d.other ? 'Any other email' : d.e}</b><small>{d.label}</small></span>
+                  {triedIt && <span className="tried-tag"><Icon name="check" /> Tried</span>}
+                </button>
+              );
+            })}
+          </div>
+          {emailError && <button type="button" className="btn subtle" onClick={() => setVerifyBy('mobile')}><Icon name="smartphone" /> Verify with a mobile number instead</button>}
+          <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send code</button></Actions>
+        </form>
+      );
+    }
   } else if (view === 'tac') {
     const ok = /^\d{6}$/.test(tac);
     const expired = tacError?.code === 'expired';
     body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok && !expired) submitTac(); }}>
-        <h1>Enter TAC</h1>
-        <p className="muted">We sent a 6-digit TAC to <b>+60 {fmtPhone(phone)}</b>. It's valid for 5 minutes.</p>
-        <label className="field"><span>TAC</span>
+        <h1>{byEmail ? 'Enter the code from your email' : 'Enter TAC'}</h1>
+        <p className="muted">We sent a 6-digit {codeWord} to <b>{sentTo}</b>. It's valid for {byEmail ? 10 : 5} minutes.{byEmail && ' Check your spam folder if you can\'t see it.'}</p>
+        <label className="field"><span>{byEmail ? 'Code' : 'TAC'}</span>
           <input autoFocus className={`tac-input ${tacError ? 'invalid' : ''}`} inputMode="numeric" maxLength={6} value={tac} placeholder="••••••"
             disabled={expired} onChange={(e) => { setTac(digits(e.target.value)); if (tacError?.code === 'wrong') setTacError(null); }} />
           {tacError
             ? <small className="field-error"><Icon name="error" /> {tacError.text}</small>
-            : <small className="field-hint"><Icon name="science" /> Demo: TAC auto-filled from “SMS”. Any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
+            : <small className="field-hint"><Icon name="science" /> Demo: {codeWord} auto-filled from “{byEmail ? 'email' : 'SMS'}”. Any 6 digits pass. 000000 = incorrect, 999999 = expired.</small>}
         </label>
-        <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={sendTac}>{resendIn > 0 ? `Resend TAC in ${resendIn}s` : 'Resend TAC'}</button>
+        <button type="button" className="btn subtle" disabled={resendIn > 0} onClick={sendTac}>{resendIn > 0 ? `Resend ${codeWord} in ${resendIn}s` : `Resend ${codeWord}`}</button>
         <Actions onBack={() => setView('phone')}><button className="btn primary" disabled={!ok || expired}>Verify</button></Actions>
       </form>
     );
@@ -530,12 +599,14 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             <span><b>Charge to Bill isn't available: {ctbNotice.title.toLowerCase()}.</b> {ctbNotice.message} Please pay by Direct Debit.</span></div>
         ) : (
           <p className="muted">{customer
-            ? <>You're an existing telco customer. Your subscription will be added to your monthly telco bill.</>
+            ? customer.kind === 'fibre'
+              ? <>You're an existing fibre customer. Your subscription will be added to your monthly fibre bill.</>
+              : <>You're an existing telco customer. Your subscription will be added to your monthly telco bill.</>
             : <>We couldn't find a telco account for <b>+60 {fmtPhone(phone)}</b>. Your subscription will be paid by Direct Debit.</>}</p>
         )}
         {customer && (<>
           <div className="field-label">Charge to Bill</div>
-          <div className="options">{opt('ctb', 'receipt_long', 'Charge to Bill', `Billing account ${customer.account} · ${customer.plan}`)}</div>
+          <div className="options">{opt('ctb', customer.kind === 'fibre' ? 'router' : 'receipt_long', customer.kind === 'fibre' ? 'Charge to fibre bill' : 'Charge to Bill', `${customer.kind === 'fibre' ? 'Fibre account' : 'Billing account'} ${customer.account} · ${customer.plan}`)}</div>
         </>)}
         {(!customer || blocked.ctb) && (<>
           <div className="field-label">Direct Debit</div>
@@ -551,13 +622,14 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     body = (
       <div className="auth-card left">
         <h1>Confirm and subscribe</h1>
-        <PriceNew price={quote.total} included={quote.included} label="You'll be charged" badge={method === 'ctb' ? 'On your telco bill' : 'Direct Debit'} />
+        <PriceNew price={quote.total} included={quote.included} label="You'll be charged" badge={method === 'ctb' ? (customer?.kind === 'fibre' ? 'On your fibre bill' : 'On your telco bill') : 'Direct Debit'} />
         <div className="summary-box">
           <div><span>Home</span><b>{homeName.trim()}</b></div>
           {device && <div><span>Device</span><b>{device.model}</b></div>}
           <div><span>Plan</span><b>{plan.name}</b></div>
           <div><span>Payment</span><b>{methodLabel}</b></div>
-          {method === 'ctb' && <div><span>Billing account</span><b>{customer.account}</b></div>}
+          {method === 'ctb' && <div><span>{customer.kind === 'fibre' ? 'Fibre account' : 'Billing account'}</span><b>{customer.account}</b></div>}
+          <div><span>Verified {byEmail ? 'email' : 'mobile'}</span><b>{sentTo}</b></div>
           <div className="total"><span>Monthly price</span><b>{rm(quote.total)}</b></div>
         </div>
         <Actions onBack={() => setView('payment')}><button className="btn primary" onClick={confirmPayment}>Confirm &amp; subscribe</button></Actions>
@@ -606,7 +678,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     const subscription = {
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
       detail: method === 'ctb' ? customer.account : ddOption.label,
-      price: quote.total, phone, status: 'active', startedOn: new Date().toISOString(), billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
+      price: quote.total, ...verifiedWith, status: 'active', startedOn: new Date().toISOString(), billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
     };
     body = (
       <div className="auth-card left">
@@ -660,7 +732,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
       detail: method === 'ctb' ? customer.account : ddOption.label,
       price: quote.total,
-      phone,
+      ...verifiedWith,
       status: 'active',
       startedOn: new Date().toISOString(),
       billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
