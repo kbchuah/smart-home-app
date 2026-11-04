@@ -4,6 +4,9 @@ import Icon from '../components/Icon.jsx';
 import { loadHome } from '../store.js';
 import { billedPrice, subStatus } from '../mockBackend.js';
 
+// Each home gets its own colour in the list.
+const HOME_TONES = ['sage', 'blue', 'honey', 'plum'];
+
 export default function Homes({ user, onOpen, onLogout, onAddHome }) {
   const [toast, setToast] = useState(null);
   const structures = (user?.structures ?? []).map((id) => {
@@ -47,9 +50,9 @@ export default function Homes({ user, onOpen, onLogout, onAddHome }) {
         </div>
       ) : (
         <div className="structures">
-          {structures.map((s) => (
+          {structures.map((s, i) => (
             <button key={s.id} className="structure" onClick={() => onOpen(s.id)}>
-              <span className="structure-icon"><Icon name="home" fill /></span>
+              <span className={`structure-icon tone-${HOME_TONES[i % HOME_TONES.length]}`}><Icon name="home" fill /></span>
               <span className="structure-body">
                 <b>{s.name}</b>
                 <small>{s.rooms} room{s.rooms === 1 ? '' : 's'} · {s.devices} device{s.devices === 1 ? '' : 's'}{s.status === 'free' ? ' · Free plan' : `${s.price ? ` · MYR ${s.price}/month` : ''}${s.billing ? ` · ${s.billing}` : ''}${s.status === 'cancelling' ? ' · Ending' : ''}`}</small>

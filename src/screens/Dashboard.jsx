@@ -21,6 +21,9 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
 }
 
+// Routine chip colours by icon: morning honey, leaving blue, night plum, others sage.
+const ROUTINE_TONE = { wb_sunny: 'honey', directions_walk: 'blue', bedtime: 'plum' };
+
 export default function Dashboard({ structureId, user, plan, onBack }) {
   const [state, dispatch] = useHome(structureId);
   const { rooms, devices, routines } = state;
@@ -139,19 +142,19 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
 
       <section className="summary">
         {devices.some((d) => d.type === 'light') && (
-          <button className="chip-card" onClick={() => setFilter('all')}>
+          <button className="chip-card tone-honey" onClick={() => setFilter('all')}>
             <Icon name="lightbulb" fill={summary.lightsOn > 0} />
             <span><b>{summary.lightsOn}</b> light{summary.lightsOn === 1 ? '' : 's'} on</span>
           </button>
         )}
         {summary.thermo && (
-          <button className="chip-card" onClick={() => setOpenId(summary.thermo.id)}>
+          <button className="chip-card tone-clay" onClick={() => setOpenId(summary.thermo.id)}>
             <Icon name="thermostat" />
             <span><b>{summary.thermo.current.toFixed(1)}°</b> indoors</span>
           </button>
         )}
         {devices.some((d) => d.type === 'lock') && (
-          <button className={`chip-card ${summary.unlocked ? 'warn' : ''}`}
+          <button className={`chip-card tone-blue ${summary.unlocked ? 'warn' : ''}`}
             onClick={() => { const l = devices.find((d) => d.type === 'lock'); if (l) setOpenId(l.id); }}>
             <Icon name={summary.unlocked ? 'lock_open' : 'lock'} fill />
             <span>{summary.unlocked ? <><b>{summary.unlocked}</b> unlocked</> : 'All locked'}</span>
@@ -163,7 +166,7 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         <h3 className="section-title">Routines</h3>
         <div className="routines">
           {routines.map((r) => (
-            <button key={r.id} className="routine" onClick={() => runRoutine(r)}>
+            <button key={r.id} className={`routine tone-${ROUTINE_TONE[r.icon] ?? 'sage'}`} onClick={() => runRoutine(r)}>
               <Icon name={r.icon} fill /> {r.name}
             </button>
           ))}

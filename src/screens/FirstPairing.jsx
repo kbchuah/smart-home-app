@@ -423,7 +423,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   } else if (view === 'price' && isUpgrade) {
     body = (
       <div className="auth-card left">
-        <span className="auth-logo"><Icon name="workspace_premium" fill /></span>
+        <span className="auth-logo premium"><Icon name="workspace_premium" fill /></span>
         <h1>Upgrade {homeName} to {plan.name}</h1>
         <p className="muted">Turn the Premium features back on. Your {quote.currentDevices} device{quote.currentDevices === 1 ? '' : 's'} stay as they are.</p>
         <PriceNew price={quote.total} included={quote.included} />
