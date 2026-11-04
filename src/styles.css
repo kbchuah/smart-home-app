@@ -602,3 +602,5 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .summary-box .rule-row span { font-size: 12px; color: var(--muted); }
 .segmented.verify-by { margin: 4px 0 14px; }
 .link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--primary); cursor: pointer; text-decoration: underline; }
+.tc-cells.one { grid-template-columns: 1fr; }
+.tc-cols:has(> :only-child) { grid-template-columns: 1fr; }

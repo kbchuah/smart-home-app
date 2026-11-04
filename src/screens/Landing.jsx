@@ -50,7 +50,7 @@ export default function Landing({ plan, onProceed }) {
       </section>
 
       <section className="compare-section">
-        <TierCompare note="Free features are always included. Premium is billed per home." />
+        <TierCompare premiumOnly title="What's included" note="Billed per home." />
       </section>
 
       <section className="consent-box">

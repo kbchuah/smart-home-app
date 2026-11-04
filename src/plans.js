@@ -22,7 +22,7 @@ export const DEMO_USERS = {
 // the in-home Premium features panel and the cancel screen.
 export const FEATURE_COMPARE = [
   { id: 'video', icon: 'history', name: 'Video history', free: 'Live view + 3-hour event clips and snapshots', premium: '30-day event video history, clips up to 5 min' },
-  { id: 'alerts', icon: 'face', name: 'Camera alerts', free: 'Motion, person, vehicle and animal', premium: 'Plus familiar faces and garage door alerts' },
+  { id: 'alerts', icon: 'face', name: 'Camera alerts', free: 'Motion, person, vehicle and animal', premium: 'Plus familiar faces and garage door alerts', standalone: 'Motion, person, vehicle and animal, plus familiar faces and garage door' },
   { id: 'sound', icon: 'detector_smoke', name: 'Sound alerts', free: 'Not available', premium: 'Smoke/CO alarm and glass-break detection' },
   { id: 'gemini', icon: 'auto_awesome', name: 'Gemini AI', free: 'Standard voice commands', premium: 'Gemini Live conversations and Daily Home Brief' },
   { id: 'automation', icon: 'magic_button', name: 'Automations', free: 'Manual setup', premium: '“Help me create” from plain language' },
