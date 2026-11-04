@@ -223,7 +223,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const sendEmailCode = () => run('Checking your email…', async () => {
     markTried(emailKey(email));
     const c = await lookupFibreByEmail(email);
-    if (!c) { setEmailError("We couldn't find a fibre account with this email. Check the email on your fibre bill, or verify with a mobile number instead."); return; }
+    if (!c) { setEmailError("We couldn't find a fibre account with this email. Check the email on your fibre bill, or verify with any Malaysian mobile number instead (it works even if you're not with us)."); return; }
     setPendingFibre(c); setBusy('Sending code…'); await wait(800); sendTac(); setView('tac');
   });
 
@@ -508,10 +508,11 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <span className="auth-logo"><Icon name="sms" /></span>
         {toggle}
         <h1>Verify your mobile number</h1>
-        <p className="muted">We'll send a TAC to check if you're an existing telco customer, so we can offer the best way to pay.</p>
+        <p className="muted">Any Malaysian mobile number works, from any provider. We'll send a TAC to it. If the number is on a mobile plan with us, you can pay on your bill. If not, you'll pay by Direct Debit.</p>
         <label className="field"><span>Mobile number</span>
           <div className="phone-input"><span>+60</span>
-            <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789" onChange={(e) => setPhone(digits(e.target.value).slice(0, 11))} /></div></label>
+            <input autoFocus inputMode="tel" value={fmtPhone(phone)} placeholder="012-345 6789" onChange={(e) => setPhone(digits(e.target.value).slice(0, 11))} /></div>
+          <small className="field-hint"><Icon name="info" /> Not with us? Use any Malaysian mobile number.</small></label>
         <div className="field-label">Demo: tap a number to use it</div>
         <div className="options">
           {DEMO_PHONES.map((d) => {
@@ -525,7 +526,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             );
           })}
         </div>
-        <button type="button" className="btn subtle" onClick={() => { setVerifyBy('email'); setEmailError(null); }}><Icon name="router" /> No mobile plan with us? Verify with your fibre account email</button>
+        <button type="button" className="btn subtle" onClick={() => { setVerifyBy('email'); setEmailError(null); }}><Icon name="router" /> Fibre plan but no mobile plan with us? Verify with your fibre account email</button>
         <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send TAC</button></Actions>
       </form>
       );
@@ -536,7 +537,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <span className="auth-logo"><Icon name="mail" /></span>
           {toggle}
           <h1>Verify your fibre account email</h1>
-          <p className="muted">For customers with a fibre plan but no mobile plan with us. Enter the email on your fibre account and we'll send a 6-digit code to it.</p>
+          <p className="muted">For customers with a fibre plan but no mobile plan with us. Enter the email on your fibre account and we'll send a 6-digit code to it. Not with us at all? Use <button type="button" className="link-btn" onClick={() => setVerifyBy('mobile')}>any mobile number</button>.</p>
           <label className="field"><span>Fibre account email</span>
             <input autoFocus type="email" inputMode="email" autoComplete="email" className={emailError ? 'invalid' : ''} value={email} placeholder="name@example.com"
               onChange={(e) => { setEmail(e.target.value); setEmailError(null); }} />
@@ -557,7 +558,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
               );
             })}
           </div>
-          {emailError && <button type="button" className="btn subtle" onClick={() => setVerifyBy('mobile')}><Icon name="smartphone" /> Verify with a mobile number instead</button>}
+          {emailError && <button type="button" className="btn subtle" onClick={() => setVerifyBy('mobile')}><Icon name="smartphone" /> Verify with any mobile number instead</button>}
           <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send code</button></Actions>
         </form>
       );
@@ -602,7 +603,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
             ? customer.kind === 'fibre'
               ? <>You're an existing fibre customer. Your subscription will be added to your monthly fibre bill.</>
               : <>You're an existing telco customer. Your subscription will be added to your monthly telco bill.</>
-            : <>We couldn't find a telco account for <b>+60 {fmtPhone(phone)}</b>. Your subscription will be paid by Direct Debit.</>}</p>
+            : <><b>+60 {fmtPhone(phone)}</b> isn't on a mobile plan with us, so you'll pay by Direct Debit, from a card or bank account.</>}</p>
         )}
         {customer && (<>
           <div className="field-label">Charge to Bill</div>
