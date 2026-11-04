@@ -340,7 +340,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   } else if (view === 'wifi') {
     body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ssid) joinWifi(); }}>
-        <span className="auth-logo"><Icon name="wifi" /></span>
+        <span className="auth-logo info"><Icon name="wifi" /></span>
         <h1>Connect camera to Wi-Fi</h1>
         <p className="muted">Your <b>{device.model}</b> needs Wi-Fi to work. Choose your home network.</p>
         {homeWifi && (
@@ -514,7 +514,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       const ok = /^01\d{8,9}$/.test(phone);
       body = (
       <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) run('Sending TAC…', async () => { markTried(phoneKey(phone)); await wait(900); sendTac(); setView('tac'); }); }}>
-        <span className="auth-logo"><Icon name="sms" /></span>
+        <span className="auth-logo info"><Icon name="sms" /></span>
         {toggle}
         <h1>Verify your mobile number</h1>
         <p className="muted">Any Malaysian mobile number works, from any provider. We'll send a TAC to it. If the number is on a mobile plan with us, you can pay on your bill. If not, you'll pay by Direct Debit.</p>
@@ -544,7 +544,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
       const ok = EMAIL_RE.test(email.trim());
       body = (
         <form className="auth-card left" onSubmit={(e) => { e.preventDefault(); if (ok) sendEmailCode(); }}>
-          <span className="auth-logo"><Icon name="mail" /></span>
+          <span className="auth-logo info"><Icon name="mail" /></span>
           {toggle}
           <h1>Verify your fibre account email</h1>
           <p className="muted">For customers with a fibre plan but no mobile plan with us. Enter the email on your fibre account and we'll send a 6-digit code to it. Not with us at all? Use <button type="button" className="link-btn" onClick={() => setVerifyBy('mobile')}>any mobile number</button>.</p>

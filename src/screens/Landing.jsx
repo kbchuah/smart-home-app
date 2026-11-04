@@ -43,8 +43,8 @@ export default function Landing({ plan, onProceed }) {
         <h2 className="plans-title">What's included</h2>
         <div className="features">
           {FEATURE_COMPARE.map((f) => (
-            <div key={f.id} className="feature">
-              <Icon name={f.icon} fill />
+            <div key={f.id} className={`feature tone-${f.tone}`}>
+              <span className="f-icon"><Icon name={f.icon} fill /></span>
               <div><b>{f.headline}</b><p>{f.pitch}</p></div>
             </div>
           ))}

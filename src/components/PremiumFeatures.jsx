@@ -11,7 +11,7 @@ export default function PremiumFeatures({ premium, onUpgrade, onTry }) {
       </div>
       <div className="pf-grid">
         {PREMIUM_FEATURES.map((f) => (
-          <button key={f.id} className={`pf ${premium ? '' : 'locked'}`} onClick={() => (premium ? onTry(f) : onUpgrade())}
+          <button key={f.id} className={`pf tone-${f.tone} ${premium ? '' : 'locked'}`} onClick={() => (premium ? onTry(f) : onUpgrade())}
             aria-label={premium ? f.name : `${f.name} (needs Premium)`}>
             <span className="pf-icon"><Icon name={premium ? f.icon : 'lock'} fill={premium} /></span>
             <span className="pf-body"><b>{f.name}</b><small>{premium ? f.desc : `Free: ${f.freeDesc}`}</small></span>
