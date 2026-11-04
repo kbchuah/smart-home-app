@@ -160,7 +160,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const ddOption = DD_OPTIONS.find((o) => o.id === method);
   // Saved on the subscription: how the customer was verified for this home (SMS TAC or fibre email code).
   const verifiedWith = verifyBy === 'email' ? { email: normEmail(email), billedTo: method === 'ctb' ? 'fibre' : undefined } : { phone, billedTo: method === 'ctb' ? 'mobile' : undefined };
-  const methodLabel = method === 'ctb' ? (customer?.kind === 'fibre' ? 'Charge to Bill · fibre' : 'Charge to Bill') : ddOption ? `Direct Debit · ${ddOption.label}` : '';
+  const methodLabel = method === 'ctb' ? (customer?.kind === 'fibre' ? 'Charge to Bill · fibre' : 'Charge to Bill') : ddOption ? `Direct Debit · ${ddOption.label.replace(' (FPX Direct Debit)', ' (FPX)')}` : '';
   const priceUp = isExisting && !isFreeHome && Boolean(quote) && quote.total > quote.currentTotal;
   const tasks = isUpgrade
     ? [{ key: 'subscription', label: `Reactivating ${plan.name} for ${homeName}` }]
