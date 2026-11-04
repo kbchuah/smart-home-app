@@ -627,3 +627,7 @@ input[type=range]::-moz-range-thumb { width: 6px; height: 28px; border-radius: 3
 .shop-link:hover { text-decoration: underline; }
 .shop-link .msr { font-size: 17px; }
 .shop-link .msr:last-child { font-size: 14px; }
+.pricing-link { align-self: flex-start; margin-top: 10px; padding-left: 0; }
+.price-examples .pe-lead { font-size: 14px; line-height: 1.45; margin: 0; padding: 12px; }
+.included { margin: 36px 0 28px; }
+.included .features { margin-bottom: 0; }

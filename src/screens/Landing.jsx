@@ -2,20 +2,16 @@ import { useState } from 'react';
 import Icon from '../components/Icon.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
 import { confirmResetAll } from '../resetAll.js';
-import TierCompare from '../components/TierCompare.jsx';
+import Modal from '../components/Modal.jsx';
+import { FEATURE_COMPARE } from '../plans.js';
 import ShopDevices from '../components/ShopDevices.jsx';
 import { premiumPrice } from '../mockBackend.js';
 
-const FEATURES = [
-  ['history', '30 days of video history', 'See what happened while you were out. Event clips up to 5 minutes, kept for 30 days.'],
-  ['face', "Know who's at the door", 'Familiar face detection tells you who is there. Garage door alerts too.'],
-  ['detector_smoke', 'Hear what matters', 'Get alerted when a smoke or CO alarm goes off, or glass breaks.'],
-  ['auto_awesome', 'Gemini for your home', 'Talk naturally with Gemini Live, get a Daily Home Brief, and create automations just by describing them.'],
-];
 
 export default function Landing({ plan, onProceed }) {
   const [agreed, setAgreed] = useState(false);
   const [inMalaysia, setInMalaysia] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
 
   return (
     <div className="landing">
@@ -31,15 +27,6 @@ export default function Landing({ plan, onProceed }) {
         <p>Premium Home brings all your smart devices into one app, with 30-day video history, smarter camera and sound alerts, and Gemini built in.</p>
       </section>
 
-      <section className="features">
-        {FEATURES.map(([icon, title, text]) => (
-          <div key={title} className="feature">
-            <Icon name={icon} fill />
-            <div><b>{title}</b><p>{text}</p></div>
-          </div>
-        ))}
-      </section>
-
       <section>
         <h2 className="plans-title">Your Premium Home plan</h2>
         <div className="plan single">
@@ -48,15 +35,29 @@ export default function Landing({ plan, onProceed }) {
           <span className="plan-price">MYR {plan.price}<small>/month</small></span>
           <span className="plan-extra"><Icon name="add_circle" /><span>{plan.devices} devices included · <b>+MYR {plan.extraDevicePrice}/month</b> for each additional device</span></span>
           <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
-          <PriceExamples plan={plan} />
+          <button type="button" className="btn subtle pricing-link" onClick={() => setShowPricing(true)}><Icon name="calculate" /> How your price works</button>
+        </div>
+      </section>
+
+      <section className="included">
+        <h2 className="plans-title">What's included</h2>
+        <div className="features">
+          {FEATURE_COMPARE.map((f) => (
+            <div key={f.id} className="feature">
+              <Icon name={f.icon} fill />
+              <div><b>{f.headline}</b><p>{f.pitch}</p></div>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="shop-section"><ShopDevices variant="card" /></section>
 
-      <section className="compare-section">
-        <TierCompare premiumOnly title="What's included" note="Billed per home." />
-      </section>
+      {showPricing && (
+        <Modal title="How your price works" onClose={() => setShowPricing(false)}>
+          <PriceExamples plan={plan} />
+        </Modal>
+      )}
 
       <section className="consent-box">
         <label className="consent">
@@ -94,7 +95,7 @@ function PriceExamples({ plan }) {
   ];
   return (
     <div className="price-examples">
-      <div className="pe-title">How your price works</div>
+      <p className="pe-lead">MYR {plan.price}/month covers up to {plan.devices} devices in a home. Each device after that adds MYR {plan.extraDevicePrice}/month.</p>
       <table>
         <thead><tr><th>Devices in your home</th><th>Monthly price</th></tr></thead>
         <tbody>
