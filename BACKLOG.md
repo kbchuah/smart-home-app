@@ -7,7 +7,7 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 | # | Item | Notes | Status |
 |---|------|-------|--------|
 | 1 | **Pre-fill last verified mobile number in TAC step** | Suggest the most recently verified number (editable). A TAC is still required every time, because the verified number decides billing (Charge to Bill vs Direct Debit). Don't take it from the sign-up profile. | Agreed, later |
-| 2 | Enforce plan device limit | Premium Home allows up to 4 devices per home. Decide: block or warn at the limit. KB home's demo data (13 devices) is already over the limit. | Needs decision |
+| 2 | Enforce plan device limit | Premium Home includes 5 devices per home (MYR 80), then MYR 10 per extra device. Decide whether there is a hard cap. | Needs decision |
 | 3 | Rooms synced from the home's ecosystem | For homes powered by Google Home / SmartThings / Apple Home, rooms should come from that system ("Synced from …"), and local room editing turned off. Check each system's developer API for write access. | Idea |
 | 4 | Enable more device types in pairing | Speaker, smart display, light, plug, aircond, lock, doorbell are currently "Coming soon". Only Camera works. | Later |
 | 5 | AI features from the marketing page | AI assistant (plain-language control), suggested routines, smart camera alerts, energy insights. Marketing copy only so far. | Later |
@@ -17,6 +17,8 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 | 9 | Legal links on price agreement | Terms of service and privacy policy links on the agreement checkbox. | Later |
 
 ## Decisions
+
+- **Pricing (4 Nov 2026):** MYR 80/month per home for up to 5 devices, plus MYR 10/month for each additional device. Replaces MYR 60 for 4 + MYR 15. Set in `src/plans.js`.
 
 - **No pro-rating, in any scenario** (first bill, mid-cycle increases, unpairing). Our commercial terms with Google don't include pro-rating: Google charges us the full monthly amount for a device even if it's paired for only one day of the month (e.g. at month end). We charge customers the same way, full monthly amounts only. Pro-rating was built and then reverted.
 

@@ -4,7 +4,7 @@ import Icon from './Icon.jsx';
 
 export const rm = (n) => `MYR ${Number(n).toFixed(2)}`;
 
-// Highlighted monthly price change (existing homes, 5th device onwards).
+// Highlighted monthly price change (existing homes, once devices go past the included count).
 export function PriceChange({ from, to, done = false }) {
   return (
     <div className="price-change" role="status">

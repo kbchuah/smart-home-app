@@ -1,8 +1,8 @@
 export const PLAN = {
-  id: 'premium', name: 'Premium Home', price: 60, devices: 4, extraDevicePrice: 15, // MYR/month per device beyond `devices`
+  id: 'premium', name: 'Premium Home', price: 80, devices: 5, extraDevicePrice: 10, // MYR/month per device beyond `devices`
   tagline: 'Smart home control with Gemini built in.',
   perks: [
-    '4 devices included per home',
+    '5 devices included per home',
     '30-day event video history',
     'Familiar face and garage door alerts',
     'Smoke/CO alarm and glass-break detection',

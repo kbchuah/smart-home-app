@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { STRUCTURES, DEVICE_TYPES, matchesTarget, uid } from './data.js';
 
-const keyFor = (id) => `hearth-home-v4-${id}`;
+const keyFor = (id) => `hearth-home-v5-${id}`;
 const CREATED = {}; // homes created during this session (e.g. by a new user)
 const defaultsFor = (id) => STRUCTURES[id] ?? CREATED[id];
 

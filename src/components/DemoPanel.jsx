@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Icon from './Icon.jsx';
 import Modal from './Modal.jsx';
 import { APP_VERSION, APP_BUILD } from '../version.js';
+import { PLAN } from '../plans.js';
 import { useDemo, setDemo, resetDemo, DEMO_CONTROLS, DEMO_DEFAULTS } from '../demoStore.js';
 import { clearAllTacLocks, useAnyTacLock } from '../tacLock.js';
 import { confirmResetAll } from '../resetAll.js';
@@ -114,8 +115,8 @@ export default function DemoPanel() {
             <p className="note"><Icon name="info" /> Force these with “Processing” in Simulate. Leaving setup (✕ or Cancel) always asks for confirmation first.</p>
             <h4>Adding devices to an existing home</h4>
             <table><tbody>
-              <tr><td>Up to 4 devices</td><td>“Included in your plan”, no agreement needed</td></tr>
-              <tr><td>5th device onwards</td><td>Shows current → new price (+MYR 15 each); agreement checkbox required</td></tr>
+              <tr><td>Up to {PLAN.devices} devices</td><td>“Included in your plan”, no agreement needed</td></tr>
+              <tr><td>Device {PLAN.devices + 1} onwards</td><td>Shows current → new price (+MYR {PLAN.extraDevicePrice} each); agreement checkbox required</td></tr>
               <tr><td>No TAC / payment step</td><td>The home's existing billing method is used</td></tr>
             </tbody></table>
           </div>
