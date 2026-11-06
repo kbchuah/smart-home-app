@@ -84,3 +84,16 @@ export const setDemoReveal = (on) => {
   revealListeners.forEach((l) => l());
 };
 export const useDemoReveal = () => useSyncExternalStore((l) => { revealListeners.add(l); return () => revealListeners.delete(l); }, () => reveal);
+
+// Which journey the demo runs: 'device' (device-led v1: first camera sells the subscription)
+// or 'subscription' (subscription-led v1: subscribe first, add cameras after).
+const JOURNEY_KEY = 'sixam-journey'; // not 'hearth-': Reset all demo data keeps the chosen journey
+let journey = (() => { try { return localStorage.getItem(JOURNEY_KEY) === 'subscription' ? 'subscription' : 'device'; } catch { return 'device'; } })();
+const journeyListeners = new Set();
+export const setJourney = (j) => {
+  journey = j;
+  try { localStorage.setItem(JOURNEY_KEY, j); } catch { /* storage unavailable */ }
+  journeyListeners.forEach((l) => l());
+};
+export const getJourney = () => journey;
+export const useJourney = () => useSyncExternalStore((l) => { journeyListeners.add(l); return () => journeyListeners.delete(l); }, () => journey);

@@ -4,6 +4,7 @@ import GoogleG from '../components/GoogleG.jsx';
 import Stepper from '../components/Stepper.jsx';
 import { PriceNew } from '../components/PriceCards.jsx';
 import { DEMO_USERS } from '../plans.js';
+import { useJourney } from '../demoStore.js';
 
 const SIGNUP_STEPS = ['Account', 'Permissions', 'Profile', 'Plan', 'Done'];
 
@@ -22,6 +23,7 @@ function Spinner({ label }) {
 }
 
 export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
+  const journey = useJourney();
   const isSignup = mode === 'signup';
   const choices = isSignup ? [DEMO_USERS.fresh] : [DEMO_USERS.existing, DEMO_USERS.future, DEMO_USERS.upsell];
   const [account, setAccount] = useState({ ...choices[0], isNew: isSignup });
@@ -104,14 +106,14 @@ export default function GoogleFlow({ mode, plan, onCancel, onDone }) {
       <div className="auth-card left">
         <h1>Confirm your plan</h1>
         <PriceNew price={plan.price} included={plan.devices} label={`${plan.name} plan`} badge="MYR 0.00 today"
-          sub="Nothing to pay today. Billing starts when you pair your first device." />
+          sub={journey === 'subscription' ? 'Nothing to pay today. Billing starts when your first camera is online.' : 'Nothing to pay today. Billing starts when you pair your first device.'} />
         <div className="summary-box">
           <div><span>Plan</span><b>{plan.name}</b></div>
           <div><span>Devices</span><b>Up to {plan.devices}</b></div>
           <div><span>Billing</span><b>Monthly</b></div>
           <div className="total"><span>Due today</span><b>MYR 0.00</b></div>
         </div>
-        <p className="note"><Icon name="info" /><span>You'll choose how to pay (Charge to Bill or Direct Debit) when you add your first device.</span></p>
+        <p className="note"><Icon name="info" /><span>{journey === 'subscription' ? "Next, you'll subscribe for your home and choose how to pay. Billing starts when your first camera is online." : "You'll choose how to pay (Charge to Bill or Direct Debit) when you add your first device."}</span></p>
         <button className="btn primary wide" onClick={() => next(1000)}>Confirm plan &amp; continue</button>
       </div>
     );

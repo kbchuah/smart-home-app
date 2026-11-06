@@ -2,7 +2,7 @@ import Icon from './Icon.jsx';
 
 // Each step has its own colour (current step dot); completed steps are sage.
 const STEP_TONE = {
-  Account: 'blue', Permissions: 'plum', Profile: 'sage', Plan: 'honey',
+  Account: 'blue', Permissions: 'plum', Profile: 'sage', Plan: 'honey', Camera: 'plum',
   Device: 'plum', 'Wi-Fi': 'blue', Room: 'sage', Price: 'honey', Verify: 'blue', Payment: 'plum', Done: 'sage',
 };
 

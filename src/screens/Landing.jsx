@@ -5,10 +5,12 @@ import { confirmResetAll } from '../resetAll.js';
 import Modal from '../components/Modal.jsx';
 import { FEATURE_COMPARE } from '../plans.js';
 import ShopDevices from '../components/ShopDevices.jsx';
+import { useJourney, setJourney } from '../demoStore.js';
 import { premiumPrice } from '../mockBackend.js';
 
 
 export default function Landing({ plan, onProceed }) {
+  const journey = useJourney();
   const [agreed, setAgreed] = useState(false);
   const [inMalaysia, setInMalaysia] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
@@ -19,6 +21,15 @@ export default function Landing({ plan, onProceed }) {
         <span className="brand"><Icon name="cottage" fill /> Sixam Home</span>
         <span className="demo-pill">Demo</span>
       </header>
+
+      <div className="journey-switch" role="group" aria-label="Demo journey">
+        <span className="js-label"><Icon name="science" /> Demo journey</span>
+        <div className="segmented">
+          <button className={journey === 'device' ? 'active' : ''} onClick={() => setJourney('device')}>Device-led v1</button>
+          <button className={journey === 'subscription' ? 'active' : ''} onClick={() => setJourney('subscription')}>Subscription-led v1</button>
+        </div>
+        <small>{journey === 'device' ? 'Sign up free, then pairing your first camera starts the subscription.' : 'Subscribe first (MYR 0 today, optional camera), then add cameras. Billing starts with the first camera.'}</small>
+      </div>
 
       <section className="hero">
         <span className="hero-badge"><Icon name="auto_awesome" fill /> Premium Home · with AI</span>
@@ -35,6 +46,7 @@ export default function Landing({ plan, onProceed }) {
           <span className="plan-price">MYR {plan.price}<small>/month</small></span>
           <span className="plan-extra"><Icon name="add_circle" /><span>{plan.devices} devices included · <b>+MYR {plan.extraDevicePrice}/month</b> for each additional device</span></span>
           <ul>{plan.perks.map((x) => <li key={x}><Icon name="check" /> {x}</li>)}</ul>
+          {journey === 'subscription' && <p className="plan-sub-note"><Icon name="event_available" /> Subscribe now for MYR 0 today. Billing starts when your first camera is online.</p>}
           <button type="button" className="btn subtle pricing-link" onClick={() => setShowPricing(true)}><Icon name="calculate" /> How your price works</button>
         </div>
       </section>

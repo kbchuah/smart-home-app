@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ShopDevices from '../components/ShopDevices.jsx';
+import { useJourney } from '../demoStore.js';
 import Icon from '../components/Icon.jsx';
 import { loadHome } from '../store.js';
 import { billedPrice, subStatus } from '../mockBackend.js';
@@ -8,10 +9,11 @@ import { billedPrice, subStatus } from '../mockBackend.js';
 const HOME_TONES = ['sage', 'blue', 'honey', 'plum'];
 
 export default function Homes({ user, onOpen, onLogout, onAddHome }) {
+  const subLed = useJourney() === 'subscription';
   const [toast, setToast] = useState(null);
   const structures = (user?.structures ?? []).filter((id) => loadHome(id)).map((id) => {
     const h = loadHome(id);
-    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? billedPrice(h) : null, status: subStatus(h.subscription) };
+    return { id, name: h.homeName, rooms: h.rooms.length, devices: h.devices.length, ecosystem: h.ecosystem, billing: h.subscription?.method, price: h.subscription ? billedPrice(h) : null, status: subStatus(h.subscription), pending: Boolean(h.subscription?.billingPending) };
   });
 
   useEffect(() => {
@@ -42,9 +44,9 @@ export default function Homes({ user, onOpen, onLogout, onAddHome }) {
         <div className="empty-state">
           <span className="empty-art"><Icon name="add_home" /></span>
           <h2>No homes or devices yet</h2>
-          <p className="muted">Add your first device to get started. We'll help you set up your home along the way.</p>
+          <p className="muted">{subLed ? 'Subscribe to Premium Home for your home first, then add your cameras.' : "Add your first device to get started. We'll help you set up your home along the way."}</p>
           <button className="btn primary cta" onClick={onAddHome}>
-            <Icon name="add" /> Add device
+            <Icon name={subLed ? 'workspace_premium' : 'add'} /> {subLed ? 'Subscribe to Premium Home' : 'Add device'}
           </button>
           <ShopDevices />
         </div>
@@ -55,7 +57,7 @@ export default function Homes({ user, onOpen, onLogout, onAddHome }) {
               <span className={`structure-icon tone-${HOME_TONES[i % HOME_TONES.length]}`}><Icon name="home" fill /></span>
               <span className="structure-body">
                 <b>{s.name}</b>
-                <small>{s.rooms} room{s.rooms === 1 ? '' : 's'} · {s.devices} device{s.devices === 1 ? '' : 's'}{s.status === 'free' ? ' · Free plan' : `${s.price ? ` · MYR ${s.price}/month` : ''}${s.billing ? ` · ${s.billing}` : ''}${s.status === 'cancelling' ? ' · Ending' : ''}`}</small>
+                <small>{s.rooms} room{s.rooms === 1 ? '' : 's'} · {s.devices} device{s.devices === 1 ? '' : 's'}{s.status === 'free' ? ' · Free plan' : s.pending ? ' · Premium ready · not billed yet' : `${s.price ? ` · MYR ${s.price}/month` : ''}${s.billing ? ` · ${s.billing}` : ''}${s.status === 'cancelling' ? ' · Ending' : ''}`}</small>
                 {s.ecosystem && <span className="ecosystem"><Icon name="hub" /> Powered by {s.ecosystem}</span>}
               </span>
               <Icon name="chevron_right" />

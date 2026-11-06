@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import ShopDevices from '../components/ShopDevices.jsx';
 import { roomStyle } from '../roomStyle.js';
+import { STORE_CAMERAS, BILLING_GRACE_DAYS } from '../plans.js';
 import DemoReveal, { DemoOnly } from '../components/DemoReveal.jsx';
 import Icon from '../components/Icon.jsx';
 import Modal from '../components/Modal.jsx';
@@ -10,7 +11,7 @@ import DemoPanel from '../components/DemoPanel.jsx';
 import { useDemo, markTried, useTried, useDemoReveal } from '../demoStore.js';
 import { useTacLock, lockTac } from '../tacLock.js';
 import {
-  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, lookupFibreByEmail, maskEmail, normEmail, EMAIL_CODE_VALID_MS, TAC_VALID_MS, checkEligibility, wait,
+  QR_CODES, DD_OPTIONS, WIFI_NETWORKS, checkCompatibility, connectWifi, verifyTac, checkTelcoAccount, fmtDate, TAC_LOCK_MINUTES, quotePrice, lookupCustomer, lookupFibreByEmail, maskEmail, normEmail, EMAIL_CODE_VALID_MS, TAC_VALID_MS, checkEligibility, wait,
   PROCESSING_FAILURES, processingFails, supportRef, monthlyPrice, isPremium, billedPrice,
 } from '../mockBackend.js';
 
@@ -29,6 +30,8 @@ const STEP_OF = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiF
 const STEPS_EXISTING = ['Device', 'Wi-Fi', 'Room', 'Price', 'Done'];
 const STEPS_UPGRADE = ['Price', 'Verify', 'Payment', 'Done'];
 const STEP_OF_UPGRADE = { price: 0, phone: 1, tac: 1, tacLocked: 1, payment: 2, confirm: 2, eligFail: 2, processing: 2, procFail: 2, success: 3 };
+const STEPS_SUBSCRIBE = ['Plan', 'Camera', 'Verify', 'Payment', 'Done'];
+const STEP_OF_SUBSCRIBE = { price: 0, bundle: 1, phone: 2, tac: 2, tacLocked: 2, payment: 3, confirm: 3, eligFail: 3, processing: 3, procFail: 3, success: 4 };
 const STEP_OF_EXISTING = { scan: 0, serial: 0, scanFail: 0, compatFail: 0, wifi: 1, wifiFail: 1, room: 2, price: 3, processing: 3, procFail: 3, success: 4 };
 const DEFAULT_ROOM = 'My room';
 // Demo mobile numbers shown as tappable cards on the TAC screen. 'other' = any non-telco number.
@@ -82,11 +85,15 @@ export function uniqueHomeName(taken, base = PILOT_HOME_NAME) {
   return `${base} ${i}`;
 }
 
-export default function FirstPairing({ plan, home = null, upgrade = false, defaultRoom = DEFAULT_ROOM, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
+export default function FirstPairing({ plan, home = null, upgrade = false, subscribe = false, expectModel = null, defaultRoom = DEFAULT_ROOM, account = 'guest', existingHomeNames = [], onCancel, onDone }) {
   // upgrade: a free home re-subscribes (billing steps only). Existing: add a device to a home (no billing).
-  const isUpgrade = Boolean(home) && upgrade;
+  // subscribe (subscription-led): a new home subscribes first, with no device. Same billing steps as upgrade.
+  const isSubscribe = subscribe && !home;
+  const isUpgrade = (Boolean(home) && upgrade) || isSubscribe;
   const isExisting = Boolean(home) && !upgrade;
   const isFreeHome = isExisting && !isPremium(home.subscription);
+  // Subscription-led home that hasn't been billed yet: its first camera starts the billing.
+  const isFirstBill = isExisting && !isFreeHome && Boolean(home.subscription?.billingPending);
   const homeWifi = home?.wifi ?? null; // existing homes: the network their devices use
   const demo = useDemo();
   const showDemo = useDemoReveal(); // demo hints and Tried marks are hidden unless demo options are shown
@@ -99,17 +106,21 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const [homeName] = useState(() => (home ? home.homeName : uniqueHomeName(existingHomeNames)));
   const ecosystem = home?.ecosystem ?? PILOT_ECOSYSTEM;
   // device
-  const [selectedQr, setSelectedQr] = useState(null);
+  const [selectedQr, setSelectedQr] = useState(() => QR_CODES.find((q) => q.id === expectModel) ?? null); // camera from a store order
   const [serial, setSerial] = useState('');
   const [device, setDevice] = useState(null);
   const [compatError, setCompatError] = useState(null);
   // price
   const [quote, setQuote] = useState(() => {
     if (!isUpgrade) return null;
-    const p = monthlyPrice(home.devices.length); // re-subscribe at the price for the home's current devices
-    return { currentDevices: home.devices.length, devicesAfter: home.devices.length, included: p.included, base: p.base, extraDevices: p.extraDevices, extraEach: p.extraEach, total: p.total || p.base, currentTotal: 0 };
+    const n = home?.devices.length ?? 0;
+    const p = monthlyPrice(n); // (re-)subscribe at the price for the home's current devices
+    return { currentDevices: n, devicesAfter: n, included: p.included, base: p.base, extraDevices: p.extraDevices, extraEach: p.extraEach, total: p.total || p.base, currentTotal: 0 };
   });
   const [agreed, setAgreed] = useState(false);
+  const [bundle, setBundle] = useState('none'); // subscribe: camera bought with the plan ('none' | STORE_CAMERAS id)
+  const bundleCam = STORE_CAMERAS.find((c) => c.id === bundle) ?? null;
+  const billingBy = new Date(Date.now() + BILLING_GRACE_DAYS * 864e5);
   // verify
   const [verifyBy, setVerifyBy] = useState('mobile'); // 'mobile' (SMS TAC) | 'email' (code to fibre account email)
   const [phone, setPhone] = useState('');
@@ -162,12 +173,18 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   const verifiedWith = verifyBy === 'email' ? { email: normEmail(email), billedTo: method === 'ctb' ? 'fibre' : undefined } : { phone, billedTo: method === 'ctb' ? 'mobile' : undefined };
   const methodLabel = method === 'ctb' ? (customer?.kind === 'fibre' ? 'Charge to Bill · fibre' : 'Charge to Bill') : ddOption ? `Direct Debit · ${ddOption.label.replace(' (FPX Direct Debit)', ' (FPX)')}` : '';
   const priceUp = isExisting && !isFreeHome && Boolean(quote) && quote.total > quote.currentTotal;
-  const tasks = isUpgrade
+  const tasks = isSubscribe
+    ? [
+      { key: 'home', label: `Creating ${homeName} (${ecosystem})` },
+      ...(bundleCam ? [{ key: 'order', label: `Ordering your ${bundleCam.model}` }] : []),
+      { key: 'subscription', label: `Activating ${plan.name} (billing starts with your first camera)` },
+    ]
+    : isUpgrade
     ? [{ key: 'subscription', label: `Reactivating ${plan.name} for ${homeName}` }]
     : isExisting
     ? [
       { key: 'device', label: `Registering ${device?.model ?? 'camera'} to ${homeName}` },
-      ...(priceUp ? [{ key: 'subscription', label: `Updating subscription to ${rm(quote.total)}/month` }] : []),
+      ...(priceUp ? [{ key: 'subscription', label: isFirstBill ? `Starting ${plan.name} billing at ${rm(quote.total)}/month` : `Updating subscription to ${rm(quote.total)}/month` }] : []),
     ]
     : [
       { key: 'home', label: `Creating ${homeName.trim()} (${ecosystem})` },
@@ -183,7 +200,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     const t = setTimeout(() => {
       if (processingFails({ mode: demo.processing, task, failedBefore: failedOnce[task] })) {
         setFailedOnce((f) => ({ ...f, [task]: true }));
-        const kind = task === 'subscription' ? (isUpgrade ? 'subscription_upgrade' : isExisting ? 'subscription_update' : 'subscription_new') : 'device';
+        const kind = task === 'subscription' ? (isSubscribe ? 'subscription_new' : isUpgrade ? 'subscription_upgrade' : isExisting ? 'subscription_update' : 'subscription_new') : 'device';
         setProcError({ task, ...PROCESSING_FAILURES[kind], ref: supportRef() });
         setView('procFail');
         return;
@@ -214,7 +231,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     setBusy(`Checking devices on ${homeName.trim()}…`);
     const q = await quotePrice({ structureDeviceCount: isExisting ? home.devices.length : 0 }); // new home: 0 devices
     // Free plan: adding costs nothing. Premium: compare with what's billed now (a pending drop may already cover it).
-    setQuote(isFreeHome ? { ...q, total: 0, currentTotal: 0 } : isExisting ? { ...q, currentTotal: billedPrice(home), total: Math.max(q.total, billedPrice(home)) } : q);
+    setQuote(isFreeHome ? { ...q, total: 0, currentTotal: 0 } : isFirstBill ? { ...q, currentTotal: 0 } : isExisting ? { ...q, currentTotal: billedPrice(home), total: Math.max(q.total, billedPrice(home)) } : q);
     setView(isExisting ? 'room' : 'price');
   });
 
@@ -424,6 +441,50 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <Actions onBack={() => setView('wifi')}><button className="btn primary" disabled={!chosenRoomName}>Next</button></Actions>
       </form>
     );
+  } else if (view === 'price' && isSubscribe) {
+    body = (
+      <div className="auth-card left">
+        <span className="auth-logo premium"><Icon name="workspace_premium" fill /></span>
+        <h1>Subscribe to {plan.name}</h1>
+        <p className="muted">Set up your plan for <b>{homeName}</b> now, then add your cameras. You can rename your home later.</p>
+        <PriceNew price={quote.total} included={quote.included} label={`${plan.name} plan`} badge="MYR 0.00 today" />
+        <div className="alert ok-alert"><Icon name="verified_user" fill /><span><b>Nothing to pay until your first camera is online.</b> Billing starts the day your first camera connects, or on <b>{fmtDate(billingBy)}</b> at the latest.</span></div>
+        <div className="summary-box">
+          <div><span>{plan.name} (up to {quote.included} devices)</span><b>{rm(quote.base)}/month</b></div>
+          <div><span>Each extra device</span><b>+{rm(quote.extraEach)}/month</b></div>
+          <div className="total"><span>Due today</span><b>MYR 0.00</b></div>
+        </div>
+        <label className="consent">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+          <span>I agree to subscribe to <b>{plan.name}</b> for <b>{homeName}</b> at <b>{rm(quote.total)}/month</b> for up to {quote.included} devices (+{rm(quote.extraEach)}/month each extra), starting when my first camera is online or on {fmtDate(billingBy)} at the latest. Renews monthly; I can cancel anytime.</span>
+        </label>
+        <Actions onBack={requestLeave} backLabel="Cancel"><button className="btn primary" disabled={!agreed} onClick={() => setView('bundle')}>Proceed <Icon name="arrow_forward" /></button></Actions>
+      </div>
+    );
+  } else if (view === 'bundle') {
+    body = (
+      <div className="auth-card left">
+        <span className="auth-logo tone-logo tone-plum"><Icon name="videocam" fill /></span>
+        <h1>Do you need a camera?</h1>
+        <p className="muted">Add a camera from the Maxis store to your order. It's delivered in 2–3 working days, and your Premium billing starts once it's set up.</p>
+        <div className="options">
+          <button type="button" className={`option compact tone-sage ${bundle === 'none' ? 'sel' : ''}`} onClick={() => setBundle('none')}>
+            <span className="option-icon"><Icon name="check_circle" fill /></span>
+            <span className="option-body"><b>I already have a camera</b><small>Works with Google Home or Matter-certified</small></span>
+            <Icon name={bundle === 'none' ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
+          </button>
+          {STORE_CAMERAS.map((c, i) => (
+            <button type="button" key={c.id} className={`option compact tone-${i ? 'blue' : 'plum'} ${bundle === c.id ? 'sel' : ''}`} onClick={() => setBundle(c.id)}>
+              <span className="option-icon"><Icon name={c.icon} fill /></span>
+              <span className="option-body"><b>{c.model} · {rm(c.price)}</b><small>{c.note}</small></span>
+              <Icon name={bundle === c.id ? 'radio_button_checked' : 'radio_button_unchecked'} className="option-radio" />
+            </button>
+          ))}
+        </div>
+        {bundleCam && <p className="note"><Icon name="local_shipping" /><span>One-off {rm(bundleCam.price)} for the camera, charged with your order. Free delivery.</span></p>}
+        <Actions onBack={() => setView('price')}><button className="btn primary" onClick={() => setView('phone')}>Continue <Icon name="arrow_forward" /></button></Actions>
+      </div>
+    );
   } else if (view === 'price' && isUpgrade) {
     body = (
       <div className="auth-card left">
@@ -452,22 +513,26 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <span className="auth-logo ok"><Icon name="check_circle" fill /></span>
         <h1>Camera is online</h1>
         <p className="muted"><b>{device.model}</b> ({device.brand === '3P' ? 'Works with Google Home' : 'Nest'}) · SN {device.serial} · connected to {ssid}</p>
-        {isFreeHome ? <PriceFree /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} />}
+        {isFreeHome ? <PriceFree /> : isFirstBill ? <PriceNew price={quote.total} included={quote.included} label={`Your ${plan.name} billing starts`} badge="First camera" /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} />}
         <div className="summary-box">
           <div><span>Home</span><b>{homeName}</b></div>
           <div><span>Room</span><b>{roomLabel}{roomPick.id || matchRoom(newRoom) ? '' : ' (new)'}</b></div>
           <div><span>Devices on this home</span><b>{quote.currentDevices} → {quote.devicesAfter}</b></div>
           <div><span>Included in {plan.name}</span><b>Up to {quote.included}</b></div>
-          {priceUp
+          {isFirstBill
+            ? <div className="total"><span>Monthly price</span><b>{rm(quote.total)} (starts today)</b></div>
+            : priceUp
             ? <div className="total"><span>Monthly price</span><b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b></div>
             : <div className="total"><span>Monthly price</span><b>{rm(quote.total)} {isFreeHome ? '(free plan)' : '(no change)'}</b></div>}
           {isFreeHome ? <div><span>Plan</span><b>Free</b></div> : <div><span>Billed via</span><b>{home.subscription?.method ?? 'Current method'}</b></div>}
         </div>
         {priceUp ? (<>
-          <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices. Each extra device is {rm(quote.extraEach)}/month.</p>
+          {!isFirstBill && <p className="note"><Icon name="info" /> Price rule: {rm(quote.base)}/month covers up to {quote.included} devices. Each extra device is {rm(quote.extraEach)}/month.</p>}
           <label className="consent">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-            <span>I agree that my <b>{plan.name}</b> subscription for <b>{homeName}</b> increases from <b>{rm(quote.currentTotal)}</b> to <b>{rm(quote.total)}/month</b>, billed via {home.subscription?.method ?? 'my current payment method'}, starting when this device is paired.</span>
+            {isFirstBill
+              ? <span>I agree that billing for my <b>{plan.name}</b> subscription for <b>{homeName}</b> starts today at <b>{rm(quote.total)}/month</b>, billed via {home.subscription?.method}, now that my first camera is online.</span>
+              : <span>I agree that my <b>{plan.name}</b> subscription for <b>{homeName}</b> increases from <b>{rm(quote.currentTotal)}</b> to <b>{rm(quote.total)}/month</b>, billed via {home.subscription?.method ?? 'my current payment method'}, starting when this device is paired.</span>}
           </label>
           <Actions onBack={() => setView('room')}><button className="btn primary" disabled={!agreed} onClick={start}>Proceed <Icon name="arrow_forward" /></button></Actions>
         </>) : (<>
@@ -541,7 +606,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         </div>
         </DemoReveal>
         <button type="button" className="btn subtle" onClick={() => { setVerifyBy('email'); setEmailError(null); }}><Icon name="router" /> Fibre plan but no mobile plan with us? Verify with your fibre account email</button>
-        <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send TAC</button></Actions>
+        <Actions onBack={() => setView(isSubscribe ? 'bundle' : 'price')}><button className="btn primary" disabled={!ok}>Send TAC</button></Actions>
       </form>
       );
     } else {
@@ -574,7 +639,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           </div>
           </DemoReveal>
           {emailError && <button type="button" className="btn subtle" onClick={() => setVerifyBy('mobile')}><Icon name="smartphone" /> Verify with any mobile number instead</button>}
-          <Actions onBack={() => setView('price')}><button className="btn primary" disabled={!ok}>Send code</button></Actions>
+          <Actions onBack={() => setView(isSubscribe ? 'bundle' : 'price')}><button className="btn primary" disabled={!ok}>Send code</button></Actions>
         </form>
       );
     }
@@ -638,7 +703,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
     body = (
       <div className="auth-card left">
         <h1>Confirm and subscribe</h1>
-        <PriceNew price={quote.total} included={quote.included} label="You'll be charged" badge={method === 'ctb' ? (customer?.kind === 'fibre' ? 'On your fibre bill' : 'On your telco bill') : 'Direct Debit'} />
+        <PriceNew price={quote.total} included={quote.included} label={isSubscribe ? 'From your first camera' : "You'll be charged"} badge={method === 'ctb' ? (customer?.kind === 'fibre' ? 'On your fibre bill' : 'On your telco bill') : 'Direct Debit'} />
         <div className="summary-box">
           <div><span>Home</span><b>{homeName.trim()}</b></div>
           {device && <div><span>Device</span><b>{device.model}</b></div>}
@@ -646,7 +711,10 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
           <div><span>Payment</span><b>{methodLabel}</b></div>
           {method === 'ctb' && <div><span>{customer.kind === 'fibre' ? 'Fibre account' : 'Billing account'}</span><b>{customer.account}</b></div>}
           <div><span>Verified {byEmail ? 'email' : 'mobile'}</span><b>{sentTo}</b></div>
-          <div className="total"><span>Monthly price</span><b>{rm(quote.total)}</b></div>
+          {isSubscribe && bundleCam && <div><span>Camera (one-off)</span><b>{bundleCam.model} · {rm(bundleCam.price)}</b></div>}
+          <div className={isSubscribe ? '' : 'total'}><span>Monthly price</span><b>{rm(quote.total)}</b></div>
+          {isSubscribe && <div><span>Billing starts</span><b>With your first camera (by {fmtDate(billingBy)})</b></div>}
+          {isSubscribe && <div className="total"><span>Due today</span><b>{rm(bundleCam ? bundleCam.price : 0)}</b></div>}
         </div>
         <Actions onBack={() => setView('payment')}><button className="btn primary" onClick={confirmPayment}>Confirm &amp; subscribe</button></Actions>
       </div>
@@ -690,6 +758,38 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         </ul>
       </div>
     );
+  } else if (isSubscribe) {
+    const subscription = {
+      method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
+      detail: method === 'ctb' ? customer.account : ddOption.label,
+      price: quote.total, ...verifiedWith, status: 'active', billCycleDay: method === 'ctb' ? customer.billCycleDay : undefined,
+      billingPending: true, billingBy: billingBy.toISOString(), // starts with the first camera (or by billingBy)
+    };
+    const order = bundleCam ? { model: bundleCam.model, qr: bundleCam.qr, price: bundleCam.price, status: 'shipped', orderedOn: new Date().toISOString(), eta: new Date(Date.now() + 3 * 864e5).toISOString() } : null;
+    body = (
+      <div className="auth-card left">
+        <span className="auth-logo ok"><Icon name="celebration" fill /></span>
+        <h1>{plan.name} is ready!</h1>
+        <p className="muted">Your plan for <b>{homeName}</b> is set up. Billing starts when your first camera is online.</p>
+        <PriceNew price={quote.total} included={quote.included} label="Subscription ready" badge="MYR 0 today" />
+        <div className="summary-box">
+          <div className="sb-title tone-honey"><Icon name="workspace_premium" /> Subscription</div>
+          <div><span>Payment</span><b>{subscription.method}</b></div>
+          <div><span>{method === 'ctb' ? 'Billing account' : 'Paid from'}</span><b>{subscription.detail}</b></div>
+          <div><span>Billing starts</span><b>With your first camera (by {fmtDate(billingBy)})</b></div>
+        </div>
+        {order && (
+          <div className="summary-box">
+            <div className="sb-title tone-plum"><Icon name="local_shipping" /> Camera order</div>
+            <div><span>Camera</span><b>{order.model}</b></div>
+            <div><span>Paid today</span><b>{rm(order.price)}</b></div>
+            <div><span>Arrives by</span><b>{fmtDate(order.eta)}</b></div>
+          </div>
+        )}
+        <p className="note"><Icon name="info" /><span>{order ? `When your ${order.model} arrives, open ${homeName} and tap Set up camera.` : `Next, add your camera from ${homeName}.`}</span></p>
+        <button className="btn primary wide" onClick={() => onDone({ homeName, subscription, order })}>Go to {homeName} <Icon name="arrow_forward" /></button>
+      </div>
+    );
   } else if (isUpgrade) {
     const subscription = {
       method: method === 'ctb' ? 'Charge to Bill' : 'Direct Debit',
@@ -716,7 +816,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <span className="auth-logo ok"><Icon name="celebration" fill /></span>
         <h1>Camera added!</h1>
         <p className="muted"><b>{deviceName}</b> is now in <b>{roomLabel}</b> in <b>{homeName}</b>.</p>
-        {isFreeHome ? <PriceFree done /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} done /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} done />}
+        {isFreeHome ? <PriceFree done /> : isFirstBill ? <PriceNew price={quote.total} included={quote.included} label="Billing started" badge="Active" /> : priceUp ? <PriceChange from={quote.currentTotal} to={quote.total} done /> : <PriceSame price={quote.total} used={quote.devicesAfter} included={quote.included} done />}
         <div className="summary-box">
           <div className="sb-title tone-blue"><Icon name="videocam" /> Paired device</div>
           <div><span>Name</span><b>{deviceName}</b></div>
@@ -728,7 +828,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
         <div className="summary-box">
           <div className="sb-title tone-honey"><Icon name="workspace_premium" /> Subscription</div>
           <div><span>Devices on home</span><b>{isFreeHome ? quote.devicesAfter : `${quote.devicesAfter} (up to ${quote.included} included)`}</b></div>
-          <div><span>Monthly price</span>{priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} {isFreeHome ? '(free plan)' : '(no change)'}</b>}</div>
+          <div><span>Monthly price</span>{isFirstBill ? <b>{rm(quote.total)} (from today)</b> : priceUp ? <b className="price-diff"><s>{rm(quote.currentTotal)}</s> {rm(quote.total)}</b> : <b>{rm(quote.total)} {isFreeHome ? '(free plan)' : '(no change)'}</b>}</div>
           {isFreeHome ? <div><span>Plan</span><b>Free</b></div> : <div><span>Billed via</span><b>{home.subscription?.method ?? '—'}</b></div>}
         </div>
         {homeWifi && ssid !== homeWifi && (
@@ -795,7 +895,7 @@ export default function FirstPairing({ plan, home = null, upgrade = false, defau
   return (
     <div className="auth pair">
       {!['processing', 'success'].includes(view) && <button className="icon-btn back-btn" onClick={requestLeave} aria-label="Cancel setup"><Icon name="close" /></button>}
-      <Stepper steps={isUpgrade ? STEPS_UPGRADE : isExisting ? STEPS_EXISTING : STEPS} step={(isUpgrade ? STEP_OF_UPGRADE : isExisting ? STEP_OF_EXISTING : STEP_OF)[view]} label="Setup progress" />
+      <Stepper steps={isSubscribe ? STEPS_SUBSCRIBE : isUpgrade ? STEPS_UPGRADE : isExisting ? STEPS_EXISTING : STEPS} step={(isSubscribe ? STEP_OF_SUBSCRIBE : isUpgrade ? STEP_OF_UPGRADE : isExisting ? STEP_OF_EXISTING : STEP_OF)[view]} label="Setup progress" />
       {body}
       <DemoPanel />
       {confirmLeave && (

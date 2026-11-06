@@ -1,6 +1,14 @@
 // Online store for buying compatible devices (upsell links).
 export const STORE_URL = 'https://store.maxis.com.my';
 
+// Subscription-led: cameras sold with the plan at checkout (mock store catalogue, one-off price).
+export const STORE_CAMERAS = [
+  { id: 'aero', model: 'Aero Cam 2K', price: 299, qr: 'qr6', icon: 'videocam', note: 'Indoor · 2K video · Works with Google Home' },
+  { id: 'kova', model: 'Kova Outdoor Cam', price: 449, qr: 'qr7', icon: 'outdoor_garden', note: 'Outdoor · weatherproof · Matter-certified' },
+];
+// Subscription-led: billing starts when the first camera is online, or after this many days at the latest.
+export const BILLING_GRACE_DAYS = 30;
+
 export const PLAN = {
   id: 'premium', name: 'Premium Home', price: 80, devices: 5, extraDevicePrice: 10, // MYR/month per device beyond `devices`
   tagline: 'Smart home control with Gemini built in.',

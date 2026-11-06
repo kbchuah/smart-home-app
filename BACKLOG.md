@@ -18,6 +18,9 @@ Tracker for parked ideas and open decisions. Move items to **Done** when shipped
 
 ## Decisions
 
+- **Two journeys (6 Nov 2026).** *Device-led v1* (branch `device-led-v1`): sign up free, and pairing the first camera sells the per-home subscription. *Subscription-led v1* (branch `subscription-led-v1`): subscribe first, then add cameras. Switch between them on the marketing page (Demo journey).
+- **Subscription-led billing:** MYR 0 at subscribe. Billing starts when the first camera is online, or 30 days after subscribing at the latest. Cancelling before billing starts ends Premium straight away with nothing to refund. An optional camera (Aero Cam 2K MYR 299, Kova Outdoor Cam MYR 449, mock prices) can be bought with the plan; it shows as an order on the home with a delivery tracker.
+
 - **Pricing (4 Nov 2026):** MYR 80/month per home for up to 5 devices, plus MYR 10/month for each additional device. Replaces MYR 60 for 4 + MYR 15. Set in `src/plans.js`.
 
 - **No pro-rating, in any scenario** (first bill, mid-cycle increases, unpairing). Our commercial terms with Google don't include pro-rating: Google charges us the full monthly amount for a device even if it's paired for only one day of the month (e.g. at month end). We charge customers the same way, full monthly amounts only. Pro-rating was built and then reverted.

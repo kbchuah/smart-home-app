@@ -7,6 +7,7 @@ import DeviceTile from '../components/DeviceTile.jsx';
 import DeviceControls from '../components/DeviceControls.jsx';
 import DeviceForm from '../components/DeviceForm.jsx';
 import FirstPairing from './FirstPairing.jsx';
+import SetupChecklist from '../components/SetupChecklist.jsx';
 import SubscriptionCard from '../components/SubscriptionCard.jsx';
 import WifiChange from '../components/WifiChange.jsx';
 import CancelPremium from '../components/CancelPremium.jsx';
@@ -96,20 +97,24 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
     // Same pairing flow as first pairing, in existing-home mode (no TAC/payment; price re-quoted).
     const presetRoom = rooms.find((r) => r.id === pairing.roomId);
     return (
-      <FirstPairing plan={plan} home={state} defaultRoom={presetRoom?.name ?? 'My room'} onCancel={() => setPairing(null)}
+      <FirstPairing plan={plan} home={state} defaultRoom={presetRoom?.name ?? 'My room'} expectModel={pairing.expectModel} onCancel={() => setPairing(null)}
         onDone={({ room, device, price }) => {
           let roomId = rooms.find((r) => r.name.toLowerCase() === room.name.toLowerCase())?.id;
           if (!roomId) { roomId = uid('room'); dispatch({ type: 'addRoom', id: roomId, name: room.name }); }
           dispatch({ type: 'addDevice', device: { ...device, roomId } });
           // Homes created before Wi-Fi was saved learn it from their next device.
           if (!state.wifi && device.wifi) dispatch({ type: 'setWifi', wifi: device.wifi });
-          // Adding raises the price immediately; it never lowers it (drops wait for renewal).
-          if (isPremium(state.subscription) && price > billedPrice(state)) {
+          // Subscription-led: the first camera starts billing (renewal anchor = today for Direct Debit).
+          if (state.subscription?.billingPending) {
+            dispatch({ type: 'patchSubscription', patch: { billingPending: false, billingBy: null, price, startedOn: new Date().toISOString() } });
+          } else if (isPremium(state.subscription) && price > billedPrice(state)) {
+            // Adding raises the price immediately; it never lowers it (drops wait for renewal).
             dispatch({ type: 'patchSubscription', patch: { price } });
           }
+          if (state.order && state.order.status !== 'set_up' && state.order.model === device.model) dispatch({ type: 'patchHome', patch: { order: { ...state.order, status: 'set_up' } } });
           setPairing(null);
           setFilter('all');
-          setToast(`${device.name} added`);
+          setToast(state.subscription?.billingPending ? `${device.name} added. Billing has started.` : `${device.name} added`);
         }} />
     );
   }
@@ -131,7 +136,11 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
       </header>
 
       <SubscriptionCard home={state}
-        onCancel={(price, endsOn) => setCancelling({ price, endsOn })}
+        onCancel={(price, endsOn) => {
+          // Not billed yet (subscription-led, no camera): cancelling ends it straight away, nothing to refund.
+          if (state.subscription?.billingPending) { dispatch({ type: 'patchSubscription', patch: { status: 'free', billingPending: false, billingBy: null } }); setToast('Premium cancelled. Nothing was charged.'); return; }
+          setCancelling({ price, endsOn });
+        }}
         onUndo={async () => { await resumePremium(); dispatch({ type: 'patchSubscription', patch: { status: 'active', endsOn: null } }); setToast('Cancellation undone. Premium continues.'); }}
         onUpgrade={() => setUpgrading(true)}
         onRenew={(next) => { dispatch({ type: 'patchSubscription', patch: { price: next, lastRenewal: renewsOn(state.subscription).toISOString() } }); setToast(`Renewed: now ${'MYR'} ${next.toFixed(2)}/month`); }}
@@ -140,6 +149,11 @@ export default function Dashboard({ structureId, user, plan, onBack }) {
         <CancelPremium home={state} price={cancelling.price} endsOn={cancelling.endsOn} onClose={() => setCancelling(null)}
           onCancelled={() => dispatch({ type: 'patchSubscription', patch: { status: 'cancelling', endsOn: new Date(cancelling.endsOn).toISOString() } })} />
       )}
+
+      <SetupChecklist home={state}
+        onSetUp={() => setPairing({ expectModel: state.order?.status === 'delivered' ? state.order.qr : undefined })}
+        onDelivered={() => { dispatch({ type: 'patchHome', patch: { order: { ...state.order, status: 'delivered' } } }); setToast(`${state.order.model} delivered`); }}
+        onSkipToBilling={() => { dispatch({ type: 'patchSubscription', patch: { billingPending: false, startedOn: new Date().toISOString(), billingBy: null } }); setToast('Billing date reached: billing has started'); }} />
 
       <section className="summary">
         {devices.some((d) => d.type === 'light') && (

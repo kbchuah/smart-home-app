@@ -9,7 +9,7 @@ import { createHome, loadHome, homeExists } from './store.js';
 import { DEVICE_TYPES, GENERIC_ROUTINES, uid } from './data.js';
 import { PLAN as plan } from './plans.js';
 import { loadSession, saveSession } from './session.js';
-import { clearTried } from './demoStore.js';
+import { clearTried, getJourney } from './demoStore.js';
 
 // Where a signed-in user lands: their only home, or the homes list.
 const landingFor = (u) => (u?.structures?.length === 1 ? { screen: 'dashboard', id: u.structures[0] } : { screen: 'homes', id: null });
@@ -28,10 +28,27 @@ export default function App() {
 
   const signedIn = (u) => {
     setUser(u);
+    // Subscription-led: a new account subscribes first, before any device.
+    if (getJourney() === 'subscription' && !(u.structures?.length)) { setScreen('subscribe'); return; }
     // Only one home? Skip the list and go straight into it.
     const to = landingFor(u);
     setStructureId(to.id); setScreen(to.screen);
   };
+  // Subscription-led: the home is created with Premium (billing waits for the first camera), no devices yet.
+  const subscribed = ({ homeName, subscription, order }) => {
+    const id = uid('home');
+    createHome(id, {
+      homeName, ecosystem: 'Google Home Premium', wifi: null,
+      subscription, order: order ?? null,
+      rooms: [{ id: 'room1', name: 'My room' }],
+      devices: [],
+      routines: GENERIC_ROUTINES,
+    });
+    setUser((u) => ({ ...u, structures: [...u.structures, id] }));
+    setStructureId(id);
+    setScreen('dashboard');
+  };
+  const homeNames = () => (user?.structures ?? []).map((id) => loadHome(id)?.homeName).filter(Boolean);
   // New user with no home: create the home together with the first paired device.
   const firstDevicePaired = ({ home, room, device, subscription }) => {
     const id = uid('home');
@@ -59,10 +76,13 @@ export default function App() {
     case 'login':
       return <GoogleFlow mode={screen} plan={plan} onCancel={() => setScreen('auth')} onDone={signedIn} />;
     case 'homes':
-      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddHome={() => setScreen('firstPair')} />;
+      return <Homes user={user} onOpen={(id) => { setStructureId(id); setScreen('dashboard'); }} onLogout={logout} onAddHome={() => setScreen(getJourney() === 'subscription' ? 'subscribe' : 'firstPair')} />;
+    case 'subscribe':
+      // Subscription-led: subscribe to Premium for a new home first; cameras are added afterwards.
+      return <FirstPairing plan={plan} subscribe account={user?.email} existingHomeNames={homeNames()} onCancel={() => setScreen('homes')} onDone={subscribed} />;
     case 'firstPair':
       // New home: billing is per home, so its first pairing includes the subscription.
-      return <FirstPairing plan={plan} account={user?.email} existingHomeNames={(user?.structures ?? []).map((id) => loadHome(id)?.homeName).filter(Boolean)} onCancel={() => setScreen('homes')} onDone={firstDevicePaired} />;
+      return <FirstPairing plan={plan} account={user?.email} existingHomeNames={homeNames()} onCancel={() => setScreen('homes')} onDone={firstDevicePaired} />;
     case 'dashboard':
       return <Dashboard key={structureId} structureId={structureId} user={user} plan={plan} onBack={() => setScreen('homes')} />;
     default:

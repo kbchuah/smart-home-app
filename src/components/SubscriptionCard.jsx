@@ -24,6 +24,7 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
   const pendingDrop = status === 'active' && next < billed; // lower price from the next renewal
   const detail = sub.method === 'Charge to Bill' ? (sub.billingAccount ?? sub.detail) : (sub.detail ?? sub.bank);
   const close = () => setOpen(false);
+  const pendingBill = Boolean(sub.billingPending); // subscription-led: not billed until the first camera
 
   if (status === 'free') {
     return (
@@ -39,7 +40,7 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
   }
 
   return (<>
-    <button className={`sub-card ${status === 'cancelling' ? 'ending' : ''}`} onClick={() => setOpen(true)} aria-label="Subscription details">
+    <button className={`sub-card ${status === 'cancelling' ? 'ending' : ''} ${pendingBill ? 'pending' : ''}`} onClick={() => setOpen(true)} aria-label="Subscription details">
       <span className="sub-icon"><Icon name="workspace_premium" fill /></span>
       <span className="sub-body">
         <span className="sub-top"><b>{PLAN.name}{status === 'cancelling' && ` · ends ${fmtDate(endsOn)}`}</b><span className="sub-price">{rm(billed)}<small>/month</small></span></span>
@@ -48,7 +49,7 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
           {Array.from({ length: price.included }, (_, i) => <i key={i} className={i < used ? 'on' : ''} />)}
           {over && <em>+{price.extraDevices}</em>}
         </span>
-        <small>{over ? `${count} devices · ${price.extraDevices} extra` : `${used} of ${price.included} devices included`} · {sub.method}</small>
+        <small>{pendingBill ? `Not billed yet · starts with your first camera (by ${fmtDate(sub.billingBy)})` : <>{over ? `${count} devices · ${price.extraDevices} extra` : `${used} of ${price.included} devices included`} · {sub.method}</>}</small>
       </span>
       <Icon name="chevron_right" />
     </button>
@@ -60,9 +61,11 @@ export default function SubscriptionCard({ home, onCancel, onUndo, onUpgrade, on
         )}
         <div className="summary-box">
           <div><span>Plan</span><b>{PLAN.name}</b></div>
-          <div><span>Status</span>{status === 'cancelling' ? <b className="warn-text">Ends {fmtDate(endsOn)}</b> : <b className="ok-text">Active</b>}</div>
-          <div><span>{status === 'cancelling' ? 'Ends on' : 'Renews on'}</span><b>{fmtDate(endsOn)}</b></div>
-          {status === 'active' && <div className="rule-row"><span>{renewalRule(sub)}</span></div>}
+          <div><span>Status</span>{status === 'cancelling' ? <b className="warn-text">Ends {fmtDate(endsOn)}</b> : pendingBill ? <b>Ready · not billed yet</b> : <b className="ok-text">Active</b>}</div>
+          {pendingBill
+            ? <div><span>Billing starts</span><b>With your first camera (by {fmtDate(sub.billingBy)})</b></div>
+            : <div><span>{status === 'cancelling' ? 'Ends on' : 'Renews on'}</span><b>{fmtDate(endsOn)}</b></div>}
+          {status === 'active' && !pendingBill && <div className="rule-row"><span>{renewalRule(sub)}</span></div>}
           <div><span>Devices on home</span><b>{count}</b></div>
           {!pendingDrop && <div><span>{PLAN.name} (up to {price.included} devices)</span><b>{rm(price.base)}</b></div>}
           {!pendingDrop && over && <div><span>{price.extraDevices} extra × {rm(price.extraEach)}</span><b>{rm(price.extraDevices * price.extraEach)}</b></div>}
